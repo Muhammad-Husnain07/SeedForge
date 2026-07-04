@@ -1,0 +1,15 @@
+{
+  "users": [
+    { "_id": { "$oid": "650000000000000000000001" }, "email": "alice@example.com", "firstName": "Alice", "lastName": "Smith", "role": "customer", "createdAt": { "$date": "2025-01-15T10:00:00Z" }, "isActive": true, "address": { "city": "New York", "zip": "10001" } },
+    { "_id": { "$oid": "650000000000000000000002" }, "email": "bob@example.com", "firstName": "Bob", "lastName": "Jones", "role": "admin", "createdAt": { "$date": "2025-02-20T14:30:00Z" }, "isActive": true, "address": { "city": "Boston", "zip": "02101" } },
+    { "_id": { "$oid": "650000000000000000000003" }, "email": "carol@example.com", "firstName": "Carol", "lastName": "Lee", "role": "customer", "createdAt": { "$date": "2025-03-10T08:15:00Z" }, "isActive": false }
+  ],
+  "products": [
+    { "_id": { "$oid": "650000000000000000000010" }, "name": "Widget A", "price": 19.99, "sku": "WID-001", "description": "A basic widget", "inStock": true, "ratings": [4.5, 4.0, 5.0] },
+    { "_id": { "$oid": "650000000000000000000011" }, "name": "Gadget B", "price": 49.99, "sku": "GAD-002", "description": null, "inStock": false, "ratings": [3.5] }
+  ],
+  "orders": [
+    { "_id": { "$oid": "650000000000000000000020" }, "userId": { "$oid": "650000000000000000000001" }, "status": "delivered", "total": 69.98, "createdAt": { "$date": "2025-04-01T12:00:00Z" }, "items": [ { "productId": { "$oid": "650000000000000000000010" }, "qty": 2, "price": 19.99 }, { "productId": { "$oid": "650000000000000000000011" }, "qty": 1, "price": 29.99 } ] },
+    { "_id": { "$oid": "650000000000000000000021" }, "userId": { "$oid": "650000000000000000000002" }, "status": "pending", "total": 19.99, "createdAt": { "$date": "2025-05-10T16:45:00Z" }, "items": [ { "productId": { "$oid": "650000000000000000000010" }, "qty": 1, "price": 19.99 } ] }
+  ]
+}
