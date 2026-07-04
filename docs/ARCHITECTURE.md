@@ -30,6 +30,7 @@ A CLI + core engine that:
 | Fake data | `@faker-js/faker` | Best-in-class, seeded PRNG |
 | CLI | Commander.js | Declarative subcommand support |
 | Validation | Zod | Runtime schema validation, TS-first |
+| Property tests | fast-check | Generator-based property testing |
 | Tests | Vitest | Fast, Vite-native, ESM-compatible |
 
 ## Package Layout
@@ -37,18 +38,21 @@ A CLI + core engine that:
 ```
 packages/
   core/                 — Schema IR, relationship graph, semantic analyzer,
-                          distributions, rules engine, generation engine.
-                          DB-agnostic — no database drivers.
-                          Deps: @faker-js/faker, zod.
+                           distributions, config DSL, generation engine,
+                           validation layer. DB-agnostic — no database drivers.
+                           Deps: @faker-js/faker, zod.
 
   adapter-postgres/     — Postgres introspection (INFORMATION_SCHEMA, pg_catalog)
-                          + bulk writer (planned). Deps: pg, @seedforge/core.
+                          + bulk writer (multi-row INSERT, COPY, fresh/truncate/append).
+                          Deps: pg, @seedforge/core.
 
   adapter-mysql/        — MySQL introspection (INFORMATION_SCHEMA)
-                          + bulk writer (planned). Deps: mysql2, @seedforge/core.
+                          + bulk writer (multi-row INSERT, fresh/truncate/append).
+                          Deps: mysql2, @seedforge/core.
 
   adapter-mongodb/      — MongoDB schema inference (document sampling via
-                          $sample aggregation). Deps: mongodb, @seedforge/core.
+                          $sample aggregation) + bulk writer (insertMany).
+                          Deps: mongodb, @seedforge/core.
 
   cli/                  — The `seedforge` command. Thin orchestration.
                           Deps: commander, all of the above.
@@ -62,20 +66,83 @@ packages/
 Database
    │
    ▼  (adapter introspects)
-Schema IR (tables, columns, types, FKs, constraints)
+Schema IR (tables, columns, types, FKs, constraints, enums)
    │
-   ▼  (core — semantic analyzer + rules engine)
-Generator Plan (per-column generator functions × distributions × correlations)
+   ▼  (core — graph/buildGraph)
+Relationship Graph (nodes, edges, insertionOrder, cycles)
    │
-   ▼  (core — generation engine, seeded PRNG)
+   ▼  (core — semantic/analyzer)
+Semantic Matches (per-column generator suggestions with confidence)
+   │
+   ▼  (core — config/merge)
+Generation Plan (resolved generators per column, counts, personas)
+   │
+   ▼  (core — validate/preflight)
+Pre-flight Validation (NOT NULL, enum values, unique cardinality, FK order)
+   │  ❌ fail → report returned, no DB write
+   │  ✅ pass → continue
+   ▼  (core — generate/engine, seeded PRNG)
 Row Stream (flat row objects with resolved FK references)
    │
-   ▼  (core — validation layer)
-Validated Row Stream
+   ▼  (core — validate/postwrite, opt-in)
+Post-write Verification (row counts, FK sample check, junction orphans)
    │
-   ▼  (adapter — bulk writer)
+   ▼  (adapter — bulk writer, transaction)
 Database
 ```
+
+## Core Subsystems
+
+### 1. Schema IR (`types/index.ts`)
+Shared domain types that all adapters map to: `DatabaseSchema`, `TableSchema`, `ColumnSchema`, `ForeignKey`. All adapter tests produce instances of these types.
+
+### 2. Introspection Dispatcher (`introspect.ts`)
+Registry pattern: `registerIntrospector(dialect, adapter)` → `introspect(connectionConfig)`. Each adapter module self-registers on import. Includes `computeSchemaHash()` for deterministic schema fingerprinting.
+
+### 3. Relationship Graph (`graph/`)
+Topological sort of FK dependencies (Kahn's algorithm) to produce a valid insertion order. Classifies edges as one-to-many / one-to-one / self-referential / many-to-many. Detects and isolates cycles.
+
+### 4. Semantic Analyzer (`semantic/`)
+20+ prioritized rules match column names and types to generators. Priority 100 (enum) → Priority 69 (rating). Each rule returns a `GeneratorSpec` with confidence. Unresolved columns are tracked for user override.
+
+### 5. Statistical Distributions (`distributions/`)
+Pure PRNG functions built on mulberry32. Each distribution is a function `(prng, params) → value`. Independent sub-streams via `deriveStream(namespace, ...parts)`.
+
+### 6. Config DSL & Plan Builder (`config/`)
+- `defineConfig()` — identity helper for type-safe config objects
+- `validateConfig()` — Zod schema validation + type compatibility checks
+- `buildGenerationPlan()` — merges config overrides with inferred matches; throws on unresolved columns
+
+### 7. Generation Engine (`generate/`)
+- `generate()` — async generator that yields `GenerationBatch` objects
+- Field-level PRNG sub-streams for deterministic per-cell values
+- FK resolution via PK cache with self-referential patch phase
+- Unique enforcement with configurable retry limit
+- Null injection based on column nullability and logical type
+
+### 8. Validation Layer (`validate/`)
+Two-pass validation system:
+
+**Pre-flight** (`validatePreFlight`):
+- NOT NULL: detects global `nullProbability > 0` conflicting with NOT NULL columns
+- Enum values: statically checks `weighted-categorical` value sets against declared `enumValues` / CHECK `IN` clauses
+- Unique cardinality: estimates generator distinct-value domain vs requested row count; warns on mismatch, fails on severe mismatch
+- FK ordering: defensive check that referenced tables precede referencing tables in insertion order
+
+**Post-write** (`verifyPostWrite`):
+- Row count match against plan (handles `countPerParent` relationships)
+- Random-sample FK reference integrity (configurable sample, default 50)
+- Junction table orphan detection
+
+Both return structured `{ valid, entries[] }` objects — no direct terminal output, enabling CI gating via the `valid` boolean.
+
+### 9. Database Writers (`writer/`)
+Each adapter implements `BatchWriter` with three write modes:
+- `fresh` — error if table is non-empty
+- `truncate` — clear table before writing
+- `append` — add to existing data
+
+Supports batch-oriented progress events and AbortSignal cancellation.
 
 ## Design Principles
 
@@ -91,13 +158,33 @@ The `core` package never imports a database driver. Each adapter translates conc
 ### 4. Schema drift is a first-class concern
 Every generation run produces a lockfile. Before generating, SeedForge compares the live schema to the lockfile and warns on drift.
 
-## Current State (Milestone II Complete)
+### 5. Validate early, verify often
+Pre-flight catches config mistakes before any DB connection. Post-write verifies data integrity after generation. Both produce structured, CI-gateable results.
+
+## Current State (Milestone IX Complete)
 
 - ✅ Monorepo tooling — pnpm workspaces, Turborepo, TypeScript strict
 - ✅ Core domain types — `LogicalType`, `DatabaseSchema`, `TableSchema`, `ColumnSchema`, `ForeignKey`
 - ✅ Postgres introspection — 7 information_schema queries, enum detection, 6 tests
-- ✅ MySQL introspection — equivalent queries, Enum parsing, `TINYINT(1)` → boolean, 7 tests
+- ✅ MySQL introspection — equivalent queries, enum parsing, `TINYINT(1)` → boolean, 7 tests
 - ✅ MongoDB inference — document sampling, nested flattening, extended JSON, 8 tests
 - ✅ Core dispatcher — registry pattern, `computeSchemaHash()` canonical SHA256, 5 tests
 - ✅ Docker fixture — Postgres 16 + MySQL 8 with 7-table e-commerce schema
-- 🔄 **Next: Relationship graph & dependency resolution**
+- ✅ Relationship graph — topological sort, cycle detection, junction merging, 12 tests
+- ✅ Semantic analyzer — 20+ rules, priority system, confidence scoring, 12 tests
+- ✅ Statistical distributions — 8 PRNG functions, persona assignment, 20+ tests
+- ✅ Config DSL — Zod validation, type compatibility, plan merging, 12 tests
+- ✅ Generation engine — 20+ generators, FK resolution, unique enforcement, 15 tests
+- ✅ Database writers — Postgres (COPY/INSERT), MySQL, MongoDB, 30+ integration tests
+- ✅ Validation layer — pre-flight (4 checks) + post-write (3 checks), 9 tests
+- 🔄 **Next: Lockfile & schema drift detection**
+
+## Test Suite
+
+| Package | Test count | Environment |
+|---|---|---|
+| `@seedforge/core` | ~95 | Standalone (unit + property) |
+| `@seedforge/adapter-postgres` | ~18 | Docker Postgres 16 |
+| `@seedforge/adapter-mysql` | ~17 | Docker MySQL 8 |
+| `@seedforge/adapter-mongodb` | ~16 | Docker MongoDB 7 |
+| **Total** | **~157** | `docker compose up -d` |

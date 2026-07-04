@@ -4,7 +4,7 @@
 
 - **Node.js** >= 18.17
 - **pnpm** >= 9.4.0 (`npm install -g pnpm`)
-- **Docker Desktop** — required for integration tests (Postgres + MySQL)
+- **Docker Desktop** — required for integration tests (Postgres + MySQL + MongoDB)
 
 ## Install
 

@@ -5,11 +5,17 @@ SeedForge uses a registry-based adapter pattern to support multiple database bac
 ## Architecture
 
 ```
-core/introspect.ts          ← registry dispatch
+core/introspect.ts          ← registry dispatch (introspection)
   │
   ├── adapter-postgres/      ← pg driver, INFORMATION_SCHEMA + pg_catalog
   ├── adapter-mysql/         ← mysql2 driver, INFORMATION_SCHEMA (uppercase columns)
   └── adapter-mongodb/       ← mongodb driver, document sampling inference
+
+core/writer/types.ts         ← BatchWriter interface (shared)
+  │
+  ├── adapter-postgres/      ← multi-row INSERT / COPY, transaction-managed
+  ├── adapter-mysql/         ← multi-row INSERT, transaction-managed
+  └── adapter-mongodb/       ← insertMany, transaction-managed
 ```
 
 ## Registry Pattern
@@ -27,9 +33,51 @@ const schema = await introspect({
 });
 ```
 
+## Common Writer Interface
+
+All adapters implement the `BatchWriter` interface:
+
+```typescript
+interface BatchWriter {
+  write(
+    batches: AsyncIterable<GenerationBatch>,
+    graph: RelationshipGraph,
+    schema: DatabaseSchema,
+    options?: WriteOptions,
+  ): Promise<WriteResult>;
+}
+```
+
+### Write Modes
+
+| Mode | Behavior |
+|------|----------|
+| `fresh` | Error if any table/collection already contains rows |
+| `truncate` | Clear all rows before writing |
+| `append` | Add to existing data without clearing |
+
+### Progress Events
+
+Writers emit progress events via the `WriteProgressEmitter` for CLI progress bars and monitoring:
+
+```typescript
+interface WriteProgressEvent {
+  table: string;
+  phase: 'insert' | 'patch' | 'truncate' | 'verify';
+  rowsWritten: number;
+  rowsTotal: number;
+}
+```
+
+### Transaction Safety
+
+All three adapters wrap writes in a single transaction. If any batch fails, the transaction is rolled back, leaving the database in its original state. The `fresh` mode check also runs within the transaction.
+
+---
+
 ## Adapter: Postgres (`@seedforge/adapter-postgres`)
 
-### Source queries
+### Introspection
 
 | Query | Tables |
 |-------|--------|
@@ -41,7 +89,7 @@ const schema = await introspect({
 | Unique constraints | `table_constraints` + `key_column_usage` |
 | Check constraints | `table_constraints` + `check_constraints` |
 
-### Type mapping
+### Type Mapping
 
 Maps ~35+ native PG types to `LogicalType`. Notable mappings:
 - `int4`, `int8`, `serial`, `oid` → `integer`
@@ -50,18 +98,31 @@ Maps ~35+ native PG types to `LogicalType`. Notable mappings:
 - `ARRAY` → `array`
 - `timestamptz`, `timestamp with time zone` → `timestamp`
 
+### Writer
+
+The Postgres writer uses two insert strategies depending on batch size:
+
+- **Multi-row INSERT** (batches < 100 rows): `INSERT INTO table (cols) VALUES (...), (...), ... ON CONFLICT DO NOTHING`
+- **COPY** (batches >= 100 rows): `COPY table (cols) FROM STDIN WITH (FORMAT csv)` via `pg-copy-streams`
+
+For self-referential FK resolution, the writer applies a two-phase write:
+1. **Insert phase**: write all rows with FK columns set to NULL
+2. **Patch phase**: update FK columns in-place using `UPDATE ... FROM (VALUES ...)` for bulk patching
+
+---
+
 ## Adapter: MySQL (`@seedforge/adapter-mysql`)
 
-### Source queries
+### Introspection
 
 Equivalent INFORMATION_SCHEMA queries against the current `DATABASE()`. Uses uppercase column references (MySQL stores metadata columns in upper case; `mysql2` v3 preserves original case).
 
-### Notable features
+### Notable Features
 
 - **Enum parsing** — `column_type` field like `enum('a','b')` parsed via custom quote-aware parser
 - **`TINYINT(1)` detection** — `isTinyInt1()` returns `boolean` for `tinyint(1)` columns
 
-### Type mapping
+### Type Mapping
 
 Maps 30+ MySQL types. Notable:
 - `tinyint(1)` → `boolean` (via column_type regex match)
@@ -69,9 +130,23 @@ Maps 30+ MySQL types. Notable:
 - `datetime`, `timestamp` → `timestamp`
 - `year` → `integer`
 
+### Writer
+
+The MySQL writer uses multi-row `INSERT IGNORE` statements for all batch sizes:
+
+```
+INSERT IGNORE INTO `table` (col1, col2) VALUES (?, ?), (?, ?), ...
+```
+
+For self-referential FK resolution:
+1. **Insert phase**: write all rows with FK columns set to NULL
+2. **Patch phase**: bulk `UPDATE ... JOIN` to patch FK values
+
+---
+
 ## Adapter: MongoDB (`@seedforge/adapter-mongodb`)
 
-### Inference approach
+### Inference Approach
 
 MongoDB has no formal schema, so SeedForge **infers** one by sampling documents:
 
@@ -86,7 +161,7 @@ MongoDB has no formal schema, so SeedForge **infers** one by sampling documents:
    - **Merge types** — integer+float → float, type mismatch → string
 4. Return a standard `TableSchema` with empty `foreignKeys` and `uniqueConstraints`
 
-### Inferred column structure
+### Inferred Column Structure
 
 ```typescript
 // From: { _id: { "$oid": "..." }, address: { city: "NYC" } }
@@ -97,8 +172,21 @@ MongoDB has no formal schema, so SeedForge **infers** one by sampling documents:
 ]
 ```
 
+### Writer
+
+The MongoDB writer uses `insertMany` for all batch sizes:
+
+```typescript
+await collection.insertMany(docs, { ordered: false });
+```
+
+For self-referential FK resolution:
+1. **Insert phase**: write all documents
+2. **Patch phase**: `updateMany` with per-document `$set` operations
+
 ### Limitations
 
 - Array element types are not deeply inferred; arrays are marked `'array'`
 - No FK detection (MongoDB has no native referential constraints)
 - Inference accuracy scales with sample size (max 1,000 docs)
+- MongoDB has no native transactions in all configurations; rollback is best-effort
