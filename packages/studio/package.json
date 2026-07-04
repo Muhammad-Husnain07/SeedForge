@@ -1,0 +1,19 @@
+{
+  "name": "@seedforge/studio",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsup src/index.ts --dts --clean --format esm",
+    "dev": "tsup src/index.ts --dts --watch --format esm",
+    "test": "vitest run --reporter verbose",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "tsup": "^8.1.0",
+    "typescript": "^5.5.0"
+  }
+}
