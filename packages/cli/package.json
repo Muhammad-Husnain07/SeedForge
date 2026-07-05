@@ -15,12 +15,21 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@seedforge/core": "workspace:*",
-    "@seedforge/adapter-postgres": "workspace:*",
-    "@seedforge/adapter-mysql": "workspace:*",
-    "@seedforge/adapter-mongodb": "workspace:*",
     "@anthropic-ai/sdk": "^0.27.0",
-    "commander": "^12.1.0"
+    "@google/generative-ai": "^0.24.1",
+    "@inquirer/prompts": "^8.5.2",
+    "@seedforge/adapter-mongodb": "workspace:*",
+    "@seedforge/adapter-mysql": "workspace:*",
+    "@seedforge/adapter-postgres": "workspace:*",
+    "@seedforge/core": "workspace:*",
+    "@seedforge/studio": "workspace:*",
+    "cli-table3": "^0.6.5",
+    "commander": "^12.1.0",
+    "dotenv": "^17.4.2",
+    "jiti": "^2.7.0",
+    "openai": "^6.45.0",
+    "ora": "^9.4.1",
+    "picocolors": "^1.1.1"
   },
   "devDependencies": {
     "tsup": "^8.1.0",

@@ -1,0 +1,26 @@
+{
+  "name": "@seedforge/plugin-geo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "SeedForge plugin providing realistic geo.city generator with internally-consistent city/region/lat-lng tuples",
+  "main": "./dist/index.js",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --dts --clean --format esm",
+    "test": "vitest run --reporter verbose"
+  },
+  "dependencies": {
+    "@seedforge/core": "workspace:*"
+  },
+  "devDependencies": {
+    "tsup": "^8.1.0",
+    "typescript": "^5.5.0",
+    "vitest": "^1.6.0"
+  }
+}
