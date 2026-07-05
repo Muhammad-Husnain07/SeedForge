@@ -19,6 +19,10 @@ export interface RelationshipGraph {
   edges: RelationshipEdge[];
   insertionOrder: string[];
   cycles: string[][];
+  /** Tables grouped by dependency level.
+   *  Tables at the same level have no inter-dependency and can be generated
+   *  concurrently. Each level depends only on levels before it. */
+  levels: string[][];
 }
 
 export interface MongoInferredRelationship {

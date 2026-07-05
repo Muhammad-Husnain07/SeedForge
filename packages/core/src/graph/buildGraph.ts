@@ -34,6 +34,51 @@ function isFkCoveredByUnique(
   return false;
 }
 
+function computeLevels(
+  tableNames: string[],
+  edges: RelationshipEdge[],
+  insertionOrder: string[],
+): string[][] {
+  if (insertionOrder.length === 0) return [];
+  const nameSet = new Set(insertionOrder);
+  const deps = new Map<string, Set<string>>();
+  for (const t of insertionOrder) deps.set(t, new Set());
+
+  for (const edge of edges) {
+    // edge.from depends on edge.to (FK: child references parent)
+    if (nameSet.has(edge.from) && nameSet.has(edge.to)) {
+      deps.get(edge.from)!.add(edge.to);
+    }
+  }
+
+  // Also add ordering from insertionOrder: each table depends on all previous tables
+  // that it has FK edges to (already covered above via edges)
+
+  const remaining = new Set(insertionOrder);
+  const levels: string[][] = [];
+
+  while (remaining.size > 0) {
+    const level: string[] = [];
+    for (const t of remaining) {
+      const needs = deps.get(t)!;
+      // A table belongs in this level if all its dependencies are already assigned
+      const allDepsSatisfied = [...needs].every((d) => !remaining.has(d));
+      if (allDepsSatisfied) {
+        level.push(t);
+      }
+    }
+    if (level.length === 0) {
+      // Break cycles: put remaining tables into their own level
+      levels.push([...remaining]);
+      break;
+    }
+    for (const t of level) remaining.delete(t);
+    levels.push(level);
+  }
+
+  return levels;
+}
+
 function detectJunctionTable(table: TableSchema): boolean {
   if (table.foreignKeys.length !== 2) return false;
 
@@ -183,10 +228,15 @@ export function buildGraph(
     }
   }
 
+  // Compute dependency levels for parallel generation.
+  // Tables at level 0 have no FK dependencies; level N depends only on levels < N.
+  const levels = computeLevels(tableNames, sortEdges, order);
+
   return {
     nodes: tableNames,
     edges: outputEdges,
     insertionOrder: order,
     cycles,
+    levels,
   };
 }

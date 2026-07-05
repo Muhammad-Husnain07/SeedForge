@@ -56,32 +56,46 @@ export function buildGenerationPlan(
     const tableConfig = config.tables[tableName] ?? {};
     const fields: ResolvedField[] = [];
 
-    for (const column of tableSchema.columns) {
-      const configField = tableConfig.fields?.[column.name];
-      const inferredMatch = inferredMap.get(`${tableName}.${column.name}`);
-
-      if (configField !== undefined) {
+    // When schema columns are empty (e.g. MongoDB with no sampled documents),
+    // fall back to config fields directly so generated rows carry the expected data.
+    if (tableSchema.columns.length === 0 && tableConfig.fields) {
+      for (const [colName, fieldConfig] of Object.entries(tableConfig.fields)) {
         fields.push({
           table: tableName,
-          column: column.name,
+          column: colName,
           source: 'config',
-          generator: toGeneratorSpec(configField),
+          generator: toGeneratorSpec(fieldConfig),
           confidence: 1,
         });
-      } else if (inferredMatch && inferredMatch.source === 'rule') {
-        fields.push({
-          table: tableName,
-          column: column.name,
-          source: 'inferred',
-          generator: inferredMatch.suggestedGenerator,
-          confidence: inferredMatch.confidence,
-        });
-      } else {
-        issues.push(
-          `Column '${tableName}.${column.name}' is unresolved and has no config override. ` +
-          `SeedForge refuses to generate low-quality data. Add an explicit field config or ` +
-          `use the AI-assist command (Prompt 12) to resolve this column.`,
-        );
+      }
+    } else {
+      for (const column of tableSchema.columns) {
+        const configField = tableConfig.fields?.[column.name];
+        const inferredMatch = inferredMap.get(`${tableName}.${column.name}`);
+
+        if (configField !== undefined) {
+          fields.push({
+            table: tableName,
+            column: column.name,
+            source: 'config',
+            generator: toGeneratorSpec(configField),
+            confidence: 1,
+          });
+        } else if (inferredMatch && inferredMatch.source === 'rule') {
+          fields.push({
+            table: tableName,
+            column: column.name,
+            source: 'inferred',
+            generator: inferredMatch.suggestedGenerator,
+            confidence: inferredMatch.confidence,
+          });
+        } else {
+          issues.push(
+            `Column '${tableName}.${column.name}' is unresolved and has no config override. ` +
+            `SeedForge refuses to generate low-quality data. Add an explicit field config or ` +
+            `use the AI-assist command (Prompt 12) to resolve this column.`,
+          );
+        }
       }
     }
 

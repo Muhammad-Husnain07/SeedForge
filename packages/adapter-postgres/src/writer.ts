@@ -3,8 +3,9 @@ import { from as copyFrom } from 'pg-copy-streams';
 import type { GenerationBatch, WriteProgressEmitter } from '@seedforge/core';
 import type { RelationshipGraph, DatabaseSchema, WriteOptions, WriteResult, WriteProgressEvent } from '@seedforge/core';
 
+const DEFAULT_BATCH_SIZE = 5000;
 const MAX_PARAMS = 32000;
-const COPY_THRESHOLD = 100;
+const COPY_THRESHOLD = 500;
 
 function formatCopyValue(val: unknown): string {
   if (val === null || val === undefined) return '\\N';
@@ -61,6 +62,7 @@ async function multiRowInsert(
   table: string,
   columns: string[],
   rows: Record<string, unknown>[],
+  batchSize: number = 1000,
 ): Promise<number> {
   const quotedCols = columns.map((c) => quoteId(c)).join(', ');
   let rowIdx = 0;
@@ -72,7 +74,7 @@ async function multiRowInsert(
 
     while (rowIdx < rows.length) {
       const needed = columns.length;
-      if (totalParams + needed > MAX_PARAMS) break;
+      if (totalParams + needed > MAX_PARAMS || batchRows.length >= batchSize) break;
       batchRows.push(rows[rowIdx]!);
       totalParams += needed;
       rowIdx++;
@@ -158,6 +160,7 @@ export async function write(
   const startTime = Date.now();
   const rowsWritten: Record<string, number> = {};
   const mode = options?.mode ?? 'fresh';
+  const batchSize = options?.batchSize ?? DEFAULT_BATCH_SIZE;
 
   const patches: GenerationBatch[] = [];
 
@@ -181,7 +184,7 @@ export async function write(
         if (batch.rows.length >= COPY_THRESHOLD) {
           written = await copyInsertPgCopyStreams(client, batch.table, columns, batch.rows);
         } else {
-          written = await multiRowInsert(client, batch.table, columns, batch.rows);
+          written = await multiRowInsert(client, batch.table, columns, batch.rows, batchSize);
         }
 
         rowsWritten[batch.table] = (rowsWritten[batch.table] ?? 0) + written;

@@ -92,7 +92,16 @@ async function multiRowInsert(
     for (const row of batchRows) {
       valueClauses.push(`(${columns.map(() => '?').join(', ')})`);
       for (const col of columns) {
-        params.push(row[col] ?? null);
+        const val = row[col];
+        if (val === null || val === undefined) {
+          params.push(null);
+        } else if (val instanceof Date) {
+          params.push(val.toISOString().slice(0, 19).replace('T', ' '));
+        } else if (typeof val === 'object') {
+          params.push(JSON.stringify(val));
+        } else {
+          params.push(val);
+        }
       }
     }
 

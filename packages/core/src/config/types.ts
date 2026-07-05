@@ -43,6 +43,7 @@ export interface ConnectionConfig {
 export interface SeedForgeConfig {
   connection: ConnectionConfig;
   tables: Record<string, TableConfig>;
+  plugins?: (string | { name: string; options?: Record<string, unknown> })[];
 }
 
 export interface ResolvedField {

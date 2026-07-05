@@ -45,9 +45,62 @@ export type { SeedForgeConfig, ConnectionConfig, TableConfig, FieldConfig, Gener
 export { validatePreFlight, verifyPostWrite } from './validate/index.js';
 export type { PreFlightResult, PostWriteResult, ValidationEntry, PreFlightOptions, VerifyOptions } from './validate/index.js';
 
-export { generate } from './generate/index.js';
+export { generate, generateParallel } from './generate/index.js';
 export type { GenerateOptions, GenerationBatch } from './generate/index.js';
 export { GenerationError } from './generate/index.js';
 
 export type { WriteMode, WriteProgressEvent, WriteOptions, WriteResult, BatchWriter } from './writer/index.js';
 export { WriteProgressEmitter } from './writer/index.js';
+
+export {
+  computeConfigHash,
+  diffSchemas,
+  checkDrift,
+  createLockfile,
+  acknowledgeDrift,
+  SchemaDriftError,
+  readLockfile,
+  writeLockfile,
+  resolveLockfilePath,
+} from './lockfile/index.js';
+export type {
+  SeedForgeLockfile,
+  SchemaDiff,
+  SchemaDiffEntry,
+  SchemaDiffEntryType,
+  DriftResult,
+} from './lockfile/index.js';
+
+export {
+  exportBundle,
+  readBundle,
+  readConfigJson,
+  readLockfileJson,
+  readSnapshotData,
+  cleanupBundle,
+  checkImportCompatibility,
+  importBundle,
+} from './bundle/index.js';
+export type {
+  BundleManifest,
+  ExportOptions,
+  ImportOptions,
+  ImportResult,
+} from './bundle/index.js';
+
+export {
+  registerGenerator,
+  getGenerator,
+  generatorRegistry,
+  loadPlugins,
+  scanAvailablePlugins,
+  callPluginHook,
+} from './plugin/index.js';
+export type {
+  SeedForgePlugin,
+  GeneratorRegistry,
+  FieldGenerator,
+  FieldContext,
+  LoadedPlugin,
+  PluginLoaderResult,
+} from './plugin/index.js';

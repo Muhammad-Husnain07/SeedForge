@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { DatabaseSchema, ColumnSchema } from '../types/index.js';
 import type { SeedForgeConfig, ConnectionConfig, FieldConfig, DerivedField, SeedContext } from './types.js';
+import { getGenerator } from '../plugin/registry.js';
 
 const isDerivedField = (v: unknown): v is { fn: Function } =>
   typeof v === 'object' && v !== null && 'fn' in v && typeof (v as Record<string, unknown>).fn === 'function';
@@ -127,7 +128,11 @@ export function validateConfig(config: SeedForgeConfig, schema: DatabaseSchema):
 
         if (isGeneratorSpecConfig(fieldConfig) && !isDerivedField(fieldConfig)) {
           const columnSchema = tableSchema.columns.find((c) => c.name === fieldName)!;
-          const allowedTypes = TYPE_COMPATIBILITY[fieldConfig.kind];
+          let allowedTypes = TYPE_COMPATIBILITY[fieldConfig.kind];
+          if (!allowedTypes) {
+            const pluginGen = getGenerator(fieldConfig.kind);
+            allowedTypes = pluginGen?.compatibleTypes;
+          }
           if (allowedTypes && !allowedTypes.includes(columnSchema.logicalType) && !allowedTypes.includes('*')) {
             issues.push({
               path: `tables.${tableName}.fields.${fieldName}`,

@@ -1,7 +1,12 @@
+import type { LoadedPlugin } from '../plugin/loader.js';
+
 export interface GenerateOptions {
   batchSize?: number;
   uniqueRetryLimit?: number;
   nullProbability?: number;
+  plugins?: LoadedPlugin[];
+  /** Fixed reference timestamp (ms since epoch) for deterministic Date.now(). Defaults to real clock. */
+  refDate?: number;
 }
 
 export interface GenerationBatch {

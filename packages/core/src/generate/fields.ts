@@ -7,6 +7,8 @@ import { recencyWeighted } from '../distributions/recency.js';
 import type { GeneratorSpec } from '../semantic/types.js';
 import type { GenerationPlan, SeedContext } from '../config/types.js';
 import type { TableSchema } from '../types/index.js';
+import { getGenerator } from '../plugin/registry.js';
+import type { FieldContext } from '../plugin/types.js';
 
 function uuidV4(prng: PRNG): string {
   const hex = [
@@ -215,6 +217,11 @@ export function generateFieldValue(
     default: {
       if ((kind as string).startsWith('faker.')) {
         return fakerMethod(kind, prng, params);
+      }
+      const pluginGen = getGenerator(kind);
+      if (pluginGen) {
+        const fieldCtx: FieldContext = { table: ctx.table, column: '', rowIndex: ctx.rowIndex };
+        return pluginGen(params, row, prng, fieldCtx);
       }
       throw new Error(`unknown generator kind: '${kind}' for column`);
     }

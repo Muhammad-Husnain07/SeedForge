@@ -2,7 +2,7 @@ import { MongoClient, type Document } from 'mongodb';
 import type { GenerationBatch, WriteProgressEmitter } from '@seedforge/core';
 import type { RelationshipGraph, DatabaseSchema, WriteOptions, WriteResult, WriteProgressEvent } from '@seedforge/core';
 
-const DEFAULT_BATCH_SIZE = 1000;
+const DEFAULT_BATCH_SIZE = 5000;
 
 export interface MongoWriteConfig {
   connectionString: string;

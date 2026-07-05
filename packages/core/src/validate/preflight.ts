@@ -3,6 +3,7 @@ import type { GenerationPlan, DistributionSpec } from '../config/types.js';
 import type { GeneratorSpec } from '../semantic/types.js';
 import type { RelationshipGraph } from '../graph/graph.js';
 import type { PreFlightResult, ValidationEntry, PreFlightOptions } from './types.js';
+import { getGenerator } from '../plugin/registry.js';
 
 function entry(
   table: string,
@@ -76,8 +77,13 @@ function estimateDistinctValues(generator: GeneratorSpec): number | null {
     case 'lat-lng-pair':
       return Infinity;
 
-    default:
+    default: {
+      const pluginGen = getGenerator(kind);
+      if (pluginGen?.estimateDistinct) {
+        return pluginGen.estimateDistinct(params, 0);
+      }
       return null;
+    }
   }
 }
 

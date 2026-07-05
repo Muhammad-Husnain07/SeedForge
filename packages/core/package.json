@@ -10,7 +10,7 @@
     }
   },
   "scripts": {
-    "build": "tsup src/index.ts --dts --clean --format esm",
+    "build": "tsup src/index.ts src/generate/worker.ts --dts --clean --format esm --no-splitting",
     "dev": "tsup src/index.ts --dts --watch --format esm",
     "test": "vitest run --reporter verbose",
     "lint": "eslint src/",
@@ -19,9 +19,11 @@
   },
   "dependencies": {
     "@faker-js/faker": "^8.4.0",
+    "tar": "^7.5.19",
     "zod": "^3.23.0"
   },
   "devDependencies": {
+    "@types/tar": "^7.0.87",
     "fast-check": "^4.8.0",
     "tsup": "^8.1.0",
     "typescript": "^5.5.0"

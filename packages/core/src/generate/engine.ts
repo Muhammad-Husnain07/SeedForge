@@ -13,6 +13,7 @@ import { enforceUniqueRow, registerUnique } from './unique.js';
 import type { UniqueContext } from './unique.js';
 import { assignParents } from './parent.js';
 import type { ParentAssignmentResult, RowFkBinding } from './parent.js';
+import { callPluginHook } from '../plugin/loader.js';
 
 interface FieldEntry {
   name: string;
@@ -73,6 +74,19 @@ export async function* generate(
   const batchSize = options?.batchSize ?? 1000;
   const retryLimit = options?.uniqueRetryLimit ?? 50;
   const nullProb = options?.nullProbability ?? undefined;
+  const plugins = options?.plugins ?? [];
+
+  // Deterministic timestamp generation
+  const origDateNow = Date.now;
+  if (options?.refDate != null) {
+    Date.now = () => options.refDate!;
+  }
+
+  try {
+    // beforeGenerate hook
+    for (const { plugin } of plugins) {
+      if (plugin.beforeGenerate) await plugin.beforeGenerate(plan);
+    }
 
   const tableSchemaMap = new Map<string, TableSchema>();
   for (const t of schema.tables) tableSchemaMap.set(t.name, t);
@@ -92,7 +106,9 @@ export async function* generate(
   for (const tableName of graph.insertionOrder) {
     const tableSchema = tableSchemaMap.get(tableName);
     const tablePlan = plan.tables[tableName];
-    if (!tableSchema || !tablePlan) continue;
+    if (!tableSchema || !tablePlan) {
+      continue;
+    }
 
     const parentCascades = cascadeMap.get(tableName);
     const assignments = assignParents(
@@ -233,16 +249,37 @@ export async function* generate(
       buffer.push(finalRow);
 
       if (buffer.length >= batchSize) {
-        yield { table: tableName, rows: buffer, phase: 'insert' };
+        const batch = { table: tableName, rows: buffer, phase: 'insert' as const };
+        for (const { plugin } of plugins) {
+          if (plugin.beforeInsert) await plugin.beforeInsert(tableName, buffer);
+        }
+        yield batch;
+        for (const { plugin } of plugins) {
+          if (plugin.afterInsert) await plugin.afterInsert(tableName, buffer);
+        }
         buffer = [];
       }
     }
 
     if (buffer.length > 0) {
-      yield { table: tableName, rows: buffer, phase: 'insert' };
+      const batch = { table: tableName, rows: buffer, phase: 'insert' as const };
+      for (const { plugin } of plugins) {
+        if (plugin.beforeInsert) await plugin.beforeInsert(tableName, buffer);
+      }
+      yield batch;
+      for (const { plugin } of plugins) {
+        if (plugin.afterInsert) await plugin.afterInsert(tableName, buffer);
+      }
     }
 
     pkCache.set(tableName, generatedPKs);
+  }
+
+  // afterGenerate hook — now passes metadata, not the full dataset
+  let totalRows = 0;
+  for (const pks of pkCache.values()) totalRows += pks.length;
+  for (const { plugin } of plugins) {
+    if (plugin.afterGenerate) await plugin.afterGenerate({ tables: [...tableSchemaMap.keys()], totalRows });
   }
 
   for (const selfRefTable of selfRefTables) {
@@ -294,6 +331,11 @@ export async function* generate(
         phase: 'patch',
         patchInfo: { patchColumn: patchCol, pkColumn: pkCol! },
       };
+    }
+  }
+  } finally {
+    if (options?.refDate != null) {
+      Date.now = origDateNow;
     }
   }
 }
