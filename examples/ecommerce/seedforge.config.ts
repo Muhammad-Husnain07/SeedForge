@@ -8,9 +8,13 @@ export default defineConfig({
     database: 'ecommerce',
     user: 'seedforge',
   },
+  plugins: ['@seedforge/plugin-geo'],
   tables: {
     users: {
       count: 250,
+      fields: {
+        city: { kind: 'geo.city', params: { country: 'United States' } },
+      },
       personas: [
         {
           name: 'power_user',

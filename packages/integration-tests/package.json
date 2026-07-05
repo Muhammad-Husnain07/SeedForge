@@ -1,0 +1,27 @@
+{
+  "name": "@seedforge/integration-tests",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run --reporter verbose",
+    "test:pg": "vitest run --reporter verbose src/postgres.e2e.test.ts",
+    "test:mysql": "vitest run --reporter verbose src/mysql.e2e.test.ts",
+    "test:mongo": "vitest run --reporter verbose src/mongodb.e2e.test.ts"
+  },
+  "dependencies": {
+    "@seedforge/core": "workspace:*",
+    "@seedforge/adapter-postgres": "workspace:*",
+    "@seedforge/adapter-mysql": "workspace:*",
+    "@seedforge/adapter-mongodb": "workspace:*"
+  },
+  "devDependencies": {
+    "testcontainers": "^10.9.0",
+    "pg": "^8.12.0",
+    "mysql2": "^3.10.0",
+    "mongodb": "^6.7.0",
+    "@types/pg": "^8.11.0",
+    "vitest": "^1.6.0",
+    "typescript": "^5.5.0"
+  }
+}
