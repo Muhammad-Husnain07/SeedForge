@@ -20,58 +20,16 @@
 - [x] **7. Core generation engine** — Seeded PRNG row generation, 20+ generator kinds, FK resolution via PK cache, self-referential FK patch phase, unique enforcement with retry, null injection.
 - [x] **8. Database writers / loaders** — Bulk insert for Postgres (multi-row INSERT + COPY), MySQL (multi-row INSERT), MongoDB (insertMany). Fresh/truncate/append modes, transaction rollback on error, progress events.
 - [x] **9. Validation & constraint-checking layer** — Pre-flight validation (NOT NULL, enum/CHECK values, unique cardinality, FK ordering) + post-write verification (row counts, FK reference sampling, junction orphans). Structured CI-gateable results.
+- [x] **10. Lockfile & schema drift detection** — Schema fingerprint, drift warnings before generation. Lockfile bundle for CI reproducibility.
+- [x] **11. Export / import & sharing bundles** — Portable seed bundles for team sharing. Import a seed bundle to reproduce any dataset.
+- [x] **12. LLM-assisted semantic & business-rule suggestions** — Claude-powered column inference and business-rule proposals via `seedforge suggest` (seedforge suggest — LLM-assisted semantic analysis).
+- [x] **13. Full CLI + interactive init wizard** — `seedforge init`, `seedforge generate`, `seedforge introspect`, `seedforge validate`, `seedforge suggest`, `seedforge seed`, `seedforge studio`.
+- [x] **14. Plugin system** — Custom generators, transformers, and data sources. Hook system for pre/post generation events.
+- [x] **15. Integration test suite** — Testcontainers-based multi-DB integration tests. Full end-to-end generation → write → verify pipelines.
+- [x] **16. Performance hardening** — Large-dataset optimization, streaming, progress reporting. Benchmark suite. 1M order_items @ 7,989 rows/s with 264 MB RSS.
+- [x] **17. Local web studio dashboard** — Fastify backend + React/Vite frontend with ER diagram, config panel, live progress via SSE, one-click "Seed now".
 
 ## Planned
 
-- [ ] **10. Lockfile & schema drift detection** — Schema fingerprint, drift warnings before generation. Lockfile bundle for CI reproducibility.
-- [ ] **11. Export / import & sharing bundles** — Portable seed bundles for team sharing. Import a seed bundle to reproduce any dataset.
-- [ ] **12. LLM-assisted semantic & business-rule suggestions** — Claude-powered column inference and business-rule proposals via `seedforge suggest`.
-- [ ] **13. Full CLI + interactive init wizard** — `seedforge init`, `seedforge generate`, `seedforge introspect`, `seedforge validate`, `seedforge suggest`.
-- [ ] **14. Plugin system** — Custom generators, transformers, and data sources. Hook system for pre/post generation events.
-- [ ] **15. Integration test suite** — Testcontainers-based multi-DB integration tests. Full end-to-end generation → write → verify pipelines.
-- [ ] **16. Performance hardening** — Large-dataset optimization, streaming, progress reporting. Benchmark suite.
-- [ ] **17. Local web studio dashboard** — Optional GUI for config, preview, and monitoring. Real-time generation visualization.
 - [ ] **18. Packaging, docs, CI/CD, npm publish** — Full documentation site, GitHub Actions CI, npm package publishing.
-
-## Milestone Details
-
-### 10. Lockfile & Schema Drift Detection
-- Generate a lockfile after each successful generation (schema hash + config snapshot)
-- Before generation, compare live schema to lockfile; warn on drift
-- Track which columns have user overrides vs inferred matches
-- Lockfile format: JSON with schema hash, config hash, and per-column generator assignments
-
-### 11. Export / Import & Sharing Bundles
-- Export: bundle all generated rows + schema + config into a portable archive
-- Import: reproduce a dataset from a bundle without re-generation
-- Versioned bundles for CI/CD pipeline reproducibility
-
-### 12. LLM-Assisted Suggestions
-- `seedforge suggest` subcommand
-- Sends unresolved columns + schema context to Claude
-- Returns suggested generators and business rules
-- Interactive accept/reject flow
-
-### 13. Full CLI
-- `seedforge init` — scaffold a new config file with interactive prompts
-- `seedforge introspect` — run introspection and print schema summary
-- `seedforge validate` — run pre-flight validation standalone
-- `seedforge generate` — full generate + write pipeline
-- `seedforge suggest` — LLM-assisted column resolution
-
-### 14. Plugin System
-- Plugin registration API matching the introspector registry pattern
-- Custom generator plugins: new generator kinds with custom value production
-- Transformer plugins: post-generation row transforms
-- Data source plugins: external APIs, CSV files, etc.
-
-### 15. Integration Tests
-- Testcontainers-based: spin up real PG/MySQL/MongoDB containers per test suite
-- Full pipeline: introspect → analyze → plan → generate → write → verify
-- Stress tests with large datasets (100K+ rows)
-
-### 16. Performance
-- Benchmark suite for generation throughput (rows/sec)
-- Streaming optimization for very large datasets
-- Memory profiling and leak detection
-- Configurable batch sizes and parallelization
+- [ ] **19. Production hardening** — HTTPS, auth, multi-user workspaces, cloud-hosted studio.

@@ -6,7 +6,7 @@ SeedForge introspects your database schema, infers column semantics, applies bus
 
 ## Status
 
-Pre-alpha — under active development. Milestone IX (validation & constraint-checking) is complete.
+Pre-alpha — under active development. Milestone X (Studio Dashboard) is complete.
 
 ## Monorepo Structure
 
@@ -15,14 +15,18 @@ seedforge/
 ├── packages/
 │   ├── core/              — Schema IR, relationship graph, semantic analyzer,
 │   │                         distributions, config DSL, generation engine,
-│   │                         validation layer, lockfile management
+│   │                         validation layer, lockfile management, plugin system,
+│   │                         bundle export/import, parallel worker_threads
 │   ├── adapter-postgres/  — Postgres introspection + bulk writer (`pg` driver)
 │   ├── adapter-mysql/     — MySQL introspection + bulk writer (`mysql2`)
 │   ├── adapter-mongodb/   — MongoDB schema inference + bulk writer (`mongodb`)
-│   ├── cli/               — CLI orchestration (placeholder)
-│   └── studio/            — Local web dashboard (placeholder)
+│   ├── cli/               — CLI orchestration: seed, generate, validate, suggest
+│   │                         (LLM), introspect, diff, export, import, reset, doctor, studio
+│   └── studio/            — Local web dashboard: Fastify server + React/Vite frontend
+│                            ER diagram (React Flow), live config preview (SSE),
+│                            one-click seed with progress
 ├── fixtures/ecommerce/    — Test fixtures: schema.sql, docker-compose.yml, seed data
-├── docs/                  — Architecture, roadmap, setup guide, adapter docs
+├── docs/                  — Architecture, roadmap, setup guide, adapter docs, benchmarks
 └── tsconfig.base.json     — Shared TypeScript strict config
 ```
 
@@ -43,6 +47,9 @@ pnpm test
 
 # Lint
 pnpm lint
+
+# Launch the local web studio dashboard
+seedforge studio --config examples/ecommerce/seedforge.config.ts
 ```
 
 ## Key Features
@@ -82,6 +89,14 @@ pnpm lint
 - **FK resolution** — parent-row PK caching, self-referential FK patch phase
 - **Unique enforcement** — retry loop with configurable `retryLimit`
 - **Null injection** — per-column nullProbability based on logical type
+- **Parallel generation** — `generateParallel()` uses `worker_threads` to process independent dependency levels concurrently; byte-identical output to sequential mode
+- **Bounded backpressure** — `BoundedQueue` prevents runaway memory between generation and write stages
+- **Configurable batch sizes** — per-adapter defaults: Postgres 5000, MySQL 1000, MongoDB 5000; overridable via `--batch-size`
+
+### Streaming Pipeline
+- **Fully streaming** — generation yields batches via async generator; writers consume one batch at a time with no full-table accumulation
+- **Patch phase** — self-referential FK updates are applied after inserts in a dedicated stream phase
+- **Progress events** — `WriteProgressEmitter` streams per-table row counts during write
 
 ### Database Writers
 - **Postgres** — multi-row `INSERT` (small batches) / `COPY` (large batches), `fresh`/`truncate`/`append` modes, transaction rollback on error, progress events
@@ -104,6 +119,12 @@ pnpm lint
 - **Canonical schema hashing** — `computeSchemaHash()` produces deterministic SHA256 digests
 - **Lockfile comparison** — drift warnings before generation (planned)
 
+### Local Studio Dashboard
+- **Fastify backend** — serves static frontend SPA, provides REST + SSE APIs for schema, graph, config, plan, and seed execution
+- **React + Vite frontend** — ER diagram (React Flow), interactive config panel, one-click "Seed now", live progress via SSE
+- **Inline config editing** — in-memory config overrides applied before seed; persist edits back to `seedforge.config.ts`
+- **Deterministic parity** — studio's "Seed now" produces identical results to CLI `seedforge seed` for the same config + seed
+
 ## Project Scripts
 
 | Script | Description |
@@ -113,6 +134,16 @@ pnpm lint
 | `pnpm lint` | ESLint across all packages |
 | `pnpm clean` | Remove all `dist/` folders |
 | `pnpm dev` | Watch mode for all packages |
+| `pnpm studio:dev` | Studio dev mode (Vite dev server + Fastify backend) |
+
+## Benchmarks
+
+With a 1M `order_items` scale (1,886,991 total rows across 7 tables) on Windows 11 x64 / Node 22:
+- **Throughput**: ~7,989 rows/s (236.2 s total)
+- **Memory**: 264 MB RSS delta (well under 512 MB ceiling)
+- **Determinism**: sequential and parallel mode produce byte-identical output for the same seed
+
+See [docs/benchmarks.md](docs/benchmarks.md) for full numbers across 10K / 100K / 1M scales.
 
 ## Roadmap
 
@@ -128,3 +159,4 @@ See [docs/SETUP.md](docs/SETUP.md) for local development setup.
 - [Adapters](docs/ADAPTERS.md)
 - [Setup Guide](docs/SETUP.md)
 - [Roadmap](docs/ROADMAP.md)
+- [Benchmarks](docs/benchmarks.md)

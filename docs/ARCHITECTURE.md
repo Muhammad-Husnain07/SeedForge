@@ -57,7 +57,9 @@ packages/
   cli/                  — The `seedforge` command. Thin orchestration.
                           Deps: commander, all of the above.
 
-  studio/               — Local web dashboard (stretch goal, placeholder).
+  studio/               — Local web dashboard. Fastify backend + React/Vite frontend.
+                            REST APIs for schema, graph, config, plan, seed execution.
+                            SSE-based live progress. ER diagram via React Flow.
 ```
 
 ## Data Flow
@@ -84,10 +86,16 @@ Pre-flight Validation (NOT NULL, enum values, unique cardinality, FK order)
    ▼  (core — generate/engine, seeded PRNG)
 Row Stream (flat row objects with resolved FK references)
    │
+   │  [parallel path: BoundedQueue per dependency level → worker_threads
+   │   generates independent levels concurrently, byte-identical output]
+   │
    ▼  (core — validate/postwrite, opt-in)
 Post-write Verification (row counts, FK sample check, junction orphans)
    │
    ▼  (adapter — bulk writer, transaction)
+   │  [batch size per adapter: PG 5000, MySQL 1000, MongoDB 5000]
+   │  [WriteProgressEmitter streams per-table row counts]
+   ▼
 Database
 ```
 
@@ -115,10 +123,13 @@ Pure PRNG functions built on mulberry32. Each distribution is a function `(prng,
 
 ### 7. Generation Engine (`generate/`)
 - `generate()` — async generator that yields `GenerationBatch` objects
+- `generateParallel()` — parallel version using `worker_threads`; processes independent dependency levels concurrently
+- Determinism guarantee: sequential and parallel produce byte-identical output for the same seed
 - Field-level PRNG sub-streams for deterministic per-cell values
 - FK resolution via PK cache with self-referential patch phase
 - Unique enforcement with configurable retry limit
 - Null injection based on column nullability and logical type
+- Bounded backpressure via `BoundedQueue` prevents runaway memory
 
 ### 8. Validation Layer (`validate/`)
 Two-pass validation system:
@@ -142,7 +153,9 @@ Each adapter implements `BatchWriter` with three write modes:
 - `truncate` — clear table before writing
 - `append` — add to existing data
 
-Supports batch-oriented progress events and AbortSignal cancellation.
+Supports batch-oriented progress events (`WriteProgressEmitter`), AbortSignal cancellation, and configurable batch sizes.
+
+Default batch sizes: Postgres 5,000 (switches to COPY above 500), MySQL 1,000, MongoDB 5,000.
 
 ## Design Principles
 
@@ -161,7 +174,7 @@ Every generation run produces a lockfile. Before generating, SeedForge compares 
 ### 5. Validate early, verify often
 Pre-flight catches config mistakes before any DB connection. Post-write verifies data integrity after generation. Both produce structured, CI-gateable results.
 
-## Current State (Milestone IX Complete)
+## Current State (Milestone X Complete)
 
 - ✅ Monorepo tooling — pnpm workspaces, Turborepo, TypeScript strict
 - ✅ Core domain types — `LogicalType`, `DatabaseSchema`, `TableSchema`, `ColumnSchema`, `ForeignKey`
@@ -175,16 +188,28 @@ Pre-flight catches config mistakes before any DB connection. Post-write verifies
 - ✅ Statistical distributions — 8 PRNG functions, persona assignment, 20+ tests
 - ✅ Config DSL — Zod validation, type compatibility, plan merging, 12 tests
 - ✅ Generation engine — 20+ generators, FK resolution, unique enforcement, 15 tests
+- ✅ Parallel generation — `generateParallel()` using worker_threads, BoundedQueue backpressure, byte-identical seq/par output
 - ✅ Database writers — Postgres (COPY/INSERT), MySQL, MongoDB, 30+ integration tests
 - ✅ Validation layer — pre-flight (4 checks) + post-write (3 checks), 9 tests
-- 🔄 **Next: Lockfile & schema drift detection**
+- ✅ Lockfile & schema drift detection — canonical schema hashing, lockfile generation and comparison
+- ✅ Export/import bundles — portable seed bundle export/import for team sharing
+- ✅ LLM suggest — `seedforge suggest` subcommand for Claude-powered column inference
+- ✅ Full CLI — seed, generate, validate, suggest, introspect, diff, export, import, reset, doctor, studio
+- ✅ Plugin system — custom generators, transformers, data sources via registration API
+- ✅ Integration test suite — Testcontainers-based full end-to-end pipeline testing
+- ✅ Performance hardening — streaming pipeline, BoundedQueue, benchmark suite, 1M order_items @ 7,989 rows/s
+- ✅ Studio dashboard — Fastify backend + React/Vite frontend, ER diagram (React Flow), live progress (SSE), "Seed now" button
+- 🔄 **Next: Packaging, docs, CI/CD, npm publish**
 
 ## Test Suite
 
 | Package | Test count | Environment |
 |---|---|---|
-| `@seedforge/core` | ~95 | Standalone (unit + property) |
+| `@seedforge/core` | ~130+ | Standalone (unit + property) |
 | `@seedforge/adapter-postgres` | ~18 | Docker Postgres 16 |
 | `@seedforge/adapter-mysql` | ~17 | Docker MySQL 8 |
 | `@seedforge/adapter-mongodb` | ~16 | Docker MongoDB 7 |
-| **Total** | **~157** | `docker compose up -d` |
+| `@seedforge/cli` | ~5 | Standalone |
+| **Total** | **~190+** | `docker compose up -d` |
+
+> **Note**: All 258 tests pass across 28 test files as of Milestone X.
