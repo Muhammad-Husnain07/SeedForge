@@ -11,7 +11,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      pull-requests: write
       id-token: write
     steps:
       - uses: actions/checkout@v4
@@ -23,11 +22,34 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Create Release PR or Publish
-        uses: changesets/action@v1
-        with:
-          version: pnpm changeset version
-          publish: pnpm changeset publish
+
+      - name: Generate changeset for changed packages
+        run: node scripts/auto-changeset.mjs
+
+      - name: Check for changesets
+        id: check
+        run: |
+          count=$(find .changeset -name '*.json' ! -name 'config.json' 2>/dev/null | wc -l)
+          echo "count=$count" >> $GITHUB_OUTPUT
+          echo "Found $count changeset(s)"
+
+      - name: Version packages
+        if: steps.check.outputs.count != '0'
+        run: pnpm changeset version
+
+      - name: Commit version bump
+        if: steps.check.outputs.count != '0'
+        run: |
+          git add .
+          git diff --staged --quiet || git commit -m "Version bump [skip ci]"
+          git push
+
+      - name: Build packages
+        if: steps.check.outputs.count != '0'
+        run: pnpm build
+
+      - name: Publish to npm
+        if: steps.check.outputs.count != '0'
+        run: pnpm changeset publish
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
