@@ -1,11 +1,11 @@
 import type { FastifyInstance } from 'fastify';
 import { generate } from '@seedforge/core';
-import { getContext, rebuildPlan } from '../context.js';
+import { getContext } from '../context.js';
 import { startSeedRun, generatePreview } from '../seed-runner.js';
 import { eventBus } from '../events.js';
 import { randomUUID } from 'node:crypto';
 
-export async function seedRoutes(server: FastifyInstance): Promise<void> {
+export function seedRoutes(server: FastifyInstance): void {
   // Trigger preview regeneration
   server.post('/preview', async (req) => {
     const ctx = getContext();
@@ -19,7 +19,7 @@ export async function seedRoutes(server: FastifyInstance): Promise<void> {
   });
 
   // Start a seed run
-  server.post('/seed', async (req) => {
+  server.post('/seed', (req) => {
     const ctx = getContext();
     const body = req.body as { mode?: string; batchSize?: number } | undefined;
     const mode = body?.mode ?? 'fresh';
@@ -36,7 +36,7 @@ export async function seedRoutes(server: FastifyInstance): Promise<void> {
     const batches = generate(ctx.graph, ctx.plan, ctx.schema, ctx.seed, { batchSize });
 
     // Fire and forget (progress goes via SSE)
-    startSeedRun(
+    void startSeedRun(
       runId,
       ctx.connectConfig.dialect,
       writeConfig,

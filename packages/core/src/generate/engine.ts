@@ -7,13 +7,10 @@ import { deriveStream } from '../distributions/prng.js';
 import { assignPersona } from '../distributions/persona.js';
 import type { Persona } from '../distributions/persona.js';
 import type { GenerateOptions, GenerationBatch } from './types.js';
-import { GenerationError } from './types.js';
 import { generateFieldValue } from './fields.js';
 import { enforceUniqueRow, registerUnique } from './unique.js';
 import type { UniqueContext } from './unique.js';
 import { assignParents } from './parent.js';
-import type { ParentAssignmentResult, RowFkBinding } from './parent.js';
-import { callPluginHook } from '../plugin/loader.js';
 
 interface FieldEntry {
   name: string;

@@ -109,12 +109,14 @@ export async function* generateParallel(
     const workerPKs = new Map<Worker, unknown[]>();
 
     for (const worker of workers) {
-      worker.on('message', async (msg: WorkerOutput) => {
+      worker.on('message', (msg: WorkerOutput) => {
         if (msg.type === 'batch' && msg.table && msg.rows) {
-          await queue.push({
+          queue.push({
             table: msg.table,
             rows: msg.rows,
             phase: 'insert',
+          }).catch((err) => {
+            console.error('Queue push error:', err);
           });
         } else if (msg.type === 'done' && msg.pks) {
           workerPKs.set(worker, msg.pks);

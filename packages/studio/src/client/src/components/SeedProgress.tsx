@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useSeed } from '../hooks/useSeed.js';
 
 interface SeedProgressProps {
@@ -6,7 +6,7 @@ interface SeedProgressProps {
   seed: ReturnType<typeof useSeed>;
 }
 
-export function SeedProgress({ runId, seed }: SeedProgressProps) {
+export function SeedProgress({ runId: _runId, seed }: SeedProgressProps) {
   const progress = seed.progress;
   const done = seed.done;
   const error = seed.error;
@@ -30,10 +30,10 @@ export function SeedProgress({ runId, seed }: SeedProgressProps) {
           {done.result && (
             <>
               <div className="result-value" style={{ marginTop: 4 }}>
-                {Object.values(done.result.rowsWritten as Record<string, number>).reduce<number>((a, b) => a + b, 0)} total rows
+                {Object.values(done.result.rowsWritten).reduce<number>((a, b) => a + b, 0)} total rows
               </div>
               <div className="result-value">
-                {(done.result.elapsedMs as number / 1000).toFixed(1)}s
+                {(done.result.elapsedMs / 1000).toFixed(1)}s
               </div>
             </>
           )}

@@ -1,4 +1,4 @@
-import type { DatabaseSchema, TableSchema } from '../types/index.js';
+import type { DatabaseSchema } from '../types/index.js';
 import type { GenerationPlan, DistributionSpec } from '../config/types.js';
 import type { GeneratorSpec } from '../semantic/types.js';
 import type { RelationshipGraph } from '../graph/graph.js';
@@ -166,7 +166,6 @@ export function validatePreFlight(
     const tableSchema = schemaMap.get(tableName);
     if (!tableSchema) continue;
 
-    const colMap = new Map(tableSchema.columns.map((c) => [c.name, c]));
     const resolvedMap = new Map(tablePlan.fields.map((f) => [f.column, f]));
 
     // ── Check 1: NOT NULL ────────────────────────────────────────────────

@@ -22,7 +22,8 @@ function stripSchemaHash(
   schema: Omit<DatabaseSchema, 'schemaHash'>,
 ): Omit<DatabaseSchema, 'schemaHash'> {
   if ('schemaHash' in schema) {
-    const { schemaHash: _, ...rest } = schema as DatabaseSchema;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { schemaHash, ...rest } = schema as DatabaseSchema;
     return rest;
   }
   return schema;
@@ -73,7 +74,7 @@ export async function checkDrift(
     };
   }
 
-  const oldSchema = await reconstructSchemaFromLockfile(lockfile);
+  const oldSchema = reconstructSchemaFromLockfile(lockfile);
   const newSchema = { ...schemaNoHash, schemaHash: liveHash };
   const diff = diffSchemas(oldSchema, newSchema);
 
@@ -152,9 +153,9 @@ export async function acknowledgeDrift(
   return lockfile;
 }
 
-async function reconstructSchemaFromLockfile(
+function reconstructSchemaFromLockfile(
   lockfile: SeedForgeLockfile,
-): Promise<DatabaseSchema> {
+): DatabaseSchema {
   return {
     ...lockfile.schema,
     schemaHash: lockfile.schemaHash,

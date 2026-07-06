@@ -35,18 +35,15 @@ interface ErDiagramProps {
 const LEVEL_VERTICAL_GAP = 120;
 const NODE_HORIZONTAL_GAP = 60;
 const TABLE_NODE_WIDTH = 160;
-const TABLE_NODE_HEIGHT = 50;
-const TABLE_NODE_COLUMN_HEIGHT = 22;
 
 function TableNodeComponent({ data, selected }: NodeProps) {
   const columns = data.columns as { name: string; isPrimaryKey: boolean }[] | undefined;
-  const height = TABLE_NODE_HEIGHT + (columns?.length ?? 0) * TABLE_NODE_COLUMN_HEIGHT;
   return (
     <div
       className="table-node"
       tabIndex={0}
       role="button"
-      aria-label={`Table ${data.label}`}
+      aria-label={`Table ${String(data.label)}`}
       style={{
         background: 'var(--node-bg)',
         border: `1px solid ${selected ? 'var(--node-selected-border)' : 'var(--node-border)'}`,
@@ -106,7 +103,7 @@ export function ErDiagram({ graph, selectedTable, onTableClick }: ErDiagramProps
 
     const yOffset = 20;
     graph.levels.forEach((level, levelIdx) => {
-      let y = yOffset + levelIdx * 140;
+      const y = yOffset + levelIdx * 140;
       const totalWidth = level.length * (TABLE_NODE_WIDTH + NODE_HORIZONTAL_GAP) - NODE_HORIZONTAL_GAP;
       const startX = Math.max(0, (800 - totalWidth) / 2);
 

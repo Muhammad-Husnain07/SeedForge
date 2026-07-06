@@ -1,9 +1,9 @@
 import { z } from 'zod';
-import type { DatabaseSchema, ColumnSchema } from '../types/index.js';
-import type { SeedForgeConfig, ConnectionConfig, FieldConfig, DerivedField, SeedContext } from './types.js';
+import type { DatabaseSchema } from '../types/index.js';
+import type { SeedForgeConfig, FieldConfig, DerivedField } from './types.js';
 import { getGenerator } from '../plugin/registry.js';
 
-const isDerivedField = (v: unknown): v is { fn: Function } =>
+const isDerivedField = (v: unknown): v is { fn: (...args: unknown[]) => unknown } =>
   typeof v === 'object' && v !== null && 'fn' in v && typeof (v as Record<string, unknown>).fn === 'function';
 
 const DistributionSpecSchema = z.object({

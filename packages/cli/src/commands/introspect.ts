@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import { introspect } from '@seedforge/core';
 import { loadConfig, inferConnectConfig } from '../utils/config.js';
 import { registerAdapters } from '../utils/adapters.js';
-import { isJsonMode, printJson, printError, printSuccess, renderTable, printHeading } from '../utils/format.js';
+import { isJsonMode, printJson, printError, printSuccess, printHeading } from '../utils/format.js';
 
 export async function introspectCommand(opts: { config?: string; out?: string }): Promise<void> {
   try {

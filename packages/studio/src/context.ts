@@ -87,7 +87,7 @@ async function registerAdapters(dialect: string): Promise<void> {
 export async function initializeContext(configPath?: string): Promise<StudioContext> {
   const config = await loadConfig(configPath);
   const connectConfig = inferConnectConfig(config);
-  await registerAdapters(connectConfig.dialect as string);
+  await registerAdapters(connectConfig.dialect);
   const schema = await introspect(connectConfig);
   const matches = analyzeSchema(schema);
   const graph = buildGraph(schema);
@@ -98,9 +98,9 @@ export async function initializeContext(configPath?: string): Promise<StudioCont
   return ctx;
 }
 
-export async function rebuildPlan(
+export function rebuildPlan(
   configOverride?: Partial<SeedForgeConfig>,
-): Promise<StudioContext> {
+): StudioContext {
   if (!ctx) throw new Error('Context not initialized');
   if (configOverride) {
     if (configOverride.tables) {

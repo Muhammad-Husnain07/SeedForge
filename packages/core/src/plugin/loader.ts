@@ -1,7 +1,5 @@
-import type { SeedForgePlugin, GeneratorRegistry } from './types.js';
+import type { SeedForgePlugin } from './types.js';
 import { generatorRegistry } from './registry.js';
-import type { DatabaseSchema } from '../types/index.js';
-import type { GenerationPlan } from '../config/types.js';
 import path from 'node:path';
 
 export interface LoadedPlugin {
@@ -47,7 +45,7 @@ async function resolvePlugin(spec: string | { name: string; options?: Record<str
     const resolvedPath = pkgName.startsWith('.') || pkgName.startsWith('/') || pkgName.startsWith('..')
       ? path.resolve(process.cwd(), pkgName)
       : pkgName;
-    mod = await import(resolvedPath);
+    mod = await import(resolvedPath) as Record<string, unknown>;
     source = pkgName;
   } catch (err) {
     throw new Error(`Failed to load plugin '${pkgName}': ${(err as Error).message}`);
@@ -122,7 +120,7 @@ export function callPluginHook(
   for (const { plugin } of plugins) {
     const fn = plugin[hook] as ((...a: unknown[]) => void | Promise<void>) | undefined;
     if (typeof fn === 'function') {
-      fn(...args);
+      void fn(...args);
     }
   }
 }

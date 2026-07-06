@@ -86,7 +86,14 @@ export function renderRowPreview(
     style: { head: [], border: [] },
   });
   for (let i = 0; i < rows.length; i++) {
-    t.push([String(i + 1), ...cols.map((c) => String(rows[i]![c] ?? 'NULL'))]);
+    t.push([String(i + 1), ...cols.map((c) => {
+      const val = rows[i]![c];
+      if (val === null || val === undefined) return 'NULL';
+      if (typeof val === 'object') return JSON.stringify(val);
+      if (typeof val === 'string') return val;
+      // eslint-disable-next-line @typescript-eslint/no-base-to-string
+      return String(val);
+    })]);
   }
   return pc.underline(tableName) + '\n' + t.toString();
 }

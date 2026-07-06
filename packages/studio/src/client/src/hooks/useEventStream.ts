@@ -17,15 +17,15 @@ export function useEventStream() {
 
       evtSource.onopen = () => setConnected(true);
 
-      evtSource.addEventListener('config-changed', (e) => {
+      evtSource.addEventListener('config-changed', (e: MessageEvent) => {
         try {
-          setLastEvent({ type: 'config-changed', data: JSON.parse(e.data) as Record<string, unknown> });
+          setLastEvent({ type: 'config-changed', data: JSON.parse(e.data as string) as Record<string, unknown> });
         } catch { /* ignore */ }
       });
 
-      evtSource.addEventListener('preview', (e) => {
+      evtSource.addEventListener('preview', (e: MessageEvent) => {
         try {
-          setLastEvent({ type: 'preview', data: JSON.parse(e.data) as Record<string, unknown> });
+          setLastEvent({ type: 'preview', data: JSON.parse(e.data as string) as Record<string, unknown> });
         } catch { /* ignore */ }
       });
 

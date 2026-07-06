@@ -30,7 +30,6 @@ export function checkImportCompatibility(
   }
 
   const liveTableNames = new Set(liveTables.map((t) => t.name));
-  const liveTableMap = new Map(liveTables.map((t) => [t.name, t]));
 
   for (const tableName of Object.keys(manifest.perTableRowCounts)) {
     if (!liveTableNames.has(tableName)) {

@@ -11,7 +11,7 @@ import {
   WriteProgressEmitter,
   loadPlugins,
 } from '@seedforge/core';
-import type { WriteMode, WriteResult } from '@seedforge/core';
+import type { WriteMode } from '@seedforge/core';
 import ora from 'ora';
 import { performance } from 'node:perf_hooks';
 import { loadConfig, inferConnectConfig } from '../utils/config.js';
@@ -137,14 +137,18 @@ export async function seedCommand(opts: {
           spinners[e.table] = ora({ text: `${e.table}: waiting...`, color: 'cyan' }).start();
         }
         if (e.phase === 'truncate') {
-          spinners[e.table].text = `${e.table}: truncating...`;
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          spinners[e.table]!.text = `${e.table}: truncating...`;
         } else if (e.phase === 'verify') {
-          spinners[e.table].text = `${e.table}: verifying...`;
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          spinners[e.table]!.text = `${e.table}: verifying...`;
         } else {
-          spinners[e.table].text = `${e.table}: ${e.rowsWritten}/${e.rowsTotal} rows`;
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          spinners[e.table]!.text = `${e.table}: ${e.rowsWritten}/${e.rowsTotal} rows`;
         }
         if (e.rowsWritten >= e.rowsTotal && e.rowsTotal > 0) {
-          spinners[e.table].succeed(`${e.table}: ${e.rowsWritten} rows written`);
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+          spinners[e.table]!.succeed(`${e.table}: ${e.rowsWritten} rows written`);
         }
       });
 
@@ -197,7 +201,9 @@ export async function seedCommand(opts: {
 
       // Stop any remaining spinners
       for (const [table, spinner] of Object.entries(spinners)) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         if (spinner.isSpinning) {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
           spinner.succeed(`${table}: ${result.rowsWritten[table] ?? 0} rows`);
         }
       }

@@ -23,7 +23,7 @@ export async function readBundle(
     path.join(tmpDir, 'manifest.json'),
     'utf-8',
   );
-  const manifest: BundleManifest = JSON.parse(manifestRaw);
+  const manifest = JSON.parse(manifestRaw) as BundleManifest;
 
   return { tmpDir, manifest };
 }

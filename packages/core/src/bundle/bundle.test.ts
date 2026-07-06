@@ -13,6 +13,7 @@ import type { BundleManifest } from './types.js';
 let tmpDir: string;
 let counter = 0;
 
+// eslint-disable-next-line @typescript-eslint/require-await
 async function tempBundle(ext = 'sfbundle'): Promise<string> {
   counter++;
   const dir = tmpDir;
@@ -159,6 +160,7 @@ describe('importBundle', () => {
 
     const result = await importBundle({
       file: bundlePath,
+      // eslint-disable-next-line @typescript-eslint/require-await
       introspect: async () => ({
         schemaHash: sampleLockfile.schemaHash,
         tables: [
@@ -166,6 +168,7 @@ describe('importBundle', () => {
           { name: 'orders', columns: [{ name: 'id' }, { name: 'user_id' }, { name: 'total' }] },
         ],
       }),
+      // eslint-disable-next-line @typescript-eslint/require-await
       writeRows: async (table, rows) => {
         captured[table] = rows;
         return rows.length;
@@ -195,6 +198,7 @@ describe('importBundle', () => {
 
     const result = await importBundle({
       file: bundlePath,
+      // eslint-disable-next-line @typescript-eslint/require-await
       introspect: async () => ({
         schemaHash: sampleLockfile.schemaHash,
         tables: [
@@ -202,6 +206,7 @@ describe('importBundle', () => {
           { name: 'orders', columns: [{ name: 'id' }, { name: 'user_id' }, { name: 'total' }] },
         ],
       }),
+      // eslint-disable-next-line @typescript-eslint/require-await
       writeRows: async (table, rows) => {
         captured[table] = rows;
         return rows.length;
@@ -250,6 +255,7 @@ describe('importBundle', () => {
     // Live DB is missing the 'orders' table
     const result = await importBundle({
       file: bundlePath,
+      // eslint-disable-next-line @typescript-eslint/require-await
       introspect: async () => ({
         schemaHash: 'different-hash-1234567890',
         tables: [
@@ -257,6 +263,7 @@ describe('importBundle', () => {
           // orders table is GONE
         ],
       }),
+      // eslint-disable-next-line @typescript-eslint/require-await
       writeRows: async () => 0,
     });
 
@@ -279,6 +286,7 @@ describe('importBundle', () => {
 
     const result = await importBundle({
       file: bundlePath,
+      // eslint-disable-next-line @typescript-eslint/require-await
       introspect: async () => ({
         schemaHash: 'different-hash-but-all-tables-present',
         tables: [
@@ -286,6 +294,7 @@ describe('importBundle', () => {
           { name: 'orders', columns: [{ name: 'id' }, { name: 'user_id' }, { name: 'total' }] },
         ],
       }),
+      // eslint-disable-next-line @typescript-eslint/require-await
       writeRows: async () => 0,
     });
 
@@ -311,6 +320,7 @@ describe('importBundle', () => {
     const result = await importBundle({
       file: bundlePath,
       force: true,
+      // eslint-disable-next-line @typescript-eslint/require-await
       introspect: async () => ({
         schemaHash: 'different-hash-but-all-tables-present',
         tables: [
@@ -318,6 +328,7 @@ describe('importBundle', () => {
           { name: 'orders', columns: [{ name: 'id' }, { name: 'user_id' }, { name: 'total' }] },
         ],
       }),
+      // eslint-disable-next-line @typescript-eslint/require-await
       writeRows: async (table, rows) => {
         captured[table] = rows;
         return rows.length;

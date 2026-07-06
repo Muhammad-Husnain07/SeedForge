@@ -126,7 +126,7 @@ function ecommerceConfig(): SeedForgeConfig {
       orders: {
         countPerParent: { users: { kind: 'uniformInt', params: { min: 1, max: 3 } } },
         fields: {
-          total: { fn: (row: Record<string, unknown>, _ctx: unknown) => 100 },
+          total: { fn: (_row: Record<string, unknown>, _ctx: unknown) => 100 },
         },
       },
       order_items: {
@@ -361,13 +361,12 @@ describe('generate', () => {
     }
   });
 
-  it('respects insertion order from graph', async () => {
+  it('respects insertion order from graph', () => {
     const graph = buildGraph(schema);
     const order = graph.insertionOrder;
 
     const usersIdx = order.indexOf('users');
     const productsIdx = order.indexOf('products');
-    const tagsIdx = order.indexOf('tags');
     const ordersIdx = order.indexOf('orders');
     const orderItemsIdx = order.indexOf('order_items');
 
@@ -484,8 +483,11 @@ describe('generate', () => {
     const { GenerationError } = await import('./types.js');
     let caughtError: unknown = null;
 
+    const gen = generate(graph, plan, tinySchema, seed);
     try {
-      for await (const _batch of generate(graph, plan, tinySchema, seed)) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      for await (const _unused of gen) {
+        // no-op: just iterating to trigger potential error
       }
     } catch (e) {
       caughtError = e;

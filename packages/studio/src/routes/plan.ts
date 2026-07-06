@@ -1,8 +1,8 @@
 import type { FastifyInstance } from 'fastify';
 import { getContext } from '../context.js';
 
-export async function planRoutes(server: FastifyInstance): Promise<void> {
-  server.get('/plan', async () => {
+export function planRoutes(server: FastifyInstance): void {
+  server.get('/plan', () => {
     const ctx = getContext();
     const plan = ctx.plan;
     return {
@@ -19,7 +19,7 @@ export async function planRoutes(server: FastifyInstance): Promise<void> {
               column: f.column,
               source: f.source,
               confidence: f.confidence,
-              semanticType: f.semanticType,
+              semanticType: f.semanticType as string | undefined,
               generator: f.generator,
             })),
             personas: t.personas.map((p) => ({

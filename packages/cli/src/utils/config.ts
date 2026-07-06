@@ -23,8 +23,8 @@ export async function loadConfig(configPath?: string): Promise<SeedForgeConfig> 
     moduleCache: false,
   });
 
-  const mod = await jiti.import(resolved);
-  const config = mod.default ?? mod;
+  const mod: unknown = await jiti.import(resolved);
+  const config = (mod as Record<string, unknown>).default ?? mod;
   return config as SeedForgeConfig;
 }
 

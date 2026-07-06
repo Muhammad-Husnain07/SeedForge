@@ -32,14 +32,15 @@ function fakerMethod(method: string, prng: PRNG, params: Record<string, unknown>
   const fn = resolveDeep(faker as unknown as Record<string, unknown>, method);
   if (typeof fn === 'function') {
     const args = (params.args as unknown[]) ?? [];
-    return fn(...args);
+    return (fn as (...args: unknown[]) => unknown)(...args);
   }
   return `[unresolved-faker:${method}]`;
 }
 
 function slugify(val: unknown): string {
   if (val == null) return '';
-  return String(val)
+  const s = typeof val === 'string' ? val : JSON.stringify(val);
+  return s
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
@@ -215,7 +216,7 @@ export function generateFieldValue(
     }
 
     default: {
-      if ((kind as string).startsWith('faker.')) {
+      if (kind.startsWith('faker.')) {
         return fakerMethod(kind, prng, params);
       }
       const pluginGen = getGenerator(kind);

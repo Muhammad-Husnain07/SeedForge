@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { UnresolvedColumn, SuggestOptions, SuggestResponse, ProviderConfig } from './types.js';
+import type { SuggestOptions, SuggestResponse, ProviderConfig } from './types.js';
 import { SuggestError } from './types.js';
 import { buildSystemPrompt, buildUserMessages } from './prompt.js';
 import { createProvider, getResponseSchema } from './provider.js';

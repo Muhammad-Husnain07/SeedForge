@@ -9,14 +9,17 @@ function canonicalStringify(obj: unknown): string {
     return `[${obj.map(canonicalStringify).join(',')}]`;
   }
   if (typeof obj === 'object') {
-    const keys = Object.keys(obj as Record<string, unknown>).sort();
+    const keys = Object.keys(obj).sort();
     const pairs = keys.map(
       (k) =>
         `${JSON.stringify(k)}:${canonicalStringify((obj as Record<string, unknown>)[k])}`,
     );
     return `{${pairs.join(',')}}`;
   }
-  return String(obj);
+  if (typeof obj === 'string' || typeof obj === 'number' || typeof obj === 'boolean' || typeof obj === 'bigint' || typeof obj === 'symbol') {
+    return String(obj);
+  }
+  return JSON.stringify(obj);
 }
 
 function stripFunctions(obj: unknown): unknown {

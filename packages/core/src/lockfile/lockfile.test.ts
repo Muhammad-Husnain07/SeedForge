@@ -221,7 +221,7 @@ describe('computeConfigHash', () => {
     const cfg: SeedForgeConfig = {
       ...baseConfig(),
       tables: {
-        users: { count: 10, fields: { greeting: { fn: () => 'hello' } } as Record<string, unknown> },
+        users: { count: 10, fields: { greeting: { fn: () => 'hello' } } },
         orders: { count: 50 },
       },
     };

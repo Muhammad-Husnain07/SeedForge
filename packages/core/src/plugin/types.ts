@@ -1,5 +1,5 @@
 import type { DatabaseSchema } from '../types/index.js';
-import type { GenerationPlan, SeedContext } from '../config/types.js';
+import type { GenerationPlan } from '../config/types.js';
 import type { PRNG } from '../distributions/prng.js';
 
 export interface FieldContext {

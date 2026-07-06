@@ -138,7 +138,7 @@ function validConfig(): SeedForgeConfig {
         },
         fields: {
           total: {
-            fn: (row: Record<string, unknown>, ctx: Record<string, unknown>) => 100,
+            fn: (_row: Record<string, unknown>, _ctx: Record<string, unknown>) => 100,
           },
         },
       },
@@ -258,7 +258,7 @@ describe('buildGenerationPlan', () => {
       'order_items', 'orders', 'product_tags', 'products', 'reviews', 'tags', 'users',
     ]);
 
-    for (const [name, t] of Object.entries(plan.tables)) {
+    for (const [, t] of Object.entries(plan.tables)) {
       expect(t.fields.length).toBeGreaterThan(0);
       for (const f of t.fields) {
         expect(f.source === 'config' || f.source === 'inferred');

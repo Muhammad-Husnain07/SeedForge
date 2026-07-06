@@ -4,7 +4,6 @@ import fsSync from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import zlib from 'node:zlib';
-import { Writable } from 'node:stream';
 import type { BundleManifest, ExportOptions } from './types.js';
 import type { GenerationBatch } from '../generate/types.js';
 
@@ -37,14 +36,14 @@ async function writeGzipNdjsonStream(
       return false;
     };
 
-    (async () => {
+    void (async () => {
       try {
         if (Array.isArray(rows)) {
           for (const row of rows) {
             writeRow(row);
           }
         } else {
-          for await (const batch of rows as AsyncIterable<GenerationBatch>) {
+          for await (const batch of rows) {
             if (batch.table === tableName && batch.phase === 'insert') {
               for (const row of batch.rows) {
                 writeRow(row);
@@ -57,6 +56,8 @@ async function writeGzipNdjsonStream(
         gzip.destroy(err as Error);
       }
     })();
+
+
 
     outStream.on('finish', () => resolve(count));
     outStream.on('error', reject);

@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { eventBus, type SSEEvent } from '../events.js';
 
-export async function eventsRoutes(server: FastifyInstance): Promise<void> {
+export function eventsRoutes(server: FastifyInstance): void {
   server.get('/events', async (req, reply) => {
     reply.raw.writeHead(200, {
       'Content-Type': 'text/event-stream',

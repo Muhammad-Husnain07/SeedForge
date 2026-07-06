@@ -1,5 +1,5 @@
 import type { ColumnSchema, TableSchema, DatabaseSchema } from '../types/index.js';
-import type { FieldSemanticMatch, GeneratorSpec } from './types.js';
+import type { GeneratorSpec } from './types.js';
 
 export interface SemanticRule {
   name: string;
@@ -45,10 +45,6 @@ function matchesTargetTable(candidate: string, tables: TableSchema[]): string | 
     if (variants.includes(t.name)) return t.name;
   }
   return null;
-}
-
-function tableByName(name: string, tables: TableSchema[]): TableSchema | undefined {
-  return tables.find((t) => t.name === name);
 }
 
 const TIMESTAMP_TYPES = new Set(['timestamp', 'date']);

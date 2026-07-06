@@ -14,11 +14,6 @@ interface SeedDoneResult {
   };
 }
 
-interface SSEEventData {
-  type: string;
-  data: unknown;
-}
-
 export function useSeed() {
   const [progress, setProgress] = useState<Record<string, ProgressEntry> | null>(null);
   const [done, setDone] = useState<SeedDoneResult | null>(null);
@@ -37,9 +32,9 @@ export function useSeed() {
     function connect() {
       evtSource = new EventSource('/api/events');
 
-      evtSource.addEventListener('seed-progress', (e) => {
+      evtSource.addEventListener('seed-progress', (e: MessageEvent) => {
         try {
-          const data = JSON.parse(e.data) as { runId: string; table: string; rowsWritten: number; rowsTotal: number; phase: string };
+          const data = JSON.parse(e.data as string) as { runId: string; table: string; rowsWritten: number; rowsTotal: number; phase: string };
           setProgress((prev) => ({
             ...prev,
             [data.table]: { rowsWritten: data.rowsWritten, rowsTotal: data.rowsTotal, phase: data.phase },
@@ -47,16 +42,16 @@ export function useSeed() {
         } catch { /* ignore */ }
       });
 
-      evtSource.addEventListener('seed-done', (e) => {
+      evtSource.addEventListener('seed-done', (e: MessageEvent) => {
         try {
-          const data = JSON.parse(e.data) as { runId: string; result: { rowsWritten: Record<string, number>; elapsedMs: number } };
+          const data = JSON.parse(e.data as string) as { runId: string; result: { rowsWritten: Record<string, number>; elapsedMs: number } };
           setDone(data);
         } catch { /* ignore */ }
       });
 
-      evtSource.addEventListener('seed-error', (e) => {
+      evtSource.addEventListener('seed-error', (e: MessageEvent) => {
         try {
-          const data = JSON.parse(e.data) as { runId: string; error: string };
+          const data = JSON.parse(e.data as string) as { runId: string; error: string };
           setError(data.error);
         } catch { /* ignore */ }
       });

@@ -1,4 +1,3 @@
-import type { PRNG } from '../distributions/prng.js';
 import { deriveStream } from '../distributions/prng.js';
 import type { GeneratorSpec } from '../semantic/types.js';
 import type { TableSchema } from '../types/index.js';

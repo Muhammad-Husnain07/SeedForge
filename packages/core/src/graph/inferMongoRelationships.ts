@@ -37,13 +37,14 @@ function findMatchingCollection(
 
 function valueToString(val: unknown): string | null {
   if (val === null || val === undefined) return null;
+  if (typeof val === 'string') return val;
+  if (typeof val === 'number' || typeof val === 'boolean' || typeof val === 'bigint' || typeof val === 'symbol') return String(val);
   if (typeof val === 'object') {
     const obj = val as Record<string, unknown>;
-    if ('$oid' in obj) return String(obj['$oid']);
-    if ('$date' in obj) return String(obj['$date']);
-    if ('toString' in obj) return String(obj.toString());
+    if ('$oid' in obj) return JSON.stringify(obj['$oid']);
+    if ('$date' in obj) return JSON.stringify(obj['$date']);
   }
-  return String(val);
+  return JSON.stringify(val);
 }
 
 function collectDistinctValues(

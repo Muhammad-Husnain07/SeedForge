@@ -1,3 +1,4 @@
+import type { FastifyInstance } from 'fastify';
 import { buildServer } from './server.js';
 import { initializeContext } from './context.js';
 
@@ -14,7 +15,7 @@ export async function startStudio(options: StudioOptions = {}): Promise<void> {
   await initializeContext(configPath);
   console.error('[studio] Context initialized (schema, graph, plan ready)');
 
-  const server = await buildServer({ configPath });
+  const server = (await buildServer({ configPath })) as FastifyInstance;
 
   await server.listen({ port, host: '127.0.0.1' });
   console.error(`\n  seedforge studio running at http://127.0.0.1:${port}\n`);

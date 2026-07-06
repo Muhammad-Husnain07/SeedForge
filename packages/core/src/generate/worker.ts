@@ -45,7 +45,7 @@ if (input.refDate != null) {
   Date.now = () => input.refDate!;
 }
 
-async function run(): Promise<void> {
+function run(): void {
   const { tableName, tableSchema, tablePlan, seed, parentPKs, batchSize } = input;
 
   const pkCache = new Map<string, unknown[]>();
@@ -227,6 +227,10 @@ function sortFieldsByDependency(fields: ResolvedField[]): { name: string; genera
   return sorted;
 }
 
-run().catch((err) => {
-  port!.postMessage({ type: 'error', message: String(err), stack: String(err?.stack ?? '') });
-});
+try {
+  run();
+} catch (err) {
+  const errMsg = err instanceof Error ? err.message : String(err);
+  const errStack = err instanceof Error ? (err.stack ?? '') : '';
+  port.postMessage({ type: 'error', message: errMsg, stack: errStack });
+}

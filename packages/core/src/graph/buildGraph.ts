@@ -188,7 +188,6 @@ export function buildGraph(
   options: BuildGraphOptions = {},
 ): RelationshipGraph {
   const tableNames = schema.tables.map((t) => t.name);
-  const tableMap = new Map(schema.tables.map((t) => [t.name, t]));
 
   let rawEdges = collectRawEdges(schema.tables);
 

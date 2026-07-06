@@ -3,7 +3,7 @@ import path from 'node:path';
 import { readLockfile, resolveLockfilePath, validateConfig } from '@seedforge/core';
 import { loadConfig, inferConnectConfig } from '../utils/config.js';
 import { registerAdapters } from '../utils/adapters.js';
-import { isJsonMode, printJson, printError, renderDoctorReport, printHeading } from '../utils/format.js';
+import { isJsonMode, printJson, renderDoctorReport, printHeading } from '../utils/format.js';
 
 export async function doctorCommand(opts: { config?: string }): Promise<void> {
   const checks: { name: string; status: 'pass' | 'fail' | 'warn'; message: string }[] = [];

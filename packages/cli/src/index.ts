@@ -1,24 +1,17 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
 import fs from 'node:fs/promises';
-import path from 'node:path';
 import {
   exportBundle,
   importBundle,
   readBundle,
-  readConfigJson,
-  readLockfileJson,
   cleanupBundle,
   readLockfile,
-  writeLockfile,
   checkDrift,
-  SchemaDriftError,
   introspect,
-  computeSchemaHash,
-  registerIntrospector,
   analyzeSchema,
 } from '@seedforge/core';
-import type { BundleManifest, SeedForgeLockfile, FieldSemanticMatch } from '@seedforge/core';
+import type { BundleManifest, FieldSemanticMatch } from '@seedforge/core';
 import { suggest as runSuggest } from './suggest/index.js';
 import { initCommand } from './commands/init.js';
 import { introspectCommand } from './commands/introspect.js';
@@ -48,7 +41,7 @@ program
   .option('--force', 'overwrite existing config without confirmation')
   .action(async (opts) => {
     try {
-      await initCommand(opts);
+      await initCommand(opts as { config?: string; force?: boolean });
     } catch (err) {
       printError((err as Error).message);
       process.exit(1);
@@ -62,8 +55,8 @@ program
   .description('Print or save the full DatabaseSchema from the live database')
   .option('-c, --config <path>', 'path to config file', 'seedforge.config.ts')
   .option('--out <file>', 'write schema JSON to file')
-  .action(async (opts: Record<string, unknown>) => {
-    await introspectCommand(opts as { config?: string; out?: string });
+  .action(async (opts: { config?: string; out?: string }) => {
+    await introspectCommand(opts);
   });
 
 // ─── validate ──────────────────────────────────────────────────────────
@@ -73,7 +66,7 @@ program
   .description('Run pre-flight validation checks against the config and database')
   .option('-c, --config <path>', 'path to config file', 'seedforge.config.ts')
   .action(async (opts) => {
-    await validateCommand(opts);
+    await validateCommand(opts as { config?: string });
   });
 
 // ─── suggest ──────────────────────────────────────────────────────────
@@ -98,7 +91,8 @@ program
   .option('--dry-run', 'print what would be sent to the LLM without calling it')
   .action(async (opts) => {
     try {
-      const config = await loadConfig(opts.config);
+      const o = opts as { config?: string; output?: string; includeSamples?: boolean; provider?: string; model?: string; tables?: string[]; dryRun?: boolean };
+      const config = await loadConfig(o.config);
       const connectConfig = inferConnectConfig(config);
 
       await registerAdapters(connectConfig.dialect);
@@ -149,14 +143,14 @@ program
         };
       });
 
-      if (opts.dryRun) {
+      if (o.dryRun) {
         if (isJsonMode()) {
           printJson({
             dryRun: true,
             unresolved: unresolvedCols,
-            provider: opts.provider ?? 'anthropic (default)',
-            model: opts.model ?? '(provider default)',
-            includeSamples: !!opts.includeSamples,
+            provider: o.provider ?? 'anthropic (default)',
+            model: o.model ?? '(provider default)',
+            includeSamples: !!o.includeSamples,
           });
         } else {
           console.log('\n── DRY RUN — Would send to LLM ──\n');
@@ -169,15 +163,15 @@ program
             console.log(`    siblings: [${col.siblingColumns.join(', ')}]`);
             console.log('');
           }
-          console.log('Provider:', opts.provider ?? 'anthropic (default)');
-          console.log('Model:', opts.model ?? '(provider default)');
-          console.log('Include samples:', !!opts.includeSamples);
+          console.log('Provider:', o.provider ?? 'anthropic (default)');
+          console.log('Model:', o.model ?? '(provider default)');
+          console.log('Include samples:', !!o.includeSamples);
         }
         process.exit(0);
       }
 
       let samples: Record<string, string[]> | undefined;
-      if (opts.includeSamples) {
+      if (o.includeSamples) {
         if (!isJsonMode()) {
           printWarning(
             '--include-samples may include real user PII from the database. ' +
@@ -188,18 +182,18 @@ program
         printWarning('Sample collection requires database adapter support. Returning schema-only context.');
       }
 
-      const providerName = opts.provider ?? process.env.SEEDFORGE_LLM_PROVIDER ?? 'anthropic';
-      const modelName = opts.model ?? process.env.SEEDFORGE_LLM_MODEL;
+      const providerName = o.provider ?? process.env.SEEDFORGE_LLM_PROVIDER ?? 'anthropic';
+      const modelName = o.model ?? process.env.SEEDFORGE_LLM_MODEL;
 
       const providerConfig: { provider: string; model?: string } = { provider: providerName };
       if (modelName) providerConfig.model = modelName;
 
       const result = await runSuggest({
         unresolved: unresolvedCols,
-        includeSamples: !!opts.includeSamples,
+        includeSamples: !!o.includeSamples,
         samples,
         provider: providerConfig as Parameters<typeof runSuggest>[0]['provider'],
-        tablesOptedIn: opts.tables,
+        tablesOptedIn: o.tables,
       });
 
       if (result.suggestions.length === 0) {
@@ -255,9 +249,9 @@ program
       suggestedLines.push('});');
       suggestedLines.push('');
 
-      if (opts.output) {
-        await fs.writeFile(opts.output, suggestedLines.join('\n'), 'utf-8');
-        printSuccess(`Suggestions written to ${opts.output}`);
+      if (o.output) {
+        await fs.writeFile(o.output, suggestedLines.join('\n'), 'utf-8');
+        printSuccess(`Suggestions written to ${o.output}`);
         printInfo('Review the file and merge relevant parts into your config manually.');
       } else {
         console.log('\n── Suggested Config Additions ──\n');
@@ -286,8 +280,9 @@ program
   .option('--seed <value>', 'seed value for deterministic generation')
   .option('--preview <n>', 'print n sample rows per table without writing to database')
   .action(async (opts) => {
-    if (opts.preview) {
-      await generateCommand(opts);
+    const genOpts = opts as { preview?: string; config?: string; seed?: string };
+    if (genOpts.preview) {
+      await generateCommand(genOpts);
     } else {
       if (isJsonMode()) {
         printJson({ error: true, message: 'Use --preview <n> for dry-run, or `seedforge seed` for actual writing.' });
@@ -313,7 +308,7 @@ program
   .option('--verify', 'run post-write verification checks')
   .option('--benchmark', 'print per-table timing and throughput report')
   .action(async (opts) => {
-    await seedCommand(opts);
+    await seedCommand(opts as { config?: string; seed?: string; mode?: string; tables?: string; batchSize?: number; parallel?: boolean; count?: number; verify?: boolean; benchmark?: boolean });
   });
 
 // ─── reset ─────────────────────────────────────────────────────────────
@@ -334,7 +329,8 @@ program
   .option('-l, --lockfile <path>', 'path to lockfile')
   .action(async (opts) => {
     try {
-      const lockfilePath = opts.lockfile;
+      const diffOpts = opts as { config?: string; lockfile?: string };
+      const lockfilePath = diffOpts.lockfile;
       const lockfile = await readLockfile(lockfilePath);
 
       if (!lockfile) {
@@ -346,7 +342,7 @@ program
         process.exit(1);
       }
 
-      const config = await loadConfig(opts.config);
+      const config = await loadConfig(diffOpts.config);
       const connectConfig = inferConnectConfig(config);
 
       // Fall back to lockfile schema dialect if config has no connection
@@ -396,7 +392,8 @@ program
   .option('-l, --lockfile <path>', 'path to lockfile')
   .action(async (opts) => {
     try {
-      const lockfilePath = opts.lockfile;
+      const exportOpts = opts as { out?: string; snapshot?: boolean; config?: string; lockfile?: string };
+      const lockfilePath = exportOpts.lockfile;
       const lockfile = await readLockfile(lockfilePath);
 
       if (!lockfile) {
@@ -408,21 +405,21 @@ program
         process.exit(1);
       }
 
-      const config = await loadConfig(opts.config);
+      const config = await loadConfig(exportOpts.config);
       const connectConfig = inferConnectConfig(config);
 
       let tableData: Record<string, Record<string, unknown>[]> | undefined;
-      let perTableRowCounts = lockfile.perTableRowCounts;
+      const perTableRowCounts = lockfile.perTableRowCounts;
 
-      if (opts.snapshot) {
+      if (exportOpts.snapshot) {
         await registerAdapters(connectConfig.dialect);
         // Snapshot requires adapter-level read support — throw for now
         throw new Error('Snapshot export requires database read support. Use export without --snapshot for a replay-only bundle.');
       }
 
       const bundlePath = await exportBundle({
-        out: opts.out,
-        snapshot: !!opts.snapshot,
+        out: exportOpts.out ?? '.sfbundle',
+        snapshot: !!exportOpts.snapshot,
         config: { connection: connectConfig, tables: config.tables ?? {} },
         lockfile: {
           schemaHash: lockfile.schemaHash,
@@ -437,10 +434,10 @@ program
       });
 
       if (isJsonMode()) {
-        printJson({ bundlePath, snapshot: !!opts.snapshot, perTableRowCounts });
+        printJson({ bundlePath, snapshot: !!exportOpts.snapshot, perTableRowCounts });
       } else {
         printSuccess(`Exported to ${bundlePath}`);
-        if (opts.snapshot) {
+        if (exportOpts.snapshot) {
           printInfo(`Snapshot includes data for ${Object.keys(perTableRowCounts).length} tables`);
         } else {
           printInfo('No snapshot — import will replay generation from seed');
@@ -464,7 +461,8 @@ program
     let manifest: BundleManifest | null = null;
 
     try {
-      const { tmpDir, manifest: m } = await readBundle(file);
+      const importOpts = opts as { force?: boolean; config?: string };
+      const { tmpDir, manifest: m } = await readBundle(file as string);
       manifest = m;
 
       if (!isJsonMode()) {
@@ -482,14 +480,14 @@ program
         console.log('');
       }
 
-      const config = await loadConfig(opts.config);
+      const config = await loadConfig(importOpts.config);
       const connectConfig = inferConnectConfig(config);
 
       await registerAdapters(connectConfig.dialect);
 
       const result = await importBundle({
-        file,
-        force: !!opts.force,
+        file: file as string,
+        force: !!importOpts.force,
         introspect: async () => {
           const liveSchema = await introspect(connectConfig as Parameters<typeof introspect>[0]);
           return {
@@ -500,6 +498,7 @@ program
             })),
           };
         },
+        // eslint-disable-next-line @typescript-eslint/require-await
         writeRows: async (table, rows) => {
           if (!isJsonMode()) console.log(`  Writing ${rows.length} rows to ${table}…`);
           return rows.length;
@@ -543,11 +542,11 @@ program
   .option('-p, --port <n>', 'port to bind', parseInt, 3456)
   .action(async (opts) => {
     try {
+      const studioOpts = opts as { config?: string; port?: number };
       // Dynamic import avoids node_modules dependency at CLI install time
       const startStudio: (opts: { configPath?: string; port?: number }) => Promise<void> =
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         (await import('@seedforge/studio')).startStudio;
-      await startStudio({ configPath: opts.config, port: opts.port });
+      await startStudio({ configPath: studioOpts.config, port: studioOpts.port });
     } catch (err) {
       printError((err as Error).message);
       process.exit(1);
@@ -561,7 +560,7 @@ program
   .description('Sanity-check the environment: config, database connection, and lockfile')
   .option('-c, --config <path>', 'path to config file', 'seedforge.config.ts')
   .action(async (opts) => {
-    await doctorCommand(opts);
+    await doctorCommand(opts as { config?: string });
   });
 
 // ─── Main ─────────────────────────────────────────────────────────────

@@ -1,8 +1,8 @@
 import type { FastifyInstance } from 'fastify';
 import { getContext } from '../context.js';
 
-export async function graphRoutes(server: FastifyInstance): Promise<void> {
-  server.get('/graph', async () => {
+export function graphRoutes(server: FastifyInstance): void {
+  server.get('/graph', () => {
     const ctx = getContext();
     return {
       nodes: ctx.graph.nodes,

@@ -3,18 +3,19 @@ import { suggest } from './suggest.js';
 import { buildSystemPrompt, buildUserMessages } from './prompt.js';
 import { createProvider, getResponseSchema } from './provider.js';
 import { SuggestError } from './types.js';
-import type { UnresolvedColumn, LLMProvider } from './index.js';
+import type { UnresolvedColumn } from './index.js';
+import type { LLMProvider } from './provider.js';
 
 // ─── Mock provider that returns a canned response ───────────────────
 
 function mockProvider(response: unknown): LLMProvider {
   return {
-    async complete(
+    complete(
       _systemPrompt: string,
       _userMessages: string[],
       _responseJsonSchema: Record<string, unknown>,
     ): Promise<unknown> {
-      return response;
+      return Promise.resolve(response);
     },
   };
 }
@@ -139,8 +140,8 @@ describe('suggest', () => {
   // ─── Malformed response (not JSON) ──────────────────────────────
   it('catches and reports non-JSON LLM output', async () => {
     const provider: LLMProvider = {
-      async complete() {
-        throw new Error('Connection refused');
+      complete(): Promise<unknown> {
+        return Promise.reject(new Error('Connection refused'));
       },
     };
     await expect(
@@ -228,7 +229,7 @@ describe('suggest', () => {
   });
 
   // ─── Samples included in prompt context ─────────────────────────
-  it('includes samples in user messages when opted in', async () => {
+  it('includes samples in user messages when opted in', () => {
     const msgs = buildUserMessages(
       [makeColumn()],
       true,
@@ -245,13 +246,13 @@ describe('suggest', () => {
   it('does NOT include samples when not opted in', async () => {
     const captured: string[] = [];
     const capturingProvider: LLMProvider = {
-      async complete(
+      complete(
         _sysPrompt: string,
         userMessages: string[],
         _schema: Record<string, unknown>,
-      ) {
+      ): Promise<unknown> {
         captured.push(...userMessages);
-        return { suggestions: [] };
+        return Promise.resolve({ suggestions: [] });
       },
     };
     await suggest(

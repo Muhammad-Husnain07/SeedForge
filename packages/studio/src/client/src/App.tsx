@@ -130,7 +130,7 @@ export function App() {
           <ConfigPanel
             config={config}
             plan={null}
-            onConfigChange={updateConfig}
+            onConfigChange={(cfg) => { void updateConfig(cfg); }}
           />
         )}
         {activeTab === 'preview' && (
@@ -141,7 +141,7 @@ export function App() {
         )}
         {activeTab === 'seed' && (
           <>
-            <SeedButton onSeed={handleSeedNow} disabled={seedRunId !== null && seed.progress !== null} />
+            <SeedButton onSeed={() => { void handleSeedNow(); }} disabled={seedRunId !== null && seed.progress !== null} />
             {seedRunId && <SeedProgress runId={seedRunId} seed={seed} />}
           </>
         )}

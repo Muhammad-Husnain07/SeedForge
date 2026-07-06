@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { buildGraph } from '../graph/buildGraph.js';
 import { analyzeSchema } from '../semantic/analyzer.js';
 import { buildGenerationPlan } from '../config/merge.js';

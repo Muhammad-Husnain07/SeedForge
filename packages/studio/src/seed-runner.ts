@@ -36,14 +36,14 @@ export async function startSeedRun(
   runs.set(id, run);
 
   try {
-    const mod = await importWriteModule(dialect);
+    const mod: WriteModule = await importWriteModule(dialect);
     const progressEmitter = new WriteProgressEmitter();
 
     progressEmitter.on('progress', (event: WriteProgressEvent) => {
       eventBus.emit('seed-progress', { runId: id, ...event });
     });
 
-    const result = await mod.write(writeConfig, batches, graph, schema, {
+    const result: WriteResult = await mod.write(writeConfig, batches, graph, schema, {
       mode: mode as 'fresh' | 'truncate' | 'append',
       batchSize,
       progressEmitter,
@@ -59,7 +59,17 @@ export async function startSeedRun(
   }
 }
 
-async function importWriteModule(dialect: string): Promise<{ write: Function }> {
+interface WriteModule {
+  write: (
+    writeConfig: Record<string, unknown>,
+    batches: AsyncIterable<GenerationBatch>,
+    graph: RelationshipGraph,
+    schema: DatabaseSchema,
+    options: { mode: 'fresh' | 'truncate' | 'append'; batchSize?: number; progressEmitter: WriteProgressEmitter },
+  ) => Promise<WriteResult>;
+}
+
+async function importWriteModule(dialect: string): Promise<WriteModule> {
   switch (dialect) {
     case 'postgres': return import('@seedforge/adapter-postgres');
     case 'mysql': return import('@seedforge/adapter-mysql');

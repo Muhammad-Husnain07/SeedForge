@@ -17,7 +17,7 @@ export interface ServerOptions {
   configPath?: string;
 }
 
-export async function buildServer(opts: ServerOptions = {}): ReturnType<typeof Fastify> {
+export async function buildServer(_opts: ServerOptions = {}): ReturnType<typeof Fastify> {
   const server = Fastify({ logger: false });
 
   await server.register(cors, { origin: true });
@@ -51,7 +51,7 @@ export async function buildServer(opts: ServerOptions = {}): ReturnType<typeof F
   await server.register(seedRoutes, { prefix: '/api' });
 
   // Health check
-  server.get('/api/health', async () => ({ status: 'ok' }));
+  server.get('/api/health', () => ({ status: 'ok' }));
 
   return server;
 }

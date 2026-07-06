@@ -52,7 +52,7 @@ describe('callPluginHook', () => {
     const p1: SeedForgePlugin = { name: 'p1', beforeGenerate: fn1 };
     const p2: SeedForgePlugin = { name: 'p2', beforeGenerate: fn2 };
 
-    const plan = {} as any;
+    const plan = {} as Record<string, unknown>;
     callPluginHook([{ plugin: p1, source: 'p1' }, { plugin: p2, source: 'p2' }], 'beforeGenerate', plan);
 
     expect(fn1).toHaveBeenCalledWith(plan);

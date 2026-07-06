@@ -103,7 +103,7 @@ export function diffSchemas(
         const newEv = (newC.enumValues ?? []).join(', ');
         entries.push(
           entry(
-            'constraint-changed' as SchemaDiffEntry['type'],
+            'constraint-changed',
             tableName,
             colName,
             `${colName} enum values: [${oldEv}] → [${newEv}]`,

@@ -111,7 +111,7 @@ export function buildGenerationPlan(
     const overrides: Record<string, unknown>[] = tableConfig.overrides ?? [];
 
     plan.tables[tableName] = {
-      count: count as number | DistributionSpec,
+      count,
       fields,
       countPerParent,
       personas,

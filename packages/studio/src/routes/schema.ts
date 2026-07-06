@@ -1,9 +1,8 @@
 import type { FastifyInstance } from 'fastify';
-import { getContext, rebuildPlan } from '../context.js';
-import { eventBus } from '../events.js';
+import { getContext } from '../context.js';
 
-export async function schemaRoutes(server: FastifyInstance): Promise<void> {
-  server.get('/schema', async () => {
+export function schemaRoutes(server: FastifyInstance): void {
+  server.get('/schema', () => {
     const ctx = getContext();
     const { schemaHash, dialect, tables } = ctx.schema;
     return {

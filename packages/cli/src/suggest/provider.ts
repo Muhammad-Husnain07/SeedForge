@@ -114,13 +114,13 @@ class AnthropicProvider implements LLMProvider {
         {
           name: 'suggest',
           description: 'Suggest generator configurations for unresolved columns',
-          input_schema: responseJsonSchema as Record<string, unknown>,
+          input_schema: responseJsonSchema,
         },
       ],
       tool_choice: { type: 'tool', name: 'suggest' },
     });
 
-    const block = msg.content.find((c: any) => c.type === 'tool_use');
+    const block = msg.content.find((c: { type: string; input?: unknown }) => c.type === 'tool_use');
     if (!block || !block.input) {
       throw new Error('Anthropic did not return a tool_use block');
     }
@@ -156,7 +156,7 @@ class OpenAIProvider implements LLMProvider {
         json_schema: {
           name: 'suggest',
           strict: true,
-          schema: responseJsonSchema as Record<string, unknown>,
+          schema: responseJsonSchema,
         },
       },
     });
@@ -262,7 +262,7 @@ export function createProvider(config: ProviderConfig): LLMProvider {
     case 'ollama':
       return new OpenAICompatibleProvider(config);
     default:
-      throw new Error(`Unknown provider: ${config.provider}`);
+      throw new Error(`Unknown provider: ${String(config.provider)}`);
   }
 }
 

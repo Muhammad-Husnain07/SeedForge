@@ -31,7 +31,7 @@ export function PreviewPane({ previewData, tables }: PreviewPaneProps) {
 
   // Request initial preview on mount
   useEffect(() => {
-    refreshPreview();
+    void refreshPreview();
   }, [refreshPreview]);
 
   const rows = selectedTable ? previewData[selectedTable] : null;
@@ -52,7 +52,7 @@ export function PreviewPane({ previewData, tables }: PreviewPaneProps) {
           Live Preview
         </div>
         <button
-          onClick={refreshPreview}
+          onClick={() => { void refreshPreview(); }}
           disabled={loading}
           style={{
             background: 'var(--bg-elevated)',
@@ -111,8 +111,8 @@ export function PreviewPane({ previewData, tables }: PreviewPaneProps) {
               {rows.map((row, i) => (
                 <tr key={i}>
                   {allColumns.map((col) => (
-                    <td key={col} title={String(row[col] ?? '')}>
-                      {String(row[col] ?? '∅')}
+                    <td key={col} title={row[col] == null ? '' : JSON.stringify(row[col])}>
+                      {row[col] == null ? '∅' : JSON.stringify(row[col])}
                     </td>
                   ))}
                 </tr>

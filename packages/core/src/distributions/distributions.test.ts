@@ -14,17 +14,9 @@ import {
   recencyWeighted,
   assignPersona,
 } from './index.js';
-import type { PRNG } from './prng.js';
 import type { PersonaSet } from './persona.js';
 
 const N = 50000;
-const TOLERANCE = 0.02;
-
-function collect(n: number, fn: (i: number) => number): number[] {
-  const out: number[] = [];
-  for (let i = 0; i < n; i++) out.push(fn(i));
-  return out;
-}
 
 function mean(arr: number[]): number {
   return arr.reduce((s, v) => s + v, 0) / arr.length;
@@ -371,13 +363,13 @@ describe('zipf', () => {
 
   it('rank 1 appears more often than rank 2', () => {
     const prng = deriveStream(42, 'zipf', 'rank');
-    const counts = new Array(10).fill(0);
+    const counts = Array.from<number>({ length: 10 }, () => 0);
     for (let i = 0; i < N; i++) {
       const val = zipf(prng, 10, 1);
-      counts[val - 1]!++;
+      counts[val - 1]++;
     }
-    expect(counts[0]!).toBeGreaterThan(counts[1]!);
-    expect(counts[1]!).toBeGreaterThan(counts[5]!);
+    expect(counts[0]).toBeGreaterThan(counts[1]);
+    expect(counts[1]).toBeGreaterThan(counts[5]);
   });
 });
 
