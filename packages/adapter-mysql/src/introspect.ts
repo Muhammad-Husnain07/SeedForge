@@ -18,7 +18,7 @@ async function queryTableNames(conn: mysql.Connection): Promise<string[]> {
      WHERE table_schema = DATABASE() AND table_type = 'BASE TABLE'
      ORDER BY TABLE_NAME`,
   );
-  return rows.map((r: any) => r.TABLE_NAME);
+  return rows.map((r) => String((r as Record<string, unknown>).TABLE_NAME));
 }
 
 async function queryColumns(
@@ -45,16 +45,19 @@ async function queryColumns(
      ORDER BY ORDINAL_POSITION`,
     [tableName],
   );
-  return rows.map((r: any) => ({
-    column_name: r.COLUMN_NAME,
-    data_type: r.DATA_TYPE,
-    column_type: r.COLUMN_TYPE,
-    character_maximum_length: r.CHARACTER_MAXIMUM_LENGTH ?? null,
-    numeric_precision: r.NUMERIC_PRECISION ?? null,
-    numeric_scale: r.NUMERIC_SCALE ?? null,
-    is_nullable: r.IS_NULLABLE,
-    column_default: r.COLUMN_DEFAULT ?? null,
-  }));
+  return rows.map((r) => {
+    const row = r as Record<string, unknown>;
+    return {
+      column_name: String(row.COLUMN_NAME),
+      data_type: String(row.DATA_TYPE),
+      column_type: String(row.COLUMN_TYPE),
+      character_maximum_length: (row.CHARACTER_MAXIMUM_LENGTH as number | null) ?? null,
+      numeric_precision: (row.NUMERIC_PRECISION as number | null) ?? null,
+      numeric_scale: (row.NUMERIC_SCALE as number | null) ?? null,
+      is_nullable: String(row.IS_NULLABLE),
+      column_default: row.COLUMN_DEFAULT !== null ? `${row.COLUMN_DEFAULT as string}` : null,
+    };
+  });
 }
 
 async function queryPrimaryKey(
@@ -75,7 +78,7 @@ async function queryPrimaryKey(
      ORDER BY kcu.ORDINAL_POSITION`,
     [tableName, tableName],
   );
-  return rows.map((r: any) => r.COLUMN_NAME);
+  return rows.map((r) => String((r as Record<string, unknown>).COLUMN_NAME));
 }
 
 async function queryForeignKeys(
@@ -102,17 +105,19 @@ async function queryForeignKeys(
 
   const groups = new Map<string, ForeignKey>();
   for (const row of rows) {
-    const existing = groups.get(row.CONSTRAINT_NAME);
+    const r = row as Record<string, unknown>;
+    const name = String(r.CONSTRAINT_NAME);
+    const existing = groups.get(name);
     if (existing) {
-      existing.columns.push(row.COLUMN_NAME);
-      existing.referencedColumns.push(row.REFERENCED_COLUMN_NAME);
+      existing.columns.push(String(r.COLUMN_NAME));
+      existing.referencedColumns.push(String(r.REFERENCED_COLUMN_NAME));
     } else {
-      groups.set(row.CONSTRAINT_NAME, {
-        columns: [row.COLUMN_NAME],
-        referencedTable: row.REFERENCED_TABLE_NAME,
-        referencedColumns: [row.REFERENCED_COLUMN_NAME],
-        onDelete: row.DELETE_RULE || undefined,
-        onUpdate: row.UPDATE_RULE || undefined,
+      groups.set(name, {
+        columns: [String(r.COLUMN_NAME)],
+        referencedTable: String(r.REFERENCED_TABLE_NAME),
+        referencedColumns: [String(r.REFERENCED_COLUMN_NAME)],
+        onDelete: r.DELETE_RULE ? `${r.DELETE_RULE as string}` : undefined,
+        onUpdate: r.UPDATE_RULE ? `${r.UPDATE_RULE as string}` : undefined,
       });
     }
   }
@@ -140,9 +145,11 @@ async function queryUniqueConstraints(
 
   const groups = new Map<string, string[]>();
   for (const row of rows) {
-    const arr = groups.get(row.CONSTRAINT_NAME) ?? [];
-    arr.push(row.COLUMN_NAME);
-    groups.set(row.CONSTRAINT_NAME, arr);
+    const r = row as Record<string, unknown>;
+    const name = String(r.CONSTRAINT_NAME);
+    const arr = groups.get(name) ?? [];
+    arr.push(String(r.COLUMN_NAME));
+    groups.set(name, arr);
   }
 
   return Array.from(groups.values());
@@ -163,10 +170,13 @@ async function queryCheckConstraints(
        AND tc.CONSTRAINT_TYPE = 'CHECK'`,
     [tableName],
   );
-  return rows.map((r: any) => ({
-    name: r.CONSTRAINT_NAME,
-    expression: r.CHECK_CLAUSE,
-  }));
+  return rows.map((r) => {
+    const row = r as Record<string, unknown>;
+    return {
+      name: String(row.CONSTRAINT_NAME),
+      expression: String(row.CHECK_CLAUSE),
+    };
+  });
 }
 
 export async function introspect(

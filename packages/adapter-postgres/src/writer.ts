@@ -9,9 +9,12 @@ const COPY_THRESHOLD = 500;
 
 function formatCopyValue(val: unknown): string {
   if (val === null || val === undefined) return '\\N';
-  const str = String(val);
-  if (str === '\\N') return '\\\\N';
-  return str.replace(/\\/g, '\\\\').replace(/\t/g, '\\t').replace(/\n/g, '\\n');
+  if (typeof val === 'string') {
+    if (val === '\\N') return '\\\\N';
+    return val.replace(/\\/g, '\\\\').replace(/\t/g, '\\t').replace(/\n/g, '\\n');
+  }
+  if (typeof val === 'number' || typeof val === 'boolean') return String(val);
+  return JSON.stringify(val);
 }
 
 function quoteId(name: string): string {
@@ -37,7 +40,7 @@ function emitProgress(event: WriteProgressEvent, options?: WriteOptions): void {
 
 async function checkFresh(client: pg.ClientBase, tables: DatabaseSchema['tables'], options?: WriteOptions): Promise<void> {
   for (const table of tables) {
-    const res = await client.query(`SELECT COUNT(*) AS cnt FROM ${quoteId(table.name)}`);
+    const res = await client.query<{ cnt: string }>(`SELECT COUNT(*) AS cnt FROM ${quoteId(table.name)}`);
     const count = parseInt(res.rows[0]?.cnt ?? '0', 10);
     emitProgress({ table: table.name, phase: 'verify', rowsWritten: count, rowsTotal: 0 }, options);
     if (count > 0) {
@@ -130,7 +133,7 @@ async function copyInsertPgCopyStreams(
 async function applyPatchBatches(
   client: pg.ClientBase,
   patches: GenerationBatch[],
-  options?: WriteOptions,
+  _options?: WriteOptions,
 ): Promise<void> {
   for (const patch of patches) {
     if (!patch.patchInfo) continue;

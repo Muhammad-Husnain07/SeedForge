@@ -67,7 +67,16 @@ async function queryColumns(
     column_default: string | null;
   }[]
 > {
-  const result = await pool.query(
+  const result = await pool.query<{
+    column_name: string;
+    data_type: string;
+    udt_name: string;
+    character_maximum_length: number | null;
+    numeric_precision: number | null;
+    numeric_scale: number | null;
+    is_nullable: string;
+    column_default: string | null;
+  }>(
     `SELECT column_name, data_type, udt_name,
             character_maximum_length, numeric_precision, numeric_scale,
             is_nullable, column_default

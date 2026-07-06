@@ -3,7 +3,7 @@ import pg from 'pg';
 import { write } from './writer.js';
 import { introspect } from './introspect.js';
 import { buildGraph, analyzeSchema, buildGenerationPlan, generate, WriteProgressEmitter } from '@seedforge/core';
-import type { GenerationBatch, SeedForgeConfig } from '@seedforge/core';
+import type { GenerationBatch, SeedForgeConfig, WriteProgressEvent } from '@seedforge/core';
 import type { RelationshipGraph, DatabaseSchema } from '@seedforge/core';
 
 const CONNECTION_STRING = 'postgres://seedforge:seedforge@localhost:5432/ecommerce';
@@ -81,7 +81,7 @@ const itPg = (name: string, fn: () => Promise<void>) => {
 async function getRowCounts(pool: pg.Pool, tables: string[]): Promise<Record<string, number>> {
   const counts: Record<string, number> = {};
   for (const t of tables) {
-    const res = await pool.query(`SELECT COUNT(*) AS cnt FROM "${t}"`);
+    const res = await pool.query<{ cnt: string }>(`SELECT COUNT(*) AS cnt FROM "${t}"`);
     counts[t] = parseInt(res.rows[0]?.cnt ?? '0', 10);
   }
   return counts;
@@ -101,6 +101,7 @@ describe('Postgres writer integration', () => {
   });
 
   itPg('should insert rows via multi-row insert', async () => {
+    // eslint-disable-next-line @typescript-eslint/require-await
     async function* batches(): AsyncGenerator<GenerationBatch> {
       yield {
         table: 'users',
@@ -119,6 +120,7 @@ describe('Postgres writer integration', () => {
   });
 
   itPg('should insert rows via COPY for large batches', async () => {
+    // eslint-disable-next-line @typescript-eslint/require-await
     async function* batches(): AsyncGenerator<GenerationBatch> {
       yield {
         table: 'users',
@@ -142,6 +144,7 @@ describe('Postgres writer integration', () => {
   });
 
   itPg('should apply patch phase after inserts', async () => {
+    // eslint-disable-next-line @typescript-eslint/require-await
     async function* batches(): AsyncGenerator<GenerationBatch> {
       yield {
         table: 'users',
@@ -165,12 +168,13 @@ describe('Postgres writer integration', () => {
     expect(result.rowsWritten['users']).toBe(1);
 
     const pool = new pg.Pool({ connectionString: CONNECTION_STRING });
-    const res = await pool.query("SELECT referred_by FROM users WHERE email = 'patch@test.com'");
+    const res = await pool.query<{ referred_by: string }>("SELECT referred_by FROM users WHERE email = 'patch@test.com'");
     await pool.end();
     expect(res.rows[0]?.referred_by).toBe('a0000000-0000-0000-0000-000000000010');
   });
 
   itPg('should throw on fresh mode when table is non-empty', async () => {
+    // eslint-disable-next-line @typescript-eslint/require-await
     async function* firstBatch(): AsyncGenerator<GenerationBatch> {
       yield {
         table: 'products',
@@ -181,6 +185,7 @@ describe('Postgres writer integration', () => {
 
     await write({ connectionString: CONNECTION_STRING }, firstBatch(), graph, schema);
 
+    // eslint-disable-next-line @typescript-eslint/require-await
     async function* secondBatch(): AsyncGenerator<GenerationBatch> {
       yield {
         table: 'products',
@@ -195,6 +200,7 @@ describe('Postgres writer integration', () => {
   });
 
   itPg('should work in truncate mode', async () => {
+    // eslint-disable-next-line @typescript-eslint/require-await
     async function* firstBatch(): AsyncGenerator<GenerationBatch> {
       yield {
         table: 'products',
@@ -205,6 +211,7 @@ describe('Postgres writer integration', () => {
 
     await write({ connectionString: CONNECTION_STRING }, firstBatch(), graph, schema);
 
+    // eslint-disable-next-line @typescript-eslint/require-await
     async function* secondBatch(): AsyncGenerator<GenerationBatch> {
       yield {
         table: 'products',
@@ -218,12 +225,13 @@ describe('Postgres writer integration', () => {
     expect(result.rowsWritten['products']).toBe(1);
 
     const pool = new pg.Pool({ connectionString: CONNECTION_STRING });
-    const res = await pool.query('SELECT COUNT(*) AS cnt FROM products');
+    const res = await pool.query<{ cnt: string }>('SELECT COUNT(*) AS cnt FROM products');
     await pool.end();
     expect(parseInt(res.rows[0]?.cnt ?? '0', 10)).toBe(1);
   });
 
   itPg('should work in append mode', async () => {
+    // eslint-disable-next-line @typescript-eslint/require-await
     async function* firstBatch(): AsyncGenerator<GenerationBatch> {
       yield {
         table: 'products',
@@ -234,6 +242,7 @@ describe('Postgres writer integration', () => {
 
     await write({ connectionString: CONNECTION_STRING }, firstBatch(), graph, schema);
 
+    // eslint-disable-next-line @typescript-eslint/require-await
     async function* secondBatch(): AsyncGenerator<GenerationBatch> {
       yield {
         table: 'products',
@@ -247,7 +256,7 @@ describe('Postgres writer integration', () => {
     expect(result.rowsWritten['products']).toBe(1);
 
     const pool = new pg.Pool({ connectionString: CONNECTION_STRING });
-    const res = await pool.query('SELECT COUNT(*) AS cnt FROM products');
+    const res = await pool.query<{ cnt: string }>('SELECT COUNT(*) AS cnt FROM products');
     await pool.end();
     expect(parseInt(res.rows[0]?.cnt ?? '0', 10)).toBe(2);
   });
@@ -258,6 +267,7 @@ describe('Postgres writer integration', () => {
     const preCounts = await getRowCounts(pool, allTables);
     await pool.end();
 
+    // eslint-disable-next-line @typescript-eslint/require-await
     async function* batches(): AsyncGenerator<GenerationBatch> {
       yield {
         table: 'users',
@@ -285,8 +295,9 @@ describe('Postgres writer integration', () => {
   });
 
   itPg('should emit progress events', async () => {
-    const events: any[] = [];
+    const events: WriteProgressEvent[] = [];
 
+    // eslint-disable-next-line @typescript-eslint/require-await
     async function* batches(): AsyncGenerator<GenerationBatch> {
       yield {
         table: 'products',
@@ -296,7 +307,7 @@ describe('Postgres writer integration', () => {
     }
 
     await write({ connectionString: CONNECTION_STRING }, batches(), graph, schema, {
-      onProgress: (e) => events.push(e),
+      onProgress: (e: WriteProgressEvent) => events.push(e),
     });
 
     expect(events.length).toBeGreaterThanOrEqual(1);
@@ -304,10 +315,11 @@ describe('Postgres writer integration', () => {
   });
 
   itPg('should emit progress events via emitter', async () => {
-    const events: any[] = [];
+    const events: WriteProgressEvent[] = [];
     const emitter = new WriteProgressEmitter();
-    emitter.on('progress', (e) => events.push(e));
+    emitter.on('progress', (e: WriteProgressEvent) => events.push(e));
 
+    // eslint-disable-next-line @typescript-eslint/require-await
     async function* batches(): AsyncGenerator<GenerationBatch> {
       yield {
         table: 'products',
@@ -335,7 +347,7 @@ describe('Postgres E2E fixture test', () => {
       product_tags: { count: 8 },
       orders: {
         countPerParent: { users: { kind: 'uniformInt', params: { min: 1, max: 3 } } },
-        fields: { total: { fn: (row: Record<string, unknown>, _ctx: unknown) => 100 } },
+        fields: { total: { fn: (_row: Record<string, unknown>, _ctx: unknown) => 100 } },
       },
       order_items: {
         countPerParent: { orders: { kind: 'uniformInt', params: { min: 1, max: 3 } } },
@@ -362,8 +374,8 @@ describe('Postgres E2E fixture test', () => {
     await pool.query('COMMIT');
 
     const emitter = new WriteProgressEmitter();
-    const progressEvents: any[] = [];
-    emitter.on('progress', (e) => progressEvents.push(e));
+    const progressEvents: WriteProgressEvent[] = [];
+    emitter.on('progress', (e: WriteProgressEvent) => progressEvents.push(e));
 
     const seed = 42;
     const batchIter = generate(realGraph, plan, realSchema, seed);
@@ -407,7 +419,7 @@ describe('Postgres E2E fixture test', () => {
           `WHERE t."${fkCol}" IS NOT NULL ` +
           `AND NOT EXISTS (SELECT 1 FROM "${refTable}" p WHERE p."${pkCol}" = t."${fkCol}")`,
         );
-        expect(parseInt(res.rows[0]?.orphans ?? '0', 10)).toBe(0);
+        expect(parseInt((res.rows[0] as Record<string, unknown>)?.orphans as string ?? '0', 10)).toBe(0);
       }
     }
 

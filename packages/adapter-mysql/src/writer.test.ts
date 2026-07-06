@@ -3,7 +3,7 @@ import mysql from 'mysql2/promise';
 import { write } from './writer.js';
 import { introspect } from './introspect.js';
 import { buildGraph, analyzeSchema, buildGenerationPlan, generate, WriteProgressEmitter } from '@seedforge/core';
-import type { GenerationBatch, SeedForgeConfig } from '@seedforge/core';
+import type { GenerationBatch, SeedForgeConfig, WriteProgressEvent } from '@seedforge/core';
 import type { RelationshipGraph, DatabaseSchema } from '@seedforge/core';
 
 const CONNECTION_STRING = 'mysql://seedforge:seedforge@localhost:3306/ecommerce';
@@ -82,7 +82,7 @@ async function getRowCounts(conn: mysql.Connection, tables: string[]): Promise<R
   const counts: Record<string, number> = {};
   for (const t of tables) {
     const [rows] = await conn.query<mysql.RowDataPacket[]>(`SELECT COUNT(*) AS cnt FROM \`${t}\``);
-    counts[t] = (rows[0] as any)?.cnt ?? 0;
+    counts[t] = Number((rows[0] as Record<string, unknown>)?.cnt ?? 0);
   }
   return counts;
 }
@@ -101,6 +101,7 @@ describe('MySQL writer integration', () => {
   });
 
   itMySql('should insert rows', async () => {
+    // eslint-disable-next-line @typescript-eslint/require-await
     async function* batches(): AsyncGenerator<GenerationBatch> {
       yield {
         table: 'users',
@@ -119,6 +120,7 @@ describe('MySQL writer integration', () => {
   });
 
   itMySql('should apply patch phase after inserts', async () => {
+    // eslint-disable-next-line @typescript-eslint/require-await
     async function* batches(): AsyncGenerator<GenerationBatch> {
       yield {
         table: 'users',
@@ -148,6 +150,7 @@ describe('MySQL writer integration', () => {
   });
 
   itMySql('should throw on fresh mode when table is non-empty', async () => {
+    // eslint-disable-next-line @typescript-eslint/require-await
     async function* firstBatch(): AsyncGenerator<GenerationBatch> {
       yield {
         table: 'products',
@@ -158,6 +161,7 @@ describe('MySQL writer integration', () => {
 
     await write({ connectionString: CONNECTION_STRING }, firstBatch(), graph, schema);
 
+    // eslint-disable-next-line @typescript-eslint/require-await
     async function* secondBatch(): AsyncGenerator<GenerationBatch> {
       yield {
         table: 'products',
@@ -172,6 +176,7 @@ describe('MySQL writer integration', () => {
   });
 
   itMySql('should work in truncate mode', async () => {
+    // eslint-disable-next-line @typescript-eslint/require-await
     async function* firstBatch(): AsyncGenerator<GenerationBatch> {
       yield {
         table: 'products',
@@ -182,6 +187,7 @@ describe('MySQL writer integration', () => {
 
     await write({ connectionString: CONNECTION_STRING }, firstBatch(), graph, schema);
 
+    // eslint-disable-next-line @typescript-eslint/require-await
     async function* secondBatch(): AsyncGenerator<GenerationBatch> {
       yield {
         table: 'products',
@@ -197,10 +203,11 @@ describe('MySQL writer integration', () => {
     const conn = await mysql.createConnection({ uri: CONNECTION_STRING });
     const [rows] = await conn.query<mysql.RowDataPacket[]>('SELECT COUNT(*) AS cnt FROM products');
     await conn.end();
-    expect((rows[0] as any)?.cnt).toBe(1);
+    expect(Number((rows[0] as Record<string, unknown>)?.cnt)).toBe(1);
   });
 
   itMySql('should work in append mode', async () => {
+    // eslint-disable-next-line @typescript-eslint/require-await
     async function* firstBatch(): AsyncGenerator<GenerationBatch> {
       yield {
         table: 'products',
@@ -211,6 +218,7 @@ describe('MySQL writer integration', () => {
 
     await write({ connectionString: CONNECTION_STRING }, firstBatch(), graph, schema);
 
+    // eslint-disable-next-line @typescript-eslint/require-await
     async function* secondBatch(): AsyncGenerator<GenerationBatch> {
       yield {
         table: 'products',
@@ -226,7 +234,7 @@ describe('MySQL writer integration', () => {
     const conn = await mysql.createConnection({ uri: CONNECTION_STRING });
     const [rows] = await conn.query<mysql.RowDataPacket[]>('SELECT COUNT(*) AS cnt FROM products');
     await conn.end();
-    expect((rows[0] as any)?.cnt).toBe(2);
+    expect(Number((rows[0] as Record<string, unknown>)?.cnt)).toBe(2);
   });
 
   itMySql('should rollback on error leaving db exactly as before', async () => {
@@ -235,6 +243,7 @@ describe('MySQL writer integration', () => {
     const preCounts = await getRowCounts(conn, allTables);
     await conn.end();
 
+    // eslint-disable-next-line @typescript-eslint/require-await
     async function* batches(): AsyncGenerator<GenerationBatch> {
       yield {
         table: 'users',
@@ -262,8 +271,9 @@ describe('MySQL writer integration', () => {
   });
 
   itMySql('should emit progress events', async () => {
-    const events: any[] = [];
+    const events: WriteProgressEvent[] = [];
 
+    // eslint-disable-next-line @typescript-eslint/require-await
     async function* batches(): AsyncGenerator<GenerationBatch> {
       yield {
         table: 'products',
@@ -281,10 +291,11 @@ describe('MySQL writer integration', () => {
   });
 
   itMySql('should emit progress events via emitter', async () => {
-    const events: any[] = [];
+    const events: WriteProgressEvent[] = [];
     const emitter = new WriteProgressEmitter();
-    emitter.on('progress', (e) => events.push(e));
+    emitter.on('progress', (e: WriteProgressEvent) => events.push(e));
 
+    // eslint-disable-next-line @typescript-eslint/require-await
     async function* batches(): AsyncGenerator<GenerationBatch> {
       yield {
         table: 'products',
@@ -313,7 +324,7 @@ describe('MySQL E2E fixture test', () => {
       product_tags: { count: 8, fields: { product_id: uuidField, tag_id: uuidField } },
       orders: {
         countPerParent: { users: { kind: 'uniformInt', params: { min: 1, max: 3 } } },
-        fields: { id: uuidField, user_id: uuidField, total: { fn: (row: Record<string, unknown>, _ctx: unknown) => 100 } },
+        fields: { id: uuidField, user_id: uuidField, total: { fn: (_row: Record<string, unknown>, _ctx: unknown) => 100 } },
       },
       order_items: {
         countPerParent: { orders: { kind: 'uniformInt', params: { min: 1, max: 3 } } },
@@ -342,8 +353,8 @@ describe('MySQL E2E fixture test', () => {
     await conn.query('SET FOREIGN_KEY_CHECKS = 1');
 
     const emitter = new WriteProgressEmitter();
-    const progressEvents: any[] = [];
-    emitter.on('progress', (e) => progressEvents.push(e));
+    const progressEvents: WriteProgressEvent[] = [];
+    emitter.on('progress', (e: WriteProgressEvent) => progressEvents.push(e));
 
     const seed = 42;
     const batchIter = generate(realGraph, plan, realSchema, seed);
@@ -383,7 +394,7 @@ describe('MySQL E2E fixture test', () => {
           `WHERE t.\`${fkCol}\` IS NOT NULL ` +
           `AND NOT EXISTS (SELECT 1 FROM \`${refTable}\` p WHERE p.\`${pkCol}\` = t.\`${fkCol}\`)`,
         );
-        expect((rows[0] as any)?.orphans).toBe(0);
+        expect(Number((rows[0] as Record<string, unknown>)?.orphans ?? 0)).toBe(0);
       }
     }
 

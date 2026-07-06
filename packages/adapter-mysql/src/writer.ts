@@ -35,7 +35,7 @@ async function checkFresh(
     const [rows] = await conn.query<mysql.RowDataPacket[]>(
       `SELECT COUNT(*) AS cnt FROM ${quoteId(table.name)}`,
     );
-    const count = (rows[0] as any)?.cnt ?? 0;
+    const count = Number((rows[0] as Record<string, unknown>)?.cnt ?? 0);
     emitProgress({ table: table.name, phase: 'verify', rowsWritten: count, rowsTotal: 0 }, options);
     if (count > 0) {
       throw new Error(
@@ -116,7 +116,7 @@ async function multiRowInsert(
 async function applyPatchBatches(
   conn: mysql.Connection,
   patches: GenerationBatch[],
-  options?: WriteOptions,
+  _options?: WriteOptions,
 ): Promise<void> {
   for (const patch of patches) {
     if (!patch.patchInfo) continue;
