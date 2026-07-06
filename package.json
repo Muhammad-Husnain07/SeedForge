@@ -13,9 +13,11 @@
     "test:integration": "pnpm --filter @seedforge/integration-tests run test",
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint:fix",
-    "clean": "turbo run clean"
+    "clean": "turbo run clean",
+    "docs:cli": "node scripts/gen-cli-docs.mjs"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.31.0",
     "@eslint/js": "^9.5.0",
     "eslint": "^9.5.0",
     "eslint-config-prettier": "^9.1.0",

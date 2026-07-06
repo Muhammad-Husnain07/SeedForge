@@ -1,7 +1,14 @@
 {
   "name": "@seedforge/adapter-postgres",
   "version": "0.0.0",
-  "private": true,
+  "description": "Postgres adapter — introspection (INFORMATION_SCHEMA + pg_catalog) and bulk writer (multi-row INSERT + COPY) for SeedForge",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Muhammad-Husnain07/SeedForge.git"
+  },
+  "author": "Muhammad Husnain",
+
   "type": "module",
   "exports": {
     ".": {
@@ -27,5 +34,9 @@
     "@types/pg-copy-streams": "^1.2.5",
     "tsup": "^8.1.0",
     "typescript": "^5.5.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   }
 }

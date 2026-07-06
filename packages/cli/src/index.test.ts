@@ -7,7 +7,7 @@ describe('@seedforge/cli', () => {
     expect(program.name()).toBe('seedforge');
   });
 
-  it('has all 11 commands', () => {
+  it('has all 12 commands', () => {
     const commands = program.commands.map((c) => c.name()).sort();
     expect(commands).toEqual([
       'diff',

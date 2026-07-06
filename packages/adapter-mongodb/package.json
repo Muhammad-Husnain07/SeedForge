@@ -1,7 +1,14 @@
 {
   "name": "@seedforge/adapter-mongodb",
   "version": "0.0.0",
-  "private": true,
+  "description": "MongoDB adapter — schema inference (document sampling, nested flattening, extended JSON) and bulk writer (insertMany) for SeedForge",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Muhammad-Husnain07/SeedForge.git"
+  },
+  "author": "Muhammad Husnain",
+
   "type": "module",
   "exports": {
     ".": {
@@ -24,5 +31,9 @@
   "devDependencies": {
     "tsup": "^8.1.0",
     "typescript": "^5.5.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   }
 }

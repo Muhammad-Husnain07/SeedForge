@@ -1,7 +1,14 @@
 {
   "name": "@seedforge/studio",
   "version": "0.0.0",
-  "private": true,
+  "description": "Local web studio dashboard — Fastify backend + React/Vite frontend with ER diagram, config panel, and live seed progress",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Muhammad-Husnain07/SeedForge.git"
+  },
+  "author": "Muhammad Husnain",
+
   "type": "module",
   "bin": {
     "seedforge-studio": "./dist/main.js"
@@ -44,5 +51,9 @@
     "typescript": "^5.5.0",
     "vite": "^5.4.0",
     "vitest": "^1.6.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   }
 }

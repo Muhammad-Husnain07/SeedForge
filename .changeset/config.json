@@ -1,0 +1,24 @@
+{
+  "$schema": "https://unpkg.com/@changesets/config@3/schema.json",
+  "changelog": "@changesets/cli/changelog",
+  "commit": false,
+  "fixed": [
+    [
+      "@seedforge/core",
+      "@seedforge/adapter-postgres",
+      "@seedforge/adapter-mysql",
+      "@seedforge/adapter-mongodb",
+      "@seedforge/cli",
+      "@seedforge/studio",
+      "seedforge"
+    ]
+  ],
+  "linked": [],
+  "access": "public",
+  "baseBranch": "main",
+  "updateInternalDependencies": "patch",
+  "ignore": [
+    "@seedforge/integration-tests",
+    "@seedforge/plugin-geo"
+  ]
+}

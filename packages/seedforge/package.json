@@ -1,0 +1,27 @@
+{
+  "name": "seedforge",
+  "version": "0.0.0",
+  "description": "Deterministic seed data generator for relational databases — zero-setup CLI",
+  "type": "module",
+  "bin": {
+    "seedforge": "./bin.js"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Muhammad-Husnain07/SeedForge.git"
+  },
+  "author": "Muhammad Husnain",
+  "engines": {
+    "node": ">=18.17"
+  },
+  "dependencies": {
+    "@seedforge/cli": "workspace:*",
+    "@seedforge/adapter-postgres": "workspace:*",
+    "@seedforge/adapter-mysql": "workspace:*",
+    "@seedforge/adapter-mongodb": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

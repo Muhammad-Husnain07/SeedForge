@@ -1,7 +1,14 @@
 {
   "name": "@seedforge/cli",
   "version": "0.0.0",
-  "private": true,
+  "description": "SeedForge CLI — seed, generate, validate, suggest, introspect, diff, export, import, reset, doctor, studio",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Muhammad-Husnain07/SeedForge.git"
+  },
+  "author": "Muhammad Husnain",
+
   "type": "module",
   "bin": {
     "seedforge": "./dist/index.js"
@@ -34,5 +41,9 @@
   "devDependencies": {
     "tsup": "^8.1.0",
     "typescript": "^5.5.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   }
 }
