@@ -29,7 +29,7 @@ jobs:
       - name: Check for changesets
         id: check
         run: |
-          count=$(find .changeset -name '*.json' ! -name 'config.json' 2>/dev/null | wc -l)
+          count=$(find .changeset -name '*.md' 2>/dev/null | wc -l)
           echo "count=$count" >> $GITHUB_OUTPUT
           echo "Found $count changeset(s)"
 
