@@ -1,6 +1,6 @@
 {
   "name": "@seed-forge/adapter-postgres",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Postgres adapter — introspection (INFORMATION_SCHEMA + pg_catalog) and bulk writer (multi-row INSERT + COPY) for SeedForge",
   "license": "MIT",
   "repository": {
@@ -24,7 +24,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@seed-forge/core": "workspace:*",
+    "@seed-forge/core": "workspace:^",
     "pg": "^8.12.0",
     "pg-copy-streams": "^7.0.0"
   },

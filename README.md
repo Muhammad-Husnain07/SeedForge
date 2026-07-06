@@ -18,13 +18,22 @@ docker run -d --name seedforge-pg \
   postgres:16
 
 # 2. Scaffold a config file
-npx @seed-forge/cli init
+npx seedforge init
 
 # 3. Seed your database
-npx @seed-forge/cli seed
+npx seedforge seed
 ```
 
 That's it. By default SeedForge introspects the target database, infers column semantics, builds a generation plan, and writes realistic data to every table.
+
+You can also scaffold a reusable project folder:
+
+```bash
+npx create-seedforge my-project
+cd my-project
+seedforge init    # or edit .env first
+seedforge seed
+```
 
 ## Key Features
 
@@ -98,17 +107,19 @@ That's it. By default SeedForge introspects the target database, infers column s
 - **Schema-only by default** — safe for any database; `--include-samples` for value-aware suggestions
 - **Zero LLM calls during generation** — the AI is consulted only at suggest-time
 
-## Installation (à la carte)
+## Package Reference
 
-All packages are published individually to npm so you install only what you need:
+The `npx seedforge` entry point auto-installs `@seed-forge/cli` and all adapters. If you prefer a minimal install, pull only the packages you need:
 
 ```bash
-# Install individual packages as needed
-npm install @seed-forge/cli @seed-forge/adapter-postgres
+npm install @seed-forge/adapter-postgres
+npx @seed-forge/cli seed
 ```
 
 | Package | Description |
 |---------|-------------|
+| `seedforge` | Zero-install entry point (meta-package, delegates to `@seed-forge/cli`) |
+| `create-seedforge` | Project scaffold (`npx create-seedforge my-project`) |
 | `@seed-forge/cli` | CLI orchestration (seed, generate, validate, suggest, studio) |
 | `@seed-forge/core` | Engine, schema IR, distributions, config DSL, lockfile, plugin system |
 | `@seed-forge/adapter-postgres` | Postgres introspection + bulk writer |

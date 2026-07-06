@@ -4,6 +4,7 @@
   "commit": false,
   "fixed": [
     [
+      "seedforge",
       "@seed-forge/core",
       "@seed-forge/adapter-postgres",
       "@seed-forge/adapter-mysql",

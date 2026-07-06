@@ -1,6 +1,6 @@
 {
   "name": "@seed-forge/studio",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Local web studio dashboard — Fastify backend + React/Vite frontend with ER diagram, config panel, and live seed progress",
   "license": "MIT",
   "repository": {
@@ -29,12 +29,12 @@
     "clean": "rm -rf dist client/dist"
   },
   "dependencies": {
-    "@seed-forge/adapter-mongodb": "workspace:*",
-    "@seed-forge/adapter-mysql": "workspace:*",
-    "@seed-forge/adapter-postgres": "workspace:*",
-    "@seed-forge/core": "workspace:*",
     "@fastify/cors": "^10.0.0",
-    "@fastify/static": "^8.0.0",
+    "@fastify/static": "^9.1.3",
+    "@seed-forge/adapter-mongodb": "workspace:^",
+    "@seed-forge/adapter-mysql": "workspace:^",
+    "@seed-forge/adapter-postgres": "workspace:^",
+    "@seed-forge/core": "workspace:^",
     "fastify": "^5.0.0",
     "jiti": "^2.7.0"
   },

@@ -29,7 +29,20 @@
 - [x] **16. Performance hardening** — Large-dataset optimization, streaming, progress reporting. Benchmark suite. 1M order_items @ 7,989 rows/s with 264 MB RSS.
 - [x] **17. Local web studio dashboard** — Fastify backend + React/Vite frontend with ER diagram, config panel, live progress via SSE, one-click "Seed now".
 
+## Completed (continued)
+
+- [x] **18. Packaging, docs, CI/CD, npm publish** — `.github/workflows/ci.yml` (lint + unit + integration on PR), `.github/workflows/publish.yml` (tag-triggered publish with npm provenance), `.changeset/config.json` (Changesets `fixed` config, synced versions). All 6 packages live on npm at `@seed-forge/*` v0.1.1: `@seed-forge/core`, `@seed-forge/cli`, `@seed-forge/adapter-postgres`, `@seed-forge/adapter-mysql`, `@seed-forge/adapter-mongodb`, `@seed-forge/studio`, plus `@seed-forge/plugin-geo`. Auto-generated CLI reference, architect docs, config DSL reference, plugin-authoring guide, contributing guide, issue templates.
+
 ## Planned
 
-- [ ] **18. Packaging, docs, CI/CD, npm publish** — Full documentation site, GitHub Actions CI, npm package publishing.
 - [ ] **19. Production hardening** — HTTPS, auth, multi-user workspaces, cloud-hosted studio.
+
+## Phase 2 — Next Level
+
+- [ ] **A. Single-command install & real branding** — `npx create-seedforge` scaffolding, dedicated domain, logo, brand colors, marketing site, product-hunt-launch-quality README
+- [ ] **B. Deepen the business-logic story** — ORM-native schema parsing (Prisma, Drizzle), time-series / cohort / event-stream generation, natural-language config authoring via LLM, production clone-and-anonymize mode (copy production schema → generate anonymized replica)
+- [ ] **C. Team collaboration & ecosystem** — Hosted profile registry (share + discover generator profiles), GitHub Actions CI plugin, test-framework bindings (Vitest fixture setup / teardown)
+- [ ] **D. More engines, harder studio** — SQLite adapter (zero-Docker seed), studio hardening (auth, saved configurations, multi-project workspaces, one-click re-seed)
+- [ ] **E. Depth & confidence** — Test coverage expansion (property-based tests for generation engine, edge-case fuzzing), `seedforge audit` command (data-quality checks: referential integrity, cardinality boundaries, outlier detection)
+
+> **npm audit:** One moderate path-traversal advisory in `@fastify/static` (via `@seed-forge/studio` → `@seed-forge/cli`) — flagged here, fixed in Prompt 1.

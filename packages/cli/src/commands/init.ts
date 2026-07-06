@@ -134,7 +134,7 @@ export async function initCommand(opts: { config?: string; force?: boolean }): P
   console.log(`  ${resolved.length} resolved, ${unresolved.length} unresolved`);
 
   // Print coverage table
-  console.log('\n' + printCoverageTable(schema));
+  console.log('\n' + printCoverageTable(matches));
 
   // Step 6: Prompt for row counts
   const useDefaultCounts = await confirm({

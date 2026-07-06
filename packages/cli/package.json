@@ -1,6 +1,6 @@
 {
   "name": "@seed-forge/cli",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "SeedForge CLI — seed, generate, validate, suggest, introspect, diff, export, import, reset, doctor, studio",
   "license": "MIT",
   "repository": {
@@ -11,6 +11,16 @@
   "type": "module",
   "bin": {
     "seedforge": "./dist/index.js"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./commands/init": {
+      "import": "./dist/commands/init.js",
+      "types": "./dist/commands/init.d.ts"
+    }
   },
   "scripts": {
     "build": "tsup src/index.ts --dts --clean --format esm",
@@ -24,11 +34,11 @@
     "@anthropic-ai/sdk": "^0.27.0",
     "@google/generative-ai": "^0.24.1",
     "@inquirer/prompts": "^8.5.2",
-    "@seed-forge/adapter-mongodb": "workspace:*",
-    "@seed-forge/adapter-mysql": "workspace:*",
-    "@seed-forge/adapter-postgres": "workspace:*",
-    "@seed-forge/core": "workspace:*",
-    "@seed-forge/studio": "workspace:*",
+    "@seed-forge/adapter-mongodb": "workspace:^",
+    "@seed-forge/adapter-mysql": "workspace:^",
+    "@seed-forge/adapter-postgres": "workspace:^",
+    "@seed-forge/core": "workspace:^",
+    "@seed-forge/studio": "workspace:^",
     "cli-table3": "^0.6.5",
     "commander": "^12.1.0",
     "dotenv": "^17.4.2",

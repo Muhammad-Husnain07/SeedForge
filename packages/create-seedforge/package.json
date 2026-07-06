@@ -1,0 +1,32 @@
+{
+  "name": "create-seedforge",
+  "version": "0.1.1",
+  "description": "Scaffold a new SeedForge project — npx create-seedforge my-project",
+  "type": "module",
+  "bin": {
+    "create-seedforge": "./dist/index.js"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Muhammad-Husnain07/SeedForge.git"
+  },
+  "author": "Muhammad Husnain",
+  "engines": {
+    "node": ">=18.17"
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --clean --format esm",
+    "dev": "tsup src/index.ts --watch --format esm"
+  },
+  "dependencies": {
+    "@seed-forge/cli": "workspace:^"
+  },
+  "devDependencies": {
+    "tsup": "^8.1.0",
+    "typescript": "^5.5.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

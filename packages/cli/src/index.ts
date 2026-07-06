@@ -569,4 +569,5 @@ if (!process.env.VITEST) {
   program.parse(process.argv);
 }
 
+export { initCommand } from './commands/init.js';
 export { program };
