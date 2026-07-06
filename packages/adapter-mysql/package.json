@@ -1,6 +1,6 @@
 {
   "name": "@seed-forge/adapter-mysql",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "MySQL adapter — introspection (INFORMATION_SCHEMA, ENUM parsing, TINYINT→boolean) and bulk writer (multi-row INSERT) for SeedForge",
   "license": "MIT",
   "repository": {

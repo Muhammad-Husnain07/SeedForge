@@ -4,3 +4,6 @@ dist
 *.tsbuildinfo
 coverage
 .env
+ 
+# npm credentials 
+.npmrc

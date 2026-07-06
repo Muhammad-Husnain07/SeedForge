@@ -1,6 +1,6 @@
 {
-  "name": "seedforge",
-  "version": "0.0.0",
+  "name": "@seed-forge/seedforge",
+  "version": "0.2.0",
   "description": "Deterministic seed data generator for relational databases — zero-setup CLI",
   "type": "module",
   "bin": {

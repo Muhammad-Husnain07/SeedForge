@@ -181,9 +181,9 @@ importers:
 
   packages/create-seedforge:
     dependencies:
-      '@seed-forge/cli':
+      '@seed-forge/seedforge':
         specifier: workspace:^
-        version: link:../cli
+        version: link:../seedforge
     devDependencies:
       tsup:
         specifier: ^8.1.0

@@ -1,6 +1,6 @@
 {
   "name": "create-seedforge",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Scaffold a new SeedForge project — npx create-seedforge my-project",
   "type": "module",
   "bin": {
@@ -20,7 +20,7 @@
     "dev": "tsup src/index.ts --watch --format esm"
   },
   "dependencies": {
-    "@seed-forge/cli": "workspace:^"
+    "@seed-forge/seedforge": "workspace:^"
   },
   "devDependencies": {
     "tsup": "^8.1.0",

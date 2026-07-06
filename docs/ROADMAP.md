@@ -39,10 +39,9 @@
 
 ## Phase 2 — Next Level
 
-- [ ] **A. Single-command install & real branding** — `npx create-seedforge` scaffolding, dedicated domain, logo, brand colors, marketing site, product-hunt-launch-quality README
+- [x] **A. Single-command install & real branding** — `npx @seed-forge/seedforge init` / `seed forge seed` as primary entry point, `npx create-seedforge` scaffolding, `workspace:^` range specifiers, `@fastify/static` security bump, programmatic `@seed-forge/cli` exports
 - [ ] **B. Deepen the business-logic story** — ORM-native schema parsing (Prisma, Drizzle), time-series / cohort / event-stream generation, natural-language config authoring via LLM, production clone-and-anonymize mode (copy production schema → generate anonymized replica)
 - [ ] **C. Team collaboration & ecosystem** — Hosted profile registry (share + discover generator profiles), GitHub Actions CI plugin, test-framework bindings (Vitest fixture setup / teardown)
 - [ ] **D. More engines, harder studio** — SQLite adapter (zero-Docker seed), studio hardening (auth, saved configurations, multi-project workspaces, one-click re-seed)
 - [ ] **E. Depth & confidence** — Test coverage expansion (property-based tests for generation engine, edge-case fuzzing), `seedforge audit` command (data-quality checks: referential integrity, cardinality boundaries, outlier detection)
 
-> **npm audit:** One moderate path-traversal advisory in `@fastify/static` (via `@seed-forge/studio` → `@seed-forge/cli`) — flagged here, fixed in Prompt 1.
