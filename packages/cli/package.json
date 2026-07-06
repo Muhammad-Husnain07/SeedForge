@@ -1,6 +1,6 @@
 {
   "name": "@seed-forge/cli",
-  "version": "0.2.0",
+  "version": "0.2.2",
   "description": "SeedForge CLI — seed, generate, validate, suggest, introspect, diff, export, import, reset, doctor, studio",
   "license": "MIT",
   "repository": {

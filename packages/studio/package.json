@@ -1,6 +1,6 @@
 {
   "name": "@seed-forge/studio",
-  "version": "0.2.0",
+  "version": "0.2.2",
   "description": "Local web studio dashboard — Fastify backend + React/Vite frontend with ER diagram, config panel, and live seed progress",
   "license": "MIT",
   "repository": {

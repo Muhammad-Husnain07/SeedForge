@@ -1,5 +1,14 @@
 # @seed-forge/studio
 
+## 0.2.2
+
+### Patch Changes
+
+- @seed-forge/core@0.2.2
+- @seed-forge/adapter-postgres@0.2.2
+- @seed-forge/adapter-mysql@0.2.2
+- @seed-forge/adapter-mongodb@0.2.2
+
 ## 0.2.0
 
 ### Minor Changes
