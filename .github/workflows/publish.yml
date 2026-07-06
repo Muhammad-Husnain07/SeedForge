@@ -52,6 +52,8 @@ jobs:
 
       - name: Publish to npm
         if: steps.check.outputs.count != '0'
-        run: pnpm changeset publish
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" > ~/.npmrc
+          pnpm changeset publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
