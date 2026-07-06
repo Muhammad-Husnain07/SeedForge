@@ -55,11 +55,21 @@ packages/
                           Deps: mongodb, @seedforge/core.
 
   cli/                  — The `seedforge` command. Thin orchestration.
-                          Deps: commander, all of the above.
+                            Deps: commander, all of the above.
 
   studio/               — Local web dashboard. Fastify backend + React/Vite frontend.
                             REST APIs for schema, graph, config, plan, seed execution.
                             SSE-based live progress. ER diagram via React Flow.
+
+  seedforge/            — Meta-package. Zero-code package that depends on
+                            @seedforge/cli + all adapters so `npx seedforge`
+                            works with zero prior setup.
+
+  integration-tests/    — Testcontainers-based end-to-end pipeline tests
+                            (private, not published).
+
+  seedforge-plugin-geo/ — Example plugin demonstrating the plugin system
+                            (private, not published).
 ```
 
 ## Data Flow
@@ -174,7 +184,25 @@ Every generation run produces a lockfile. Before generating, SeedForge compares 
 ### 5. Validate early, verify often
 Pre-flight catches config mistakes before any DB connection. Post-write verifies data integrity after generation. Both produce structured, CI-gateable results.
 
-## Current State (Milestone X Complete)
+## Deviations from the Original Design
+
+The implementation evolved during development in several ways worth noting:
+
+1. **Parallel generation was not in the original plan.** The original architecture assumed a purely sequential generation pipeline. `generateParallel()` with `worker_threads` was added to meet the 1M row throughput target while staying under 512 MB RSS.
+
+2. **Plugin system uses a generator-registry pattern** rather than the originally conceived generic lifecycle-hook approach. The `GeneratorRegistry` with `register(kind, fn)` was simpler to implement and aligned with how the config DSL references generators by kind string. Lifecycle hooks (`beforeGenerate`, `afterGenerate`, etc.) were added later as a second dimension.
+
+3. **`afterGenerate` receives metadata, not the full dataset.** The original plugin spec passed `Record<string, Record<string, unknown>[]>` (all rows). Because the pipeline is streaming (no stage holds a full table), this was changed to `{ tables: string[], totalRows: number }`. Plugins that need row-level access should use `beforeInsert` / `afterInsert`.
+
+4. **Studio evolved from a stretch goal to a full dashboard.** Originally listed as a "nice-to-have," the studio grew into a Fastify backend + React/Vite frontend with SSE-based live progress, an ER diagram (React Flow), and a "Seed now" button that mirrors the CLI exactly.
+
+5. **Lockfile/drift and export/import were implemented earlier than the roadmap planned.** These shipped in Milestone IX/X rather than being separate milestones, because the bundle format was needed for the studio's "download snapshot" feature.
+
+6. **Package count grew.** The original doc listed 6 packages (core, 3 adapters, cli, studio). The actual monorepo now contains 9 packages (adding `seedforge` meta-package, `integration-tests`, and `seedforge-plugin-geo`).
+
+7. **All packages ship at the same version.** With `@changesets/cli` and the `fixed` config, all publishable packages (`@seedforge/core`, `@seedforge/adapter-*`, `@seedforge/cli`, `@seedforge/studio`, `seedforge`) are released together with synced version numbers. This was not part of the original design but simplifies the install experience.
+
+## Current State (Milestone XI Complete)
 
 - ✅ Monorepo tooling — pnpm workspaces, Turborepo, TypeScript strict
 - ✅ Core domain types — `LogicalType`, `DatabaseSchema`, `TableSchema`, `ColumnSchema`, `ForeignKey`
@@ -199,7 +227,16 @@ Pre-flight catches config mistakes before any DB connection. Post-write verifies
 - ✅ Integration test suite — Testcontainers-based full end-to-end pipeline testing
 - ✅ Performance hardening — streaming pipeline, BoundedQueue, benchmark suite, 1M order_items @ 7,989 rows/s
 - ✅ Studio dashboard — Fastify backend + React/Vite frontend, ER diagram (React Flow), live progress (SSE), "Seed now" button
-- 🔄 **Next: Packaging, docs, CI/CD, npm publish**
+- ✅ Meta-package `seedforge` — zero-dependency bin that re-exports `@seedforge/cli` for `npx seedforge` zero-setup
+- ✅ Changesets monorepo versioning — `@changesets/cli` with `fixed` config for synced releases
+- ✅ CI workflows — lint + unit + integration on PR, publish-on-tag with npm provenance
+- ✅ README with verified 60-second quick-start — copy-pasteable `docker run` → `npx seedforge init` → `npx seedforge seed`
+- ✅ Config DSL reference — all options, generators, distributions, personas documented
+- ✅ CLI reference — auto-generated from Commander's `--help` output (always in sync)
+- ✅ Plugin-authoring guide — updated to match actual `afterGenerate` metadata signature
+- ✅ Examples project — `examples/ecommerce/` runnable out of the box
+- ✅ License, contributing guide, issue templates — MIT, CONTRIBUTING.md, bug report + feature request templates
+- 🔄 **Next: Production hardening — HTTPS, auth, multi-user workspaces, cloud-hosted studio**
 
 ## Test Suite
 

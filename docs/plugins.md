@@ -20,8 +20,8 @@ interface SeedForgePlugin {
   // Called before generation starts, with the full GenerationPlan
   beforeGenerate?(plan: GenerationPlan): void | Promise<void>;
 
-  // Called after all generation completes, with all generated rows
-  afterGenerate?(dataset: Record<string, Record<string, unknown>[]>): void | Promise<void>;
+  // Called after all generation completes, with generation metadata
+  afterGenerate?(metadata: { tables: string[]; totalRows: number }): void | Promise<void>;
 
   // Called before a batch of rows is inserted into a table
   beforeInsert?(table: string, batch: Record<string, unknown>[]): void | Promise<void>;
@@ -172,12 +172,12 @@ Then reference `{ kind: 'my-custom-kind', params: {} }` in any field config.
 
 ## Lifecycle Hook Order
 
-1. `onSchemaIntrospected(schema)` — after `introspect()` completes
-2. `registerGenerators(registry)` — at plugin load time (before generation)
+1. `registerGenerators(registry)` — at plugin load time, before introspection
+2. `onSchemaIntrospected(schema)` — after `introspect()` completes (called by CLI)
 3. `beforeGenerate(plan)` — before any rows are generated
 4. `beforeInsert(table, batch)` — before each batch is written
 5. `afterInsert(table, batch)` — after each batch is written
-6. `afterGenerate(dataset)` — after all generation completes
+6. `afterGenerate(metadata)` — after all generation completes (receives table names + row counts, not the full dataset)
 
 ## Discoverability
 

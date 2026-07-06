@@ -4,53 +4,29 @@
 
 SeedForge introspects your database schema, infers column semantics, applies business rules, and generates realistic relational seed data — deterministically and reproducibly.
 
-## Status
-
-Pre-alpha — under active development. Milestone X (Studio Dashboard) is complete.
-
-## Monorepo Structure
-
-```
-seedforge/
-├── packages/
-│   ├── core/              — Schema IR, relationship graph, semantic analyzer,
-│   │                         distributions, config DSL, generation engine,
-│   │                         validation layer, lockfile management, plugin system,
-│   │                         bundle export/import, parallel worker_threads
-│   ├── adapter-postgres/  — Postgres introspection + bulk writer (`pg` driver)
-│   ├── adapter-mysql/     — MySQL introspection + bulk writer (`mysql2`)
-│   ├── adapter-mongodb/   — MongoDB schema inference + bulk writer (`mongodb`)
-│   ├── cli/               — CLI orchestration: seed, generate, validate, suggest
-│   │                         (LLM), introspect, diff, export, import, reset, doctor, studio
-│   └── studio/            — Local web dashboard: Fastify server + React/Vite frontend
-│                            ER diagram (React Flow), live config preview (SSE),
-│                            one-click seed with progress
-├── fixtures/ecommerce/    — Test fixtures: schema.sql, docker-compose.yml, seed data
-├── docs/                  — Architecture, roadmap, setup guide, adapter docs, benchmarks
-└── tsconfig.base.json     — Shared TypeScript strict config
-```
-
 ## Quick Start
 
+**Prerequisites:** [Docker](https://docs.docker.com/get-docker/) (for the database) and [Node.js](https://nodejs.org/) >= 18.17.
+
 ```bash
-# Install
-pnpm install
+# 1. Start a Postgres container
+docker run -d --name seedforge-pg \
+  -e POSTGRES_USER=seedforge \
+  -e POSTGRES_PASSWORD=seedforge \
+  -e POSTGRES_DB=seedforge \
+  -p 5432:5432 \
+  postgres:16
 
-# Build all packages
-pnpm build
+# 2. Scaffold a config file
+npx seedforge init
 
-# Start test databases
-docker compose -f fixtures/ecommerce/docker-compose.yml up -d
-
-# Run all tests
-pnpm test
-
-# Lint
-pnpm lint
-
-# Launch the local web studio dashboard
-seedforge studio --config examples/ecommerce/seedforge.config.ts
+# 3. Seed your database
+npx seedforge seed
 ```
+
+That's it. By default SeedForge introspects the target database, infers column semantics, builds a generation plan, and writes realistic data to every table.
+
+> **Behind the scenes:** `npx seedforge` downloads the `seedforge` meta-package which bundles `@seedforge/cli` and all database adapters. The `init` command runs an interactive wizard, and `seed` runs the full generate+write pipeline.
 
 ## Key Features
 
@@ -103,21 +79,15 @@ seedforge studio --config examples/ecommerce/seedforge.config.ts
 - **MySQL** — multi-row `INSERT`, same write modes and rollback behavior
 - **MongoDB** — `insertMany`, same write modes and rollback behavior
 
-### Validation & Constraint Checking
-- **Pre-flight validation** — catches misconfigurations before any DB connection:
-  - NOT NULL columns with non-zero null probability
-  - Enum/CHECK values outside declared allowed set
-  - Unique constraints with insufficient generator cardinality
-  - FK insertion order violations
-- **Post-write verification** — opt-in validation after generation:
-  - Row count match against plan
-  - Random-sample FK reference integrity (configurable sample size, default 50)
-  - Junction table orphan detection
-- **Structured results** — grouped-by-table pass/fail report, CI-gateable via `valid` boolean
-
 ### Schema Drift Detection
 - **Canonical schema hashing** — `computeSchemaHash()` produces deterministic SHA256 digests
-- **Lockfile comparison** — drift warnings before generation (planned)
+- **Lockfile comparison** — drift warnings before generation
+- **Lockfile bundle** — portable `.sfbundle` for team sharing and CI reproducibility
+
+### Plugin System
+- **Generator registry** — plugins register custom generator kinds (e.g. `geo.city`)
+- **Lifecycle hooks** — `onSchemaIntrospected`, `onBeforeGenerate`, `onAfterWrite`
+- **Example plugin** — `@seedforge/plugin-geo` provides realistic geographic data
 
 ### Local Studio Dashboard
 - **Fastify backend** — serves static frontend SPA, provides REST + SSE APIs for schema, graph, config, plan, and seed execution
@@ -125,12 +95,40 @@ seedforge studio --config examples/ecommerce/seedforge.config.ts
 - **Inline config editing** — in-memory config overrides applied before seed; persist edits back to `seedforge.config.ts`
 - **Deterministic parity** — studio's "Seed now" produces identical results to CLI `seedforge seed` for the same config + seed
 
+### LLM-Assisted Suggestions
+- **`seedforge suggest`** — sends unresolved column metadata to an LLM (Claude, GPT, Gemini, etc.)
+- **Schema-only by default** — safe for any database; `--include-samples` for value-aware suggestions
+- **Zero LLM calls during generation** — the AI is consulted only at suggest-time
+
+## Installation (à la carte)
+
+All packages are published individually to npm so you install only what you need:
+
+```bash
+# Meta-package (recommended — includes CLI + all adapters)
+npm install seedforge
+
+# Or install individual packages
+npm install @seedforge/core @seedforge/adapter-postgres
+```
+
+| Package | Description |
+|---------|-------------|
+| `seedforge` | Meta-package — CLI + all adapters, zero-setup `npx seedforge` |
+| `@seedforge/cli` | CLI orchestration (seed, generate, validate, suggest, studio) |
+| `@seedforge/core` | Engine, schema IR, distributions, config DSL, lockfile, plugin system |
+| `@seedforge/adapter-postgres` | Postgres introspection + bulk writer |
+| `@seedforge/adapter-mysql` | MySQL introspection + bulk writer |
+| `@seedforge/adapter-mongodb` | MongoDB schema inference + bulk writer |
+| `@seedforge/studio` | Web dashboard (Fastify + React/Vite) |
+
 ## Project Scripts
 
 | Script | Description |
 |--------|-------------|
 | `pnpm build` | Build all packages (Turborepo parallel) |
-| `pnpm test` | Run all tests |
+| `pnpm test` | Run all unit tests |
+| `pnpm test:integration` | Run integration tests (requires Docker) |
 | `pnpm lint` | ESLint across all packages |
 | `pnpm clean` | Remove all `dist/` folders |
 | `pnpm dev` | Watch mode for all packages |
@@ -145,18 +143,21 @@ With a 1M `order_items` scale (1,886,991 total rows across 7 tables) on Windows 
 
 See [docs/benchmarks.md](docs/benchmarks.md) for full numbers across 10K / 100K / 1M scales.
 
-## Roadmap
-
-See [docs/ROADMAP.md](docs/ROADMAP.md) for the full milestone plan.
-
-## Contributing
-
-See [docs/SETUP.md](docs/SETUP.md) for local development setup.
-
 ## Documentation
 
+- [CLI Reference](docs/cli/reference.md) — auto-generated from `seedforge --help`
+- [Config DSL Reference](docs/config-dsl.md) — all config options, generators, distributions, personas
 - [Architecture](docs/ARCHITECTURE.md)
 - [Adapters](docs/ADAPTERS.md)
+- [Plugin Authoring Guide](docs/plugins.md)
 - [Setup Guide](docs/SETUP.md)
 - [Roadmap](docs/ROADMAP.md)
 - [Benchmarks](docs/benchmarks.md)
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for local development setup, code style, and PR workflow.
+
+## License
+
+[MIT](LICENSE)
