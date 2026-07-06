@@ -59,7 +59,19 @@ export async function startPostgres(): Promise<string> {
     .withExposedPorts(5432)
     .withStartupTimeout(60_000)
     .start();
-  return `postgres://seedforge:seedforge@${_pgContainer.getHost()}:${_pgContainer.getMappedPort(5432)}/seedforge`;
+  // Wait for Postgres to finish initializing and accept connections
+  const pgConnStr = `postgres://seedforge:seedforge@${_pgContainer.getHost()}:${_pgContainer.getMappedPort(5432)}/seedforge`;
+  const pgPool = new pg.Pool({ connectionString: pgConnStr, max: 1 });
+  for (let i = 0; i < 30; i++) {
+    try {
+      await pgPool.query('SELECT 1');
+      break;
+    } catch {
+      await new Promise((r) => setTimeout(r, 1000));
+    }
+  }
+  await pgPool.end();
+  return pgConnStr;
 }
 
 export async function startMySQL(): Promise<string> {
