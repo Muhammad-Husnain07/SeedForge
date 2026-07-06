@@ -1,0 +1,9 @@
+{
+  "releases": [
+    {
+      "name": "@seed-forge/seedforge",
+      "type": "patch"
+    }
+  ],
+  "summary": "Auto-generated patch release"
+}
