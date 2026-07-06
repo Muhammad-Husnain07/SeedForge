@@ -48,7 +48,7 @@ async function getChangedPackages() {
 async function getExistingChangesets() {
   const changesetDir = resolve(root, '.changeset');
   const files = await readdir(changesetDir);
-  return files.filter(f => f.endsWith('.json') && f !== 'config.json');
+  return files.filter(f => f.endsWith('.md'));
 }
 
 async function main() {
@@ -64,12 +64,12 @@ async function main() {
     return;
   }
 
-  const releases = packages.map(name => ({ name, type: 'patch' }));
-  const changeset = { releases, summary: 'Auto-generated patch release' };
+  const frontmatter = packages.map(name => `"${name}": patch`).join('\n');
+  const changeset = `---\n${frontmatter}\n---\n\nAuto-generated patch release\n`;
 
   const name = Date.now().toString(36);
-  const outPath = resolve(root, '.changeset', `${name}.json`);
-  await writeFile(outPath, JSON.stringify(changeset, null, 2) + '\n', 'utf-8');
+  const outPath = resolve(root, '.changeset', `${name}.md`);
+  await writeFile(outPath, changeset, 'utf-8');
   console.log(`Created changeset for: ${packages.join(', ')}`);
 }
 
