@@ -11,14 +11,14 @@ function loadSeed(): Record<string, Record<string, unknown>[]> {
     resolve(__dirname, '../../../fixtures/ecommerce/mongo-seed.json'),
     'utf-8',
   );
-  return JSON.parse(raw);
+  return JSON.parse(raw) as Record<string, Record<string, unknown>[]>;
 }
 
 describe('Mongo inference', () => {
   const seed = loadSeed();
 
   it('should infer users collection with nested fields', () => {
-    const table = inferFromDocuments('users', seed.users);
+    const table = inferFromDocuments('users', seed.users!);
     expect(table.name).toBe('users');
     expect(table.columns.length).toBeGreaterThanOrEqual(8);
 
@@ -39,7 +39,7 @@ describe('Mongo inference', () => {
   });
 
   it('should identify _id as uuid primary key', () => {
-    const table = inferFromDocuments('users', seed.users);
+    const table = inferFromDocuments('users', seed.users!);
     expect(table.primaryKey).toEqual(['_id']);
     const idCol = table.columns.find((c) => c.name === '_id')!;
     expect(idCol.isPrimaryKey).toBe(true);
@@ -47,21 +47,21 @@ describe('Mongo inference', () => {
   });
 
   it('should infer products collection with arrays', () => {
-    const table = inferFromDocuments('products', seed.products);
+    const table = inferFromDocuments('products', seed.products!);
     const ratingsCol = table.columns.find((c) => c.name === 'ratings')!;
     expect(ratingsCol).toBeDefined();
     expect(ratingsCol.logicalType).toBe('array');
   });
 
   it('should mark nullable fields correctly', () => {
-    const table = inferFromDocuments('products', seed.products);
+    const table = inferFromDocuments('products', seed.products!);
     const descCol = table.columns.find((c) => c.name === 'description')!;
     expect(descCol).toBeDefined();
     expect(descCol.nullable).toBe(true);
   });
 
   it('should infer orders collection with nested order items', () => {
-    const table = inferFromDocuments('orders', seed.orders);
+    const table = inferFromDocuments('orders', seed.orders!);
     const statusCol = table.columns.find((c) => c.name === 'status')!;
     expect(statusCol.logicalType).toBe('string');
 
@@ -71,13 +71,13 @@ describe('Mongo inference', () => {
   });
 
   it('should infer dates as timestamp type', () => {
-    const table = inferFromDocuments('users', seed.users);
+    const table = inferFromDocuments('users', seed.users!);
     const createdAtCol = table.columns.find((c) => c.name === 'createdAt')!;
     expect(createdAtCol.logicalType).toBe('timestamp');
   });
 
   it('should return empty foreign keys and unique constraints', () => {
-    const table = inferFromDocuments('users', seed.users);
+    const table = inferFromDocuments('users', seed.users!);
     expect(table.foreignKeys).toEqual([]);
     expect(table.uniqueConstraints).toEqual([]);
   });

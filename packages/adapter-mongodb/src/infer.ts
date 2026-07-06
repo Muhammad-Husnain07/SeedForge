@@ -8,7 +8,7 @@ function isExtendedJson(
     value !== null &&
     !Array.isArray(value)
   ) {
-    const keys = Object.keys(value as Record<string, unknown>);
+    const keys = Object.keys(value);
     if (
       keys.length === 1 &&
       (keys[0] === '$oid' || keys[0] === '$date')

@@ -1,4 +1,4 @@
-import { MongoClient, type Document } from 'mongodb';
+import { MongoClient } from 'mongodb';
 import type { GenerationBatch, WriteProgressEmitter } from '@seedforge/core';
 import type { RelationshipGraph, DatabaseSchema, WriteOptions, WriteResult, WriteProgressEvent } from '@seedforge/core';
 
@@ -89,7 +89,7 @@ export async function write(
 
         for (let i = 0; i < batch.rows.length; i += batchSize) {
           const chunk = batch.rows.slice(i, i + batchSize);
-          await db.collection(batch.table).insertMany(chunk as Document[], { ordered: false });
+          await db.collection(batch.table).insertMany(chunk, { ordered: false });
         }
 
         rowsWritten[batch.table] = (rowsWritten[batch.table] ?? 0) + batch.rows.length;

@@ -31,10 +31,7 @@ export async function introspect(
           sampleSize < count
             ? [{ $sample: { size: sampleSize } }]
             : [];
-        documents = (await coll.aggregate(pipeline).toArray()) as Record<
-          string,
-          unknown
-        >[];
+        documents = await coll.aggregate(pipeline).toArray();
       }
 
       const table = inferFromDocuments(collInfo.name, documents);

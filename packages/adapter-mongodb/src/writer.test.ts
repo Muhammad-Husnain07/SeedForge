@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, beforeEach, afterAll } from 'vitest';
 import { MongoClient } from 'mongodb';
 import { write } from './writer.js';
 import { buildGraph, analyzeSchema, buildGenerationPlan, generate, WriteProgressEmitter } from '@seedforge/core';
-import type { GenerationBatch, SeedForgeConfig } from '@seedforge/core';
+import type { GenerationBatch, SeedForgeConfig, WriteProgressEvent } from '@seedforge/core';
 import type { RelationshipGraph, DatabaseSchema } from '@seedforge/core';
 
 const CONNECTION_STRING = 'mongodb://localhost:27017';
@@ -55,11 +55,11 @@ const schema: DatabaseSchema = {
 };
 
 const graph: RelationshipGraph = {
+  nodes: ['users', 'products'],
+  edges: [],
   insertionOrder: ['users', 'products'],
-  adjacencyList: {
-    users: [],
-    products: [],
-  },
+  cycles: [],
+  levels: [['users', 'products']],
 };
 
 beforeAll(async () => {
@@ -97,6 +97,7 @@ describe('MongoDB writer integration', () => {
   });
 
   itMongo('should insert documents', async () => {
+    // eslint-disable-next-line @typescript-eslint/require-await
     async function* batches(): AsyncGenerator<GenerationBatch> {
       yield {
         table: 'users',
@@ -120,6 +121,7 @@ describe('MongoDB writer integration', () => {
   });
 
   itMongo('should work in truncate mode', async () => {
+    // eslint-disable-next-line @typescript-eslint/require-await
     async function* firstBatch(): AsyncGenerator<GenerationBatch> {
       yield {
         table: 'products',
@@ -135,6 +137,7 @@ describe('MongoDB writer integration', () => {
       schema,
     );
 
+    // eslint-disable-next-line @typescript-eslint/require-await
     async function* secondBatch(): AsyncGenerator<GenerationBatch> {
       yield {
         table: 'products',
@@ -161,6 +164,7 @@ describe('MongoDB writer integration', () => {
   });
 
   itMongo('should work in append mode', async () => {
+    // eslint-disable-next-line @typescript-eslint/require-await
     async function* firstBatch(): AsyncGenerator<GenerationBatch> {
       yield {
         table: 'products',
@@ -176,6 +180,7 @@ describe('MongoDB writer integration', () => {
       schema,
     );
 
+    // eslint-disable-next-line @typescript-eslint/require-await
     async function* secondBatch(): AsyncGenerator<GenerationBatch> {
       yield {
         table: 'products',
@@ -202,6 +207,7 @@ describe('MongoDB writer integration', () => {
   });
 
   itMongo('should throw on fresh mode when collection is non-empty', async () => {
+    // eslint-disable-next-line @typescript-eslint/require-await
     async function* firstBatch(): AsyncGenerator<GenerationBatch> {
       yield {
         table: 'products',
@@ -217,6 +223,7 @@ describe('MongoDB writer integration', () => {
       schema,
     );
 
+    // eslint-disable-next-line @typescript-eslint/require-await
     async function* secondBatch(): AsyncGenerator<GenerationBatch> {
       yield {
         table: 'products',
@@ -237,8 +244,9 @@ describe('MongoDB writer integration', () => {
   });
 
   itMongo('should emit progress events', async () => {
-    const events: any[] = [];
+    const events: WriteProgressEvent[] = [];
 
+    // eslint-disable-next-line @typescript-eslint/require-await
     async function* batches(): AsyncGenerator<GenerationBatch> {
       yield {
         table: 'products',
@@ -252,7 +260,7 @@ describe('MongoDB writer integration', () => {
       batches(),
       graph,
       schema,
-      { onProgress: (e) => events.push(e) },
+      { mode: 'fresh', onProgress: (e) => events.push(e) },
     );
 
     expect(events.length).toBeGreaterThanOrEqual(1);
@@ -260,10 +268,11 @@ describe('MongoDB writer integration', () => {
   });
 
   itMongo('should emit progress events via emitter', async () => {
-    const events: any[] = [];
+    const events: WriteProgressEvent[] = [];
     const emitter = new WriteProgressEmitter();
-    emitter.on('progress', (e) => events.push(e));
+    emitter.on('progress', (e: WriteProgressEvent) => events.push(e));
 
+    // eslint-disable-next-line @typescript-eslint/require-await
     async function* batches(): AsyncGenerator<GenerationBatch> {
       yield {
         table: 'products',
@@ -277,7 +286,7 @@ describe('MongoDB writer integration', () => {
       batches(),
       graph,
       schema,
-      { progressEmitter: emitter },
+      { mode: 'fresh', progressEmitter: emitter },
     );
 
     expect(events.length).toBeGreaterThanOrEqual(1);
@@ -384,8 +393,8 @@ describe('MongoDB E2E fixture test', () => {
     await client.close();
 
     const emitter = new WriteProgressEmitter();
-    const progressEvents: any[] = [];
-    emitter.on('progress', (e) => progressEvents.push(e));
+    const progressEvents: WriteProgressEvent[] = [];
+    emitter.on('progress', (e: WriteProgressEvent) => progressEvents.push(e));
 
     const seed = 42;
     const batchIter = generate(mongoGraph, plan, mongoSchema, seed);
@@ -414,7 +423,7 @@ describe('MongoDB E2E fixture test', () => {
     }
 
     // Verify FK integrity: every userId in orders matches a _id in users
-    for (const doc of await db2.collection('orders').find({}).toArray()) {
+    for (const doc of await db2.collection('orders').find({}).toArray() as Record<string, unknown>[]) {
       if (doc.userId) {
         const parent = await db2.collection('users').findOne({ _id: doc.userId });
         expect(parent).not.toBeNull();
@@ -427,7 +436,7 @@ describe('MongoDB E2E fixture test', () => {
   itMongo('fresh mode rejects non-empty collections (best-effort guard)', async () => {
     const mongoGraph = buildGraph(mongoSchema);
     const inferred = analyzeSchema(mongoSchema);
-    const plan = buildGenerationPlan(mongoSchema, e2eConfig, inferred);
+    buildGenerationPlan(mongoSchema, e2eConfig, inferred);
 
     const client = new MongoClient(CONNECTION_STRING);
     await client.connect();
@@ -448,6 +457,7 @@ describe('MongoDB E2E fixture test', () => {
 
     await client.close();
 
+    // eslint-disable-next-line @typescript-eslint/require-await
     async function* emptyBatch() {
       yield { table: 'products', phase: 'insert' as const, rows: [{ _id: 'b0000000-0000-0000-0000-000000000001', name: 'Test', price: 10, sku: 'TST-001', description: 'desc', inStock: true }] };
     }
