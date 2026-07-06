@@ -1,5 +1,17 @@
 # @seed-forge/cli
 
+## 0.2.3
+
+### Patch Changes
+
+- Auto-generated patch release
+- Updated dependencies
+  - @seed-forge/adapter-mongodb@0.2.3
+  - @seed-forge/adapter-mysql@0.2.3
+  - @seed-forge/adapter-postgres@0.2.3
+  - @seed-forge/core@0.2.3
+  - @seed-forge/studio@0.2.3
+
 ## 0.2.2
 
 ### Patch Changes
