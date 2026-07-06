@@ -1,4 +1,4 @@
-import type { LogicalType } from '@seedforge/core';
+import type { LogicalType } from '@seed-forge/core';
 
 const MYSQL_TYPE_MAP: Record<string, LogicalType> = {
   tinyint: 'integer',

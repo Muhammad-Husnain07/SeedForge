@@ -1,5 +1,5 @@
 import fs from 'node:fs/promises';
-import { introspect } from '@seedforge/core';
+import { introspect } from '@seed-forge/core';
 import { loadConfig, inferConnectConfig } from '../utils/config.js';
 import { registerAdapters } from '../utils/adapters.js';
 import { isJsonMode, printJson, printError, printSuccess, printHeading } from '../utils/format.js';

@@ -44,15 +44,15 @@ packages/
 
   adapter-postgres/     — Postgres introspection (INFORMATION_SCHEMA, pg_catalog)
                           + bulk writer (multi-row INSERT, COPY, fresh/truncate/append).
-                          Deps: pg, @seedforge/core.
+                          Deps: pg, @seed-forge/core.
 
   adapter-mysql/        — MySQL introspection (INFORMATION_SCHEMA)
                           + bulk writer (multi-row INSERT, fresh/truncate/append).
-                          Deps: mysql2, @seedforge/core.
+                          Deps: mysql2, @seed-forge/core.
 
   adapter-mongodb/      — MongoDB schema inference (document sampling via
                           $sample aggregation) + bulk writer (insertMany).
-                          Deps: mongodb, @seedforge/core.
+                          Deps: mongodb, @seed-forge/core.
 
   cli/                  — The `seedforge` command. Thin orchestration.
                             Deps: commander, all of the above.
@@ -60,10 +60,6 @@ packages/
   studio/               — Local web dashboard. Fastify backend + React/Vite frontend.
                             REST APIs for schema, graph, config, plan, seed execution.
                             SSE-based live progress. ER diagram via React Flow.
-
-  seedforge/            — Meta-package. Zero-code package that depends on
-                            @seedforge/cli + all adapters so `npx seedforge`
-                            works with zero prior setup.
 
   integration-tests/    — Testcontainers-based end-to-end pipeline tests
                             (private, not published).
@@ -198,9 +194,9 @@ The implementation evolved during development in several ways worth noting:
 
 5. **Lockfile/drift and export/import were implemented earlier than the roadmap planned.** These shipped in Milestone IX/X rather than being separate milestones, because the bundle format was needed for the studio's "download snapshot" feature.
 
-6. **Package count grew.** The original doc listed 6 packages (core, 3 adapters, cli, studio). The actual monorepo now contains 9 packages (adding `seedforge` meta-package, `integration-tests`, and `seedforge-plugin-geo`).
+6. **Package count grew.** The original doc listed 6 packages (core, 3 adapters, cli, studio). The actual monorepo now contains 9 packages (adding `integration-tests` and `seedforge-plugin-geo`).
 
-7. **All packages ship at the same version.** With `@changesets/cli` and the `fixed` config, all publishable packages (`@seedforge/core`, `@seedforge/adapter-*`, `@seedforge/cli`, `@seedforge/studio`, `seedforge`) are released together with synced version numbers. This was not part of the original design but simplifies the install experience.
+7. **All packages ship at the same version.** With `@changesets/cli` and the `fixed` config, all publishable packages (`@seed-forge/core`, `@seed-forge/adapter-*`, `@seed-forge/cli`, `@seed-forge/studio`) are released together with synced version numbers. This was not part of the original design but simplifies the install experience.
 
 ## Current State (Milestone XI Complete)
 
@@ -227,10 +223,9 @@ The implementation evolved during development in several ways worth noting:
 - ✅ Integration test suite — Testcontainers-based full end-to-end pipeline testing
 - ✅ Performance hardening — streaming pipeline, BoundedQueue, benchmark suite, 1M order_items @ 7,989 rows/s
 - ✅ Studio dashboard — Fastify backend + React/Vite frontend, ER diagram (React Flow), live progress (SSE), "Seed now" button
-- ✅ Meta-package `seedforge` — zero-dependency bin that re-exports `@seedforge/cli` for `npx seedforge` zero-setup
 - ✅ Changesets monorepo versioning — `@changesets/cli` with `fixed` config for synced releases
 - ✅ CI workflows — lint + unit + integration on PR, publish-on-tag with npm provenance
-- ✅ README with verified 60-second quick-start — copy-pasteable `docker run` → `npx seedforge init` → `npx seedforge seed`
+- ✅ README with verified 60-second quick-start — copy-pasteable `docker run` → `npx @seed-forge/cli init` → `npx @seed-forge/cli seed`
 - ✅ Config DSL reference — all options, generators, distributions, personas documented
 - ✅ CLI reference — auto-generated from Commander's `--help` output (always in sync)
 - ✅ Plugin-authoring guide — updated to match actual `afterGenerate` metadata signature
@@ -242,11 +237,11 @@ The implementation evolved during development in several ways worth noting:
 
 | Package | Test count | Environment |
 |---|---|---|
-| `@seedforge/core` | ~130+ | Standalone (unit + property) |
-| `@seedforge/adapter-postgres` | ~18 | Docker Postgres 16 |
-| `@seedforge/adapter-mysql` | ~17 | Docker MySQL 8 |
-| `@seedforge/adapter-mongodb` | ~16 | Docker MongoDB 7 |
-| `@seedforge/cli` | ~5 | Standalone |
+| `@seed-forge/core` | ~130+ | Standalone (unit + property) |
+| `@seed-forge/adapter-postgres` | ~18 | Docker Postgres 16 |
+| `@seed-forge/adapter-mysql` | ~17 | Docker MySQL 8 |
+| `@seed-forge/adapter-mongodb` | ~16 | Docker MongoDB 7 |
+| `@seed-forge/cli` | ~5 | Standalone |
 | **Total** | **~190+** | `docker compose up -d` |
 
 > **Note**: All 258 tests pass across 28 test files as of Milestone X.

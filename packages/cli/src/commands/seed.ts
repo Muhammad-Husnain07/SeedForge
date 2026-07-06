@@ -10,8 +10,8 @@ import {
   hashToSeed,
   WriteProgressEmitter,
   loadPlugins,
-} from '@seedforge/core';
-import type { WriteMode } from '@seedforge/core';
+} from '@seed-forge/core';
+import type { WriteMode } from '@seed-forge/core';
 import ora from 'ora';
 import { performance } from 'node:perf_hooks';
 import { loadConfig, inferConnectConfig } from '../utils/config.js';
@@ -97,7 +97,7 @@ export async function seedCommand(opts: {
       const events: unknown[] = [];
       progressEmitter.on('progress', (e: unknown) => events.push(e));
 
-      const genOpts: import('@seedforge/core').GenerateOptions = { plugins: pluginResult.plugins };
+      const genOpts: import('@seed-forge/core').GenerateOptions = { plugins: pluginResult.plugins };
       if (opts.batchSize) genOpts.batchSize = opts.batchSize;
       const batches = opts.parallel
         ? generateFilteredParallel(graph, plan, schema, seed, tablesFilter, genOpts)
@@ -165,8 +165,8 @@ export async function seedCommand(opts: {
       };
 
       async function* withBenchmarkTracking(
-        batches: AsyncIterable<import('@seedforge/core').GenerationBatch>,
-      ): AsyncGenerator<import('@seedforge/core').GenerationBatch> {
+        batches: AsyncIterable<import('@seed-forge/core').GenerationBatch>,
+      ): AsyncGenerator<import('@seed-forge/core').GenerationBatch> {
         for await (const batch of batches) {
           const now = performance.now();
           if (!benchmarkData.tableTimes[batch.table]) {
@@ -185,7 +185,7 @@ export async function seedCommand(opts: {
         }
       }
 
-      const genOpts: import('@seedforge/core').GenerateOptions = { plugins: pluginResult.plugins };
+      const genOpts: import('@seed-forge/core').GenerateOptions = { plugins: pluginResult.plugins };
       if (opts.batchSize) genOpts.batchSize = opts.batchSize;
       const batches = opts.parallel
         ? generateFilteredParallel(graph, plan, schema, seed, tablesFilter, genOpts)
@@ -255,7 +255,7 @@ export async function seedCommand(opts: {
       if (opts.verify) {
         printInfo('Running post-write verification...');
         const rowsByTable: Record<string, Record<string, unknown>[]> = {};
-        const vGenOpts: import('@seedforge/core').GenerateOptions = {};
+        const vGenOpts: import('@seed-forge/core').GenerateOptions = {};
         if (opts.batchSize) vGenOpts.batchSize = opts.batchSize;
         for await (const batch of generateFiltered(graph, plan, schema, seed, tablesFilter, vGenOpts)) {
           if (!rowsByTable[batch.table]) rowsByTable[batch.table] = [];
@@ -277,13 +277,13 @@ export async function seedCommand(opts: {
 }
 
 async function* generateFiltered(
-  graph: import('@seedforge/core').RelationshipGraph,
-  plan: import('@seedforge/core').GenerationPlan,
-  schema: import('@seedforge/core').DatabaseSchema,
+  graph: import('@seed-forge/core').RelationshipGraph,
+  plan: import('@seed-forge/core').GenerationPlan,
+  schema: import('@seed-forge/core').DatabaseSchema,
   seed: number,
   tablesFilter: string[] | null,
-  genOpts?: import('@seedforge/core').GenerateOptions,
-): AsyncIterable<import('@seedforge/core').GenerationBatch> {
+  genOpts?: import('@seed-forge/core').GenerateOptions,
+): AsyncIterable<import('@seed-forge/core').GenerationBatch> {
   for await (const batch of generate(graph, plan, schema, seed, genOpts)) {
     if (tablesFilter && !tablesFilter.includes(batch.table)) continue;
     yield batch;
@@ -291,14 +291,14 @@ async function* generateFiltered(
 }
 
 async function* generateFilteredParallel(
-  graph: import('@seedforge/core').RelationshipGraph,
-  plan: import('@seedforge/core').GenerationPlan,
-  schema: import('@seedforge/core').DatabaseSchema,
+  graph: import('@seed-forge/core').RelationshipGraph,
+  plan: import('@seed-forge/core').GenerationPlan,
+  schema: import('@seed-forge/core').DatabaseSchema,
   seed: number,
   tablesFilter: string[] | null,
-  genOpts?: import('@seedforge/core').GenerateOptions,
-): AsyncIterable<import('@seedforge/core').GenerationBatch> {
-  const { generateParallel } = await import('@seedforge/core');
+  genOpts?: import('@seed-forge/core').GenerateOptions,
+): AsyncIterable<import('@seed-forge/core').GenerationBatch> {
+  const { generateParallel } = await import('@seed-forge/core');
   for await (const batch of generateParallel(graph, plan, schema, seed, genOpts)) {
     if (tablesFilter && !tablesFilter.includes(batch.table)) continue;
     yield batch;

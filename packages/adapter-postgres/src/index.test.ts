@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { name } from './index.js';
 
-describe('@seedforge/adapter-postgres', () => {
+describe('@seed-forge/adapter-postgres', () => {
   it('should export its name', () => {
-    expect(name).toBe('@seedforge/adapter-postgres');
+    expect(name).toBe('@seed-forge/adapter-postgres');
   });
 });

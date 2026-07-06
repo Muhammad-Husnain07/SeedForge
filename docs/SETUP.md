@@ -21,7 +21,7 @@ pnpm install
 pnpm build
 
 # Build a single package
-pnpm --filter @seedforge/adapter-postgres build
+pnpm --filter @seed-forge/adapter-postgres build
 ```
 
 The build uses `tsup` with `--format esm` to produce ESM-compatible output in each package's `dist/` folder.
@@ -43,7 +43,7 @@ This starts Postgres 16 and MySQL 8 containers pre-loaded with the e-commerce fi
 pnpm test
 
 # Single package
-pnpm --filter @seedforge/adapter-mongodb test
+pnpm --filter @seed-forge/adapter-mongodb test
 ```
 
 ### Test skip behavior

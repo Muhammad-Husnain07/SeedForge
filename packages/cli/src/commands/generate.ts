@@ -6,7 +6,7 @@ import {
   generate,
   hashToSeed,
   loadPlugins,
-} from '@seedforge/core';
+} from '@seed-forge/core';
 import { loadConfig, inferConnectConfig } from '../utils/config.js';
 import { registerAdapters } from '../utils/adapters.js';
 import { isJsonMode, printJson, printError, printSuccess, renderRowPreview, printHeading, printInfo } from '../utils/format.js';

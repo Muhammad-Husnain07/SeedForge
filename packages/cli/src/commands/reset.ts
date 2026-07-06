@@ -1,4 +1,4 @@
-import { readLockfile } from '@seedforge/core';
+import { readLockfile } from '@seed-forge/core';
 import { seedCommand } from './seed.js';
 
 export async function resetCommand(_opts: Record<string, unknown>): Promise<void> {

@@ -5,8 +5,8 @@ import type {
   DatabaseSchema,
   WriteProgressEvent,
   WriteResult,
-} from '@seedforge/core';
-import { generate, WriteProgressEmitter } from '@seedforge/core';
+} from '@seed-forge/core';
+import { generate, WriteProgressEmitter } from '@seed-forge/core';
 import { eventBus } from './events.js';
 
 export interface SeedRun {
@@ -71,9 +71,9 @@ interface WriteModule {
 
 async function importWriteModule(dialect: string): Promise<WriteModule> {
   switch (dialect) {
-    case 'postgres': return import('@seedforge/adapter-postgres');
-    case 'mysql': return import('@seedforge/adapter-mysql');
-    case 'mongodb': return import('@seedforge/adapter-mongodb');
+    case 'postgres': return import('@seed-forge/adapter-postgres');
+    case 'mysql': return import('@seed-forge/adapter-mysql');
+    case 'mongodb': return import('@seed-forge/adapter-mongodb');
     default: throw new Error(`Unknown dialect: ${dialect}`);
   }
 }

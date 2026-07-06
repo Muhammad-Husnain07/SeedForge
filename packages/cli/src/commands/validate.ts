@@ -1,4 +1,4 @@
-import { introspect, buildGraph, buildGenerationPlan, analyzeSchema, validatePreFlight } from '@seedforge/core';
+import { introspect, buildGraph, buildGenerationPlan, analyzeSchema, validatePreFlight } from '@seed-forge/core';
 import { loadConfig, inferConnectConfig } from '../utils/config.js';
 import { registerAdapters } from '../utils/adapters.js';
 import { isJsonMode, printJson, printError, printSuccess, renderValidationTable, printHeading } from '../utils/format.js';

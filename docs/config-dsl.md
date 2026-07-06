@@ -5,12 +5,12 @@ SeedForge uses a TypeScript configuration file (`seedforge.config.ts`) with full
 ## Basic Structure
 
 ```typescript
-import { defineConfig } from '@seedforge/core';
+import { defineConfig } from '@seed-forge/core';
 
 export default defineConfig({
   connection: { /* database connection */ },
   tables: { /* per-table configuration */ },
-  plugins: ['@seedforge/plugin-geo'],
+  plugins: ['@seed-forge/plugin-geo'],
 });
 ```
 
@@ -184,7 +184,7 @@ Plugins listed in `plugins: [...]` are loaded and can register custom generator 
 
 ```typescript
 plugins: [
-  '@seedforge/plugin-geo',
+  '@seed-forge/plugin-geo',
   './path/to/local-plugin',
   { name: 'seedforge-plugin-custom', options: { apiKey: '...' } },
 ]

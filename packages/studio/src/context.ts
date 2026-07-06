@@ -8,7 +8,7 @@ import type {
   GenerationPlan,
   FieldSemanticMatch,
   ConnectConfig,
-} from '@seedforge/core';
+} from '@seed-forge/core';
 import {
   introspect,
   buildGraph,
@@ -16,7 +16,7 @@ import {
   analyzeSchema,
   hashToSeed,
   registerIntrospector,
-} from '@seedforge/core';
+} from '@seed-forge/core';
 
 export interface StudioContext {
   config: SeedForgeConfig;
@@ -67,17 +67,17 @@ function inferConnectConfig(config: SeedForgeConfig): ConnectConfig {
 async function registerAdapters(dialect: string): Promise<void> {
   switch (dialect) {
     case 'postgres': {
-      const mod = await import('@seedforge/adapter-postgres');
+      const mod = await import('@seed-forge/adapter-postgres');
       registerIntrospector('postgres', { introspect: mod.introspect });
       break;
     }
     case 'mysql': {
-      const mod = await import('@seedforge/adapter-mysql');
+      const mod = await import('@seed-forge/adapter-mysql');
       registerIntrospector('mysql', { introspect: mod.introspect });
       break;
     }
     case 'mongodb': {
-      const mod = await import('@seedforge/adapter-mongodb');
+      const mod = await import('@seed-forge/adapter-mongodb');
       registerIntrospector('mongodb', { introspect: mod.introspect });
       break;
     }

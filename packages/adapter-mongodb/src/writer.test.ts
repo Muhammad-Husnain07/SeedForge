@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeAll, beforeEach, afterAll } from 'vitest';
 import { MongoClient } from 'mongodb';
 import { write } from './writer.js';
-import { buildGraph, analyzeSchema, buildGenerationPlan, generate, WriteProgressEmitter } from '@seedforge/core';
-import type { GenerationBatch, SeedForgeConfig, WriteProgressEvent } from '@seedforge/core';
-import type { RelationshipGraph, DatabaseSchema } from '@seedforge/core';
+import { buildGraph, analyzeSchema, buildGenerationPlan, generate, WriteProgressEmitter } from '@seed-forge/core';
+import type { GenerationBatch, SeedForgeConfig, WriteProgressEvent } from '@seed-forge/core';
+import type { RelationshipGraph, DatabaseSchema } from '@seed-forge/core';
 
 const CONNECTION_STRING = 'mongodb://localhost:27017';
 const DATABASE = 'test_writer';

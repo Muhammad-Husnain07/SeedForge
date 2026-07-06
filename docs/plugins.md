@@ -66,16 +66,16 @@ Plugins are **never auto-activated**. Add them explicitly to `seedforge.config.t
 export default defineConfig({
   connection: { ... },
   tables: { ... },
-  plugins: ['@seedforge/plugin-geo'],
+  plugins: ['@seed-forge/plugin-geo'],
 });
 ```
 
 Each entry can be:
-- An npm package name: `'@seedforge/plugin-geo'`
+- An npm package name: `'@seed-forge/plugin-geo'`
 - A local path: `'./packages/my-plugin'`
-- An object with options: `{ name: '@seedforge/plugin-geo', options: { ... } }`
+- An object with options: `{ name: '@seed-forge/plugin-geo', options: { ... } }`
 
-## Example: `@seedforge/plugin-geo`
+## Example: `@seed-forge/plugin-geo`
 
 This built-in example plugin provides a `geo.city` generator that returns internally-consistent city/region/country/lat-lng tuples from a static dataset of real cities.
 
@@ -83,7 +83,7 @@ This built-in example plugin provides a `geo.city` generator that returns intern
 
 ```typescript
 // seedforge.config.ts
-import { defineConfig } from '@seedforge/core';
+import { defineConfig } from '@seed-forge/core';
 
 export default defineConfig({
   connection: { dialect: 'postgres', connectionString: '...' },
@@ -97,7 +97,7 @@ export default defineConfig({
       },
     },
   },
-  plugins: ['@seedforge/plugin-geo'],
+  plugins: ['@seed-forge/plugin-geo'],
 });
 ```
 
@@ -120,7 +120,7 @@ Full source at `packages/seedforge-plugin-geo/`:
 - `src/index.ts` — Plugin implementation registering `geo.city` with `compatibleTypes` and `estimateDistinct`
 - `src/index.test.ts` — 7 tests covering correctness, filtering, determinism
 
-The plugin only depends on `@seedforge/core`'s public types (`SeedForgePlugin`, `PRNG`, `GeneratorRegistry`).
+The plugin only depends on `@seed-forge/core`'s public types (`SeedForgePlugin`, `PRNG`, `GeneratorRegistry`).
 
 ## Writing a Plugin
 
@@ -130,7 +130,7 @@ The plugin only depends on `@seedforge/core`'s public types (`SeedForgePlugin`, 
 {
   "name": "seedforge-plugin-myplugin",
   "type": "module",
-  "dependencies": { "@seedforge/core": "^0.1.0" }
+  "dependencies": { "@seed-forge/core": "^0.1.0" }
 }
 ```
 
@@ -138,7 +138,7 @@ The plugin only depends on `@seedforge/core`'s public types (`SeedForgePlugin`, 
 
 ```typescript
 // src/index.ts
-import type { SeedForgePlugin } from '@seedforge/core';
+import type { SeedForgePlugin } from '@seed-forge/core';
 
 const plugin: SeedForgePlugin = {
   name: 'seedforge-plugin-myplugin',
@@ -181,7 +181,7 @@ Then reference `{ kind: 'my-custom-kind', params: {} }` in any field config.
 
 ## Discoverability
 
-SeedForge scans `node_modules` for packages matching `seedforge-plugin-*` or `@seedforge/plugin-*`. These are listed as available-but-not-enabled — they are never auto-activated.
+SeedForge scans `node_modules` for packages matching `seedforge-plugin-*` or `@seed-forge/plugin-*`. These are listed as available-but-not-enabled — they are never auto-activated.
 
 ## Validation Errors
 

@@ -5,7 +5,7 @@ import type {
   TableSchema,
   ForeignKey,
   DatabaseSchema,
-} from '@seedforge/core';
+} from '@seed-forge/core';
 
 export interface MysqlIntrospectConfig {
   connectionString: string;

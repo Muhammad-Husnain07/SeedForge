@@ -1,4 +1,16 @@
-# @seedforge/cli
+# @seed-forge/cli
+
+## 0.1.1
+
+### Patch Changes
+
+- Rename npm scope from `@seedforge` to `@seed-forge` (npm org `seed-forge`). Remove `seedforge` meta-package (name blocked on npm — too similar to existing `seed-forge`).
+- Updated dependencies
+  - @seed-forge/core@0.1.1
+  - @seed-forge/adapter-postgres@0.1.1
+  - @seed-forge/adapter-mysql@0.1.1
+  - @seed-forge/adapter-mongodb@0.1.1
+  - @seed-forge/studio@0.1.1
 
 ## 0.1.0
 
@@ -9,8 +21,8 @@
 ### Patch Changes
 
 - Updated dependencies
-  - @seedforge/core@0.1.0
-  - @seedforge/adapter-postgres@0.1.0
-  - @seedforge/adapter-mysql@0.1.0
-  - @seedforge/adapter-mongodb@0.1.0
-  - @seedforge/studio@0.1.0
+  - @seed-forge/core@0.1.0
+  - @seed-forge/adapter-postgres@0.1.0
+  - @seed-forge/adapter-mysql@0.1.0
+  - @seed-forge/adapter-mongodb@0.1.0
+  - @seed-forge/studio@0.1.0

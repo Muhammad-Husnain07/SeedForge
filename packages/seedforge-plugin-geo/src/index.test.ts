@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import plugin from './index.js';
-import type { GeneratorRegistry, PRNG } from '@seedforge/core';
+import type { GeneratorRegistry, PRNG } from '@seed-forge/core';
 
 const mockPrng: PRNG = {
   next() { return 0.5; },
@@ -17,9 +17,9 @@ function createMockRegistry(): GeneratorRegistry {
   };
 }
 
-describe('@seedforge/plugin-geo', () => {
+describe('@seed-forge/plugin-geo', () => {
   it('has the correct plugin name', () => {
-    expect(plugin.name).toBe('@seedforge/plugin-geo');
+    expect(plugin.name).toBe('@seed-forge/plugin-geo');
     expect(plugin.version).toBe('0.1.0');
   });
 

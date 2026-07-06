@@ -1,6 +1,6 @@
 import { MongoClient } from 'mongodb';
-import type { GenerationBatch, WriteProgressEmitter } from '@seedforge/core';
-import type { RelationshipGraph, DatabaseSchema, WriteOptions, WriteResult, WriteProgressEvent } from '@seedforge/core';
+import type { GenerationBatch, WriteProgressEmitter } from '@seed-forge/core';
+import type { RelationshipGraph, DatabaseSchema, WriteOptions, WriteResult, WriteProgressEvent } from '@seed-forge/core';
 
 const DEFAULT_BATCH_SIZE = 5000;
 

@@ -1,4 +1,4 @@
-import type { LogicalType } from '@seedforge/core';
+import type { LogicalType } from '@seed-forge/core';
 
 const PG_TYPE_MAP: Record<string, LogicalType> = {
   integer: 'integer',

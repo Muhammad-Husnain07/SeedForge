@@ -1,4 +1,4 @@
-import type { ColumnSchema, LogicalType, TableSchema } from '@seedforge/core';
+import type { ColumnSchema, LogicalType, TableSchema } from '@seed-forge/core';
 
 function isExtendedJson(
   value: unknown,

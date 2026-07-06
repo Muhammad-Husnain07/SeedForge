@@ -1,5 +1,5 @@
 {
-  "name": "@seedforge/plugin-geo",
+  "name": "@seed-forge/plugin-geo",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -16,7 +16,7 @@
     "test": "vitest run --reporter verbose"
   },
   "dependencies": {
-    "@seedforge/core": "workspace:*"
+    "@seed-forge/core": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.1.0",

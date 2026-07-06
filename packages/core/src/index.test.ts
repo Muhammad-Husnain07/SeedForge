@@ -2,9 +2,9 @@ import { describe, it, expect } from 'vitest';
 import { name } from './index.js';
 import type { DatabaseSchema } from './types/index.js';
 
-describe('@seedforge/core', () => {
+describe('@seed-forge/core', () => {
   it('should export its name', () => {
-    expect(name).toBe('@seedforge/core');
+    expect(name).toBe('@seed-forge/core');
   });
 
   it('should round-trip a DatabaseSchema through JSON', () => {

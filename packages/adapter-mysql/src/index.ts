@@ -1,4 +1,4 @@
-export const name = '@seedforge/adapter-mysql';
+export const name = '@seed-forge/adapter-mysql';
 
 export { introspect } from './introspect.js';
 export type { MysqlIntrospectConfig } from './introspect.js';

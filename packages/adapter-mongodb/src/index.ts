@@ -1,4 +1,4 @@
-export const name = '@seedforge/adapter-mongodb';
+export const name = '@seed-forge/adapter-mongodb';
 
 export { introspect } from './introspect.js';
 export { inferFromDocuments } from './infer.js';

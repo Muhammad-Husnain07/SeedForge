@@ -1,4 +1,4 @@
-export const name = '@seedforge/core';
+export const name = '@seed-forge/core';
 
 export type {
   LogicalType,

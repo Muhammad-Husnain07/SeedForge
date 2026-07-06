@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { generate } from '@seedforge/core';
+import { generate } from '@seed-forge/core';
 import { getContext } from '../context.js';
 import { startSeedRun, generatePreview } from '../seed-runner.js';
 import { eventBus } from '../events.js';

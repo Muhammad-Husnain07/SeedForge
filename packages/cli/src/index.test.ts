@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { program } from './index.js';
 
-describe('@seedforge/cli', () => {
+describe('@seed-forge/cli', () => {
   it('exports a commander program', () => {
     expect(program).toBeDefined();
     expect(program.name()).toBe('seedforge');

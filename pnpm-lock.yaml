@@ -44,7 +44,7 @@ importers:
 
   packages/adapter-mongodb:
     dependencies:
-      '@seedforge/core':
+      '@seed-forge/core':
         specifier: workspace:*
         version: link:../core
       mongodb:
@@ -60,7 +60,7 @@ importers:
 
   packages/adapter-mysql:
     dependencies:
-      '@seedforge/core':
+      '@seed-forge/core':
         specifier: workspace:*
         version: link:../core
       mysql2:
@@ -76,7 +76,7 @@ importers:
 
   packages/adapter-postgres:
     dependencies:
-      '@seedforge/core':
+      '@seed-forge/core':
         specifier: workspace:*
         version: link:../core
       pg:
@@ -110,19 +110,19 @@ importers:
       '@inquirer/prompts':
         specifier: ^8.5.2
         version: 8.5.2(@types/node@26.1.0)
-      '@seedforge/adapter-mongodb':
+      '@seed-forge/adapter-mongodb':
         specifier: workspace:*
         version: link:../adapter-mongodb
-      '@seedforge/adapter-mysql':
+      '@seed-forge/adapter-mysql':
         specifier: workspace:*
         version: link:../adapter-mysql
-      '@seedforge/adapter-postgres':
+      '@seed-forge/adapter-postgres':
         specifier: workspace:*
         version: link:../adapter-postgres
-      '@seedforge/core':
+      '@seed-forge/core':
         specifier: workspace:*
         version: link:../core
-      '@seedforge/studio':
+      '@seed-forge/studio':
         specifier: workspace:*
         version: link:../studio
       cli-table3:
@@ -181,16 +181,16 @@ importers:
 
   packages/integration-tests:
     dependencies:
-      '@seedforge/adapter-mongodb':
+      '@seed-forge/adapter-mongodb':
         specifier: workspace:*
         version: link:../adapter-mongodb
-      '@seedforge/adapter-mysql':
+      '@seed-forge/adapter-mysql':
         specifier: workspace:*
         version: link:../adapter-mysql
-      '@seedforge/adapter-postgres':
+      '@seed-forge/adapter-postgres':
         specifier: workspace:*
         version: link:../adapter-postgres
-      '@seedforge/core':
+      '@seed-forge/core':
         specifier: workspace:*
         version: link:../core
     devDependencies:
@@ -216,24 +216,9 @@ importers:
         specifier: ^1.6.0
         version: 1.6.1(@types/node@26.1.0)
 
-  packages/seedforge:
-    dependencies:
-      '@seedforge/adapter-mongodb':
-        specifier: workspace:*
-        version: link:../adapter-mongodb
-      '@seedforge/adapter-mysql':
-        specifier: workspace:*
-        version: link:../adapter-mysql
-      '@seedforge/adapter-postgres':
-        specifier: workspace:*
-        version: link:../adapter-postgres
-      '@seedforge/cli':
-        specifier: workspace:*
-        version: link:../cli
-
   packages/seedforge-plugin-geo:
     dependencies:
-      '@seedforge/core':
+      '@seed-forge/core':
         specifier: workspace:*
         version: link:../core
     devDependencies:
@@ -255,16 +240,16 @@ importers:
       '@fastify/static':
         specifier: ^8.0.0
         version: 8.3.0
-      '@seedforge/adapter-mongodb':
+      '@seed-forge/adapter-mongodb':
         specifier: workspace:*
         version: link:../adapter-mongodb
-      '@seedforge/adapter-mysql':
+      '@seed-forge/adapter-mysql':
         specifier: workspace:*
         version: link:../adapter-mysql
-      '@seedforge/adapter-postgres':
+      '@seed-forge/adapter-postgres':
         specifier: workspace:*
         version: link:../adapter-postgres
-      '@seedforge/core':
+      '@seed-forge/core':
         specifier: workspace:*
         version: link:../core
       fastify:

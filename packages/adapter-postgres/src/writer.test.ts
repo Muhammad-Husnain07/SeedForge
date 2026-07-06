@@ -2,9 +2,9 @@ import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import pg from 'pg';
 import { write } from './writer.js';
 import { introspect } from './introspect.js';
-import { buildGraph, analyzeSchema, buildGenerationPlan, generate, WriteProgressEmitter } from '@seedforge/core';
-import type { GenerationBatch, SeedForgeConfig, WriteProgressEvent } from '@seedforge/core';
-import type { RelationshipGraph, DatabaseSchema } from '@seedforge/core';
+import { buildGraph, analyzeSchema, buildGenerationPlan, generate, WriteProgressEmitter } from '@seed-forge/core';
+import type { GenerationBatch, SeedForgeConfig, WriteProgressEvent } from '@seed-forge/core';
+import type { RelationshipGraph, DatabaseSchema } from '@seed-forge/core';
 
 const CONNECTION_STRING = 'postgres://seedforge:seedforge@localhost:5432/ecommerce';
 

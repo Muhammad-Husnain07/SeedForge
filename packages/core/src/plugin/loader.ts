@@ -102,7 +102,7 @@ export async function scanAvailablePlugins(): Promise<{ name: string; path: stri
 
     const results: { name: string; path: string }[] = [];
     for (const entry of entries) {
-      if (entry.startsWith('seedforge-plugin-') || entry.startsWith('@seedforge/plugin-')) {
+      if (entry.startsWith('seedforge-plugin-') || entry.startsWith('@seed-forge/plugin-')) {
         results.push({ name: entry, path: path.join(nodeModulesDir, entry) });
       }
     }

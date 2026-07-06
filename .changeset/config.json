@@ -4,13 +4,12 @@
   "commit": false,
   "fixed": [
     [
-      "@seedforge/core",
-      "@seedforge/adapter-postgres",
-      "@seedforge/adapter-mysql",
-      "@seedforge/adapter-mongodb",
-      "@seedforge/cli",
-      "@seedforge/studio",
-      "seedforge"
+      "@seed-forge/core",
+      "@seed-forge/adapter-postgres",
+      "@seed-forge/adapter-mysql",
+      "@seed-forge/adapter-mongodb",
+      "@seed-forge/cli",
+      "@seed-forge/studio"
     ]
   ],
   "linked": [],
@@ -18,7 +17,7 @@
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
   "ignore": [
-    "@seedforge/integration-tests",
-    "@seedforge/plugin-geo"
+    "@seed-forge/integration-tests",
+    "@seed-forge/plugin-geo"
   ]
 }

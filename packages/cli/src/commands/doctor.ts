@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { readLockfile, resolveLockfilePath, validateConfig } from '@seedforge/core';
+import { readLockfile, resolveLockfilePath, validateConfig } from '@seed-forge/core';
 import { loadConfig, inferConnectConfig } from '../utils/config.js';
 import { registerAdapters } from '../utils/adapters.js';
 import { isJsonMode, printJson, renderDoctorReport, printHeading } from '../utils/format.js';
@@ -45,7 +45,7 @@ export async function doctorCommand(opts: { config?: string }): Promise<void> {
       const connectConfig = inferConnectConfig(config);
       await registerAdapters(connectConfig.dialect);
 
-      const { introspect } = await import('@seedforge/core');
+      const { introspect } = await import('@seed-forge/core');
       const schema = await introspect(connectConfig);
       checks.push({
         name: 'Database connection',

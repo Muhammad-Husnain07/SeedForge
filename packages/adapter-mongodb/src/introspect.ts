@@ -1,6 +1,6 @@
 import { MongoClient } from 'mongodb';
 import { inferFromDocuments } from './infer.js';
-import type { DatabaseSchema } from '@seedforge/core';
+import type { DatabaseSchema } from '@seed-forge/core';
 
 export interface MongoIntrospectConfig {
   connectionString: string;

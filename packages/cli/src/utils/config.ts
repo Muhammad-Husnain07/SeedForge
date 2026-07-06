@@ -1,7 +1,7 @@
 import { createJiti } from 'jiti';
 import path from 'node:path';
 import fs from 'node:fs/promises';
-import type { SeedForgeConfig } from '@seedforge/core';
+import type { SeedForgeConfig } from '@seed-forge/core';
 
 export async function loadConfig(configPath?: string): Promise<SeedForgeConfig> {
   const resolved = path.resolve(configPath ?? 'seedforge.config.ts');

@@ -14,7 +14,7 @@ This directory contains a ready-to-run SeedForge configuration for an e-commerce
 docker compose -f ../../fixtures/ecommerce/docker-compose.yml up -d
 
 # 2. Seed the database
-npx seedforge seed -c seedforge.config.ts
+npx @seed-forge/cli seed -c seedforge.config.ts
 ```
 
 ## What it does
@@ -26,7 +26,7 @@ The config connects to a Postgres database with 7 tables (users, products, categ
 - **Pareto-distributed orders** — 20% of users generate ~80% of orders
 - **1–8 order items per order**
 - **0–15 reviews per product**
-- **Consistent geo.city data** via the `@seedforge/plugin-geo` plugin
+- **Consistent geo.city data** via the `@seed-forge/plugin-geo` plugin
 
 ## Configuration
 

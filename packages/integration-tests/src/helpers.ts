@@ -17,20 +17,20 @@ import {
   importBundle,
   computeConfigHash,
   WriteProgressEmitter,
-} from '@seedforge/core';
+} from '@seed-forge/core';
 import type {
   DatabaseSchema,
   SeedForgeConfig,
   RelationshipGraph,
   GenerationPlan,
   GenerationBatch,
-} from '@seedforge/core';
-import { introspect as pgIntrospect } from '@seedforge/adapter-postgres';
-import { introspect as mysqlIntrospect } from '@seedforge/adapter-mysql';
-import { introspect as mongoIntrospect } from '@seedforge/adapter-mongodb';
-import { write as pgWrite } from '@seedforge/adapter-postgres';
-import { write as mysqlWrite } from '@seedforge/adapter-mysql';
-import { write as mongoWrite } from '@seedforge/adapter-mongodb';
+} from '@seed-forge/core';
+import { introspect as pgIntrospect } from '@seed-forge/adapter-postgres';
+import { introspect as mysqlIntrospect } from '@seed-forge/adapter-mysql';
+import { introspect as mongoIntrospect } from '@seed-forge/adapter-mongodb';
+import { write as pgWrite } from '@seed-forge/adapter-postgres';
+import { write as mysqlWrite } from '@seed-forge/adapter-mysql';
+import { write as mongoWrite } from '@seed-forge/adapter-mongodb';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const FIXTURES_DIR = path.resolve(__dirname, '../../../fixtures');

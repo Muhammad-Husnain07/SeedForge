@@ -26,7 +26,7 @@ function resolveWorkerScript(): string {
   const srcPath = path.resolve(__dirname, 'worker.js');
   if (fs.existsSync(srcPath)) return srcPath;
   throw new Error(
-    'Cannot find worker script. Build core package first (pnpm --filter @seedforge/core run build).',
+    'Cannot find worker script. Build core package first (pnpm --filter @seed-forge/core run build).',
   );
 }
 

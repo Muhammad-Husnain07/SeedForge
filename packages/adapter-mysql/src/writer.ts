@@ -1,6 +1,6 @@
 import mysql from 'mysql2/promise';
-import type { GenerationBatch, WriteProgressEmitter } from '@seedforge/core';
-import type { RelationshipGraph, DatabaseSchema, WriteOptions, WriteResult, WriteProgressEvent } from '@seedforge/core';
+import type { GenerationBatch, WriteProgressEmitter } from '@seed-forge/core';
+import type { RelationshipGraph, DatabaseSchema, WriteOptions, WriteResult, WriteProgressEvent } from '@seed-forge/core';
 
 const DEFAULT_BATCH_SIZE = 1000;
 const MAX_PLACEHOLDERS = 60000;

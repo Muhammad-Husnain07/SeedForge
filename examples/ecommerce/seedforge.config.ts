@@ -1,4 +1,4 @@
-import { defineConfig } from '@seedforge/core';
+import { defineConfig } from '@seed-forge/core';
 
 export default defineConfig({
   connection: {
@@ -8,7 +8,7 @@ export default defineConfig({
     database: 'ecommerce',
     user: 'seedforge',
   },
-  plugins: ['@seedforge/plugin-geo'],
+  plugins: ['@seed-forge/plugin-geo'],
   tables: {
     users: {
       count: 250,

@@ -1,6 +1,6 @@
 # Database Adapters
 
-SeedForge uses a registry-based adapter pattern to support multiple database backends. Each adapter is an independent `@seedforge/adapter-*` package that depends on `@seedforge/core` (types only — no circular dependency).
+SeedForge uses a registry-based adapter pattern to support multiple database backends. Each adapter is an independent `@seed-forge/adapter-*` package that depends on `@seed-forge/core` (types only — no circular dependency).
 
 ## Architecture
 
@@ -23,8 +23,8 @@ core/writer/types.ts         ← BatchWriter interface (shared)
 Adapters register themselves with the core dispatcher:
 
 ```typescript
-import { registerIntrospector, introspect } from '@seedforge/core';
-import { introspect as pgIntrospect } from '@seedforge/adapter-postgres';
+import { registerIntrospector, introspect } from '@seed-forge/core';
+import { introspect as pgIntrospect } from '@seed-forge/adapter-postgres';
 
 registerIntrospector('postgres', { introspect: pgIntrospect });
 const schema = await introspect({
@@ -75,7 +75,7 @@ All three adapters wrap writes in a single transaction. If any batch fails, the 
 
 ---
 
-## Adapter: Postgres (`@seedforge/adapter-postgres`)
+## Adapter: Postgres (`@seed-forge/adapter-postgres`)
 
 ### Introspection
 
@@ -111,7 +111,7 @@ For self-referential FK resolution, the writer applies a two-phase write:
 
 ---
 
-## Adapter: MySQL (`@seedforge/adapter-mysql`)
+## Adapter: MySQL (`@seed-forge/adapter-mysql`)
 
 ### Introspection
 
@@ -144,7 +144,7 @@ For self-referential FK resolution:
 
 ---
 
-## Adapter: MongoDB (`@seedforge/adapter-mongodb`)
+## Adapter: MongoDB (`@seed-forge/adapter-mongodb`)
 
 ### Inference Approach
 

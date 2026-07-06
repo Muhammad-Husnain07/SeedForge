@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { name } from './index.js';
 
-describe('@seedforge/adapter-mysql', () => {
+describe('@seed-forge/adapter-mysql', () => {
   it('should export its name', () => {
-    expect(name).toBe('@seedforge/adapter-mysql');
+    expect(name).toBe('@seed-forge/adapter-mysql');
   });
 });

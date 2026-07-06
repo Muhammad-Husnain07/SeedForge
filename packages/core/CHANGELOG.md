@@ -1,4 +1,10 @@
-# @seedforge/core
+# @seed-forge/core
+
+## 0.1.1
+
+### Patch Changes
+
+- Rename npm scope from `@seedforge` to `@seed-forge` (npm org `seed-forge`). Remove `seedforge` meta-package (name blocked on npm — too similar to existing `seed-forge`).
 
 ## 0.1.0
 

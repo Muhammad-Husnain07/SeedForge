@@ -10,8 +10,8 @@ import {
   checkDrift,
   introspect,
   analyzeSchema,
-} from '@seedforge/core';
-import type { BundleManifest, FieldSemanticMatch } from '@seedforge/core';
+} from '@seed-forge/core';
+import type { BundleManifest, FieldSemanticMatch } from '@seed-forge/core';
 import { suggest as runSuggest } from './suggest/index.js';
 import { initCommand } from './commands/init.js';
 import { introspectCommand } from './commands/introspect.js';
@@ -29,7 +29,7 @@ const program = new Command();
 program
   .name('seedforge')
   .description('Deterministic seed data generator for relational databases')
-  .version('0.1.0')
+  .version('0.1.1')
   .option('--json', 'machine-readable JSON output (for scripting/CI)');
 
 // ─── init ──────────────────────────────────────────────────────────────
@@ -217,7 +217,7 @@ program
         '// The LLM is ONLY consulted at suggest-time. Generate/seed NEVER calls the LLM.',
         '// ⚠  Do NOT import this file directly. Copy relevant parts into your config.',
         '',
-        "import { defineConfig } from '@seedforge/core';",
+        "import { defineConfig } from '@seed-forge/core';",
         '',
         'export default defineConfig({',
         '  // ... your existing config ...',
@@ -545,7 +545,7 @@ program
       const studioOpts = opts as { config?: string; port?: number };
       // Dynamic import avoids node_modules dependency at CLI install time
       const startStudio: (opts: { configPath?: string; port?: number }) => Promise<void> =
-        (await import('@seedforge/studio')).startStudio;
+        (await import('@seed-forge/studio')).startStudio;
       await startStudio({ configPath: studioOpts.config, port: studioOpts.port });
     } catch (err) {
       printError((err as Error).message);

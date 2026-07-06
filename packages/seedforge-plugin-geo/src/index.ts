@@ -1,4 +1,4 @@
-import type { SeedForgePlugin, PRNG } from '@seedforge/core';
+import type { SeedForgePlugin, PRNG } from '@seed-forge/core';
 import { CITIES } from './data.js';
 import type { CityRecord } from './data.js';
 
@@ -55,7 +55,7 @@ function lookupCity(
 }
 
 const plugin: SeedForgePlugin = {
-  name: '@seedforge/plugin-geo',
+  name: '@seed-forge/plugin-geo',
   version: '0.1.0',
 
   registerGenerators(registry) {

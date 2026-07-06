@@ -1,6 +1,6 @@
 {
-  "name": "@seedforge/adapter-mongodb",
-  "version": "0.1.0",
+  "name": "@seed-forge/adapter-mongodb",
+  "version": "0.1.1",
   "description": "MongoDB adapter — schema inference (document sampling, nested flattening, extended JSON) and bulk writer (insertMany) for SeedForge",
   "license": "MIT",
   "repository": {
@@ -24,7 +24,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@seedforge/core": "workspace:*",
+    "@seed-forge/core": "workspace:*",
     "mongodb": "^6.7.0"
   },
   "devDependencies": {

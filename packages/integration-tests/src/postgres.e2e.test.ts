@@ -7,7 +7,7 @@ import {
   checkForeignKeyOrphansPG,
   importBundleFile,
 } from './helpers.js';
-import { validatePreFlight } from '@seedforge/core';
+import { validatePreFlight } from '@seed-forge/core';
 
 const FIXTURES = ['ecommerce', 'blog', 'saas'] as const;
 

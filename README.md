@@ -18,15 +18,13 @@ docker run -d --name seedforge-pg \
   postgres:16
 
 # 2. Scaffold a config file
-npx seedforge init
+npx @seed-forge/cli init
 
 # 3. Seed your database
-npx seedforge seed
+npx @seed-forge/cli seed
 ```
 
 That's it. By default SeedForge introspects the target database, infers column semantics, builds a generation plan, and writes realistic data to every table.
-
-> **Behind the scenes:** `npx seedforge` downloads the `seedforge` meta-package which bundles `@seedforge/cli` and all database adapters. The `init` command runs an interactive wizard, and `seed` runs the full generate+write pipeline.
 
 ## Key Features
 
@@ -87,7 +85,7 @@ That's it. By default SeedForge introspects the target database, infers column s
 ### Plugin System
 - **Generator registry** — plugins register custom generator kinds (e.g. `geo.city`)
 - **Lifecycle hooks** — `onSchemaIntrospected`, `onBeforeGenerate`, `onAfterWrite`
-- **Example plugin** — `@seedforge/plugin-geo` provides realistic geographic data
+- **Example plugin** — `@seed-forge/plugin-geo` provides realistic geographic data
 
 ### Local Studio Dashboard
 - **Fastify backend** — serves static frontend SPA, provides REST + SSE APIs for schema, graph, config, plan, and seed execution
@@ -105,22 +103,18 @@ That's it. By default SeedForge introspects the target database, infers column s
 All packages are published individually to npm so you install only what you need:
 
 ```bash
-# Meta-package (recommended — includes CLI + all adapters)
-npm install seedforge
-
-# Or install individual packages
-npm install @seedforge/core @seedforge/adapter-postgres
+# Install individual packages as needed
+npm install @seed-forge/cli @seed-forge/adapter-postgres
 ```
 
 | Package | Description |
 |---------|-------------|
-| `seedforge` | Meta-package — CLI + all adapters, zero-setup `npx seedforge` |
-| `@seedforge/cli` | CLI orchestration (seed, generate, validate, suggest, studio) |
-| `@seedforge/core` | Engine, schema IR, distributions, config DSL, lockfile, plugin system |
-| `@seedforge/adapter-postgres` | Postgres introspection + bulk writer |
-| `@seedforge/adapter-mysql` | MySQL introspection + bulk writer |
-| `@seedforge/adapter-mongodb` | MongoDB schema inference + bulk writer |
-| `@seedforge/studio` | Web dashboard (Fastify + React/Vite) |
+| `@seed-forge/cli` | CLI orchestration (seed, generate, validate, suggest, studio) |
+| `@seed-forge/core` | Engine, schema IR, distributions, config DSL, lockfile, plugin system |
+| `@seed-forge/adapter-postgres` | Postgres introspection + bulk writer |
+| `@seed-forge/adapter-mysql` | MySQL introspection + bulk writer |
+| `@seed-forge/adapter-mongodb` | MongoDB schema inference + bulk writer |
+| `@seed-forge/studio` | Web dashboard (Fastify + React/Vite) |
 
 ## Project Scripts
 
