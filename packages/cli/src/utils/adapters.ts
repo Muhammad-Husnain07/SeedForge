@@ -24,6 +24,16 @@ export async function registerAdapters(dialect: string): Promise<void> {
       registerIntrospector('mongodb', { introspect: mod.introspect });
       break;
     }
+    case 'prisma': {
+      const mod = await import('@seed-forge/adapter-prisma');
+      registerIntrospector('prisma', { introspect: mod.introspect });
+      break;
+    }
+    case 'drizzle': {
+      const mod = await import('@seed-forge/adapter-drizzle');
+      registerIntrospector('drizzle', { introspect: mod.introspect });
+      break;
+    }
   }
 }
 

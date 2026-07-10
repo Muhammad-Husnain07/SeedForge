@@ -54,6 +54,12 @@ export async function loadConfig(configPath?: string): Promise<SeedForgeConfig> 
 
 function inferConnectConfig(config: SeedForgeConfig): ConnectConfig {
   const conn = config.connection;
+  if (conn?.source === 'prisma' || conn?.source === 'drizzle') {
+    return {
+      dialect: conn.source,
+      schemaPath: conn.schemaPath ?? 'schema.prisma',
+    } as ConnectConfig;
+  }
   if (conn?.dialect) {
     return {
       dialect: conn.dialect,
@@ -79,6 +85,16 @@ async function registerAdapters(dialect: string): Promise<void> {
     case 'mongodb': {
       const mod = await import('@seed-forge/adapter-mongodb');
       registerIntrospector('mongodb', { introspect: mod.introspect });
+      break;
+    }
+    case 'prisma': {
+      const mod = await import('@seed-forge/adapter-prisma');
+      registerIntrospector('prisma', { introspect: mod.introspect });
+      break;
+    }
+    case 'drizzle': {
+      const mod = await import('@seed-forge/adapter-drizzle');
+      registerIntrospector('drizzle', { introspect: mod.introspect });
       break;
     }
   }

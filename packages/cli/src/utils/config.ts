@@ -1,7 +1,7 @@
 import { createJiti } from 'jiti';
 import path from 'node:path';
 import fs from 'node:fs/promises';
-import type { SeedForgeConfig } from '@seed-forge/core';
+import type { ConnectConfig, SeedForgeConfig } from '@seed-forge/core';
 
 export async function loadConfig(configPath?: string): Promise<SeedForgeConfig> {
   const resolved = path.resolve(configPath ?? 'seedforge.config.ts');
@@ -28,16 +28,20 @@ export async function loadConfig(configPath?: string): Promise<SeedForgeConfig> 
   return config as SeedForgeConfig;
 }
 
-export function inferConnectConfig(
-  config: SeedForgeConfig,
-): { dialect: string; connectionString?: string; database?: string } {
+export function inferConnectConfig(config: SeedForgeConfig): ConnectConfig {
   const conn = config.connection;
+  if (conn?.source === 'prisma' || conn?.source === 'drizzle') {
+    return {
+      dialect: conn.source,
+      schemaPath: conn.schemaPath ?? 'schema.prisma',
+    } as ConnectConfig;
+  }
   if (conn?.dialect) {
     return {
       dialect: conn.dialect,
       connectionString: conn.connectionString,
-      database: conn.database,
-    };
+      ...(conn.database ? { database: conn.database } : {}),
+    } as ConnectConfig;
   }
-  return { dialect: 'postgres' };
+  return { dialect: 'postgres' } as ConnectConfig;
 }

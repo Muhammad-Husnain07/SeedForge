@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { introspect, analyzeSchema, registerIntrospector, printCoverageTable } from '@seed-forge/core';
-import type { FieldSemanticMatch, SeedForgeConfig } from '@seed-forge/core';
+import type { ConnectConfig, FieldSemanticMatch, SeedForgeConfig } from '@seed-forge/core';
 import { input, select, confirm } from '@inquirer/prompts';
 import pc from 'picocolors';
 import { registerAdapters } from '../utils/adapters.js';
@@ -26,101 +26,146 @@ export async function initCommand(opts: { config?: string; force?: boolean }): P
     // Doesn't exist, that's fine
   }
 
-  // Step 1: Check .env
-  let envDbUrl: string | undefined;
-  try {
-    const envContent = await fs.readFile('.env', 'utf-8');
-    const match = envContent.match(/^DATABASE_URL=(.+)$/m);
-    if (match) envDbUrl = match[1]!.trim();
-  } catch {
-    // No .env file
-  }
-
-  if (envDbUrl) {
-    const useEnv = await confirm({
-      message: `Found DATABASE_URL in .env. Use it?`,
-      default: true,
-    });
-    if (!useEnv) envDbUrl = undefined;
-  }
-
-  // Step 2: Pick dialect
-  const dialect = await select<'postgres' | 'mysql' | 'mongodb'>({
-    message: 'Select database dialect:',
+  // Step 1: Choose source type
+  const source = await select<'database' | 'prisma' | 'drizzle'>({
+    message: 'Select schema source:',
     choices: [
-      { name: 'PostgreSQL', value: 'postgres' },
-      { name: 'MySQL', value: 'mysql' },
-      { name: 'MongoDB', value: 'mongodb' },
+      { name: 'Live database', value: 'database' },
+      { name: 'Prisma schema file', value: 'prisma' },
+      { name: 'Drizzle schema file', value: 'drizzle' },
     ],
   });
 
-  // Step 3: Connection string
-  let connectionString = envDbUrl ?? '';
+  let schemaPath = '';
+  let dialect = 'postgres' as string;
+  let connectionString = '';
   let databaseName = '';
 
-  if (dialect === 'mongodb') {
-    connectionString = await input({
-      message: 'MongoDB connection string:',
-      default: connectionString || 'mongodb://localhost:27017',
-      validate: (v: string) => v.length > 0 ? true : 'Connection string is required',
+  if (source === 'prisma' || source === 'drizzle') {
+    // Schema-file source
+    const ext = source === 'prisma' ? '.prisma' : '.ts';
+    const defaultPath = source === 'prisma' ? 'schema.prisma' : 'schema.drizzle.ts';
+    schemaPath = await input({
+      message: `Path to ${source} schema file:`,
+      default: defaultPath,
+      validate: (v: string) => v.length > 0 ? true : 'Path is required',
     });
-    databaseName = await input({
-      message: 'Database name:',
-      default: 'seedforge',
-      validate: (v: string) => v.length > 0 ? true : 'Database name is required',
+
+    // Also ask for the target write dialect
+    dialect = await select({
+      message: 'Target database dialect (for seeding):',
+      choices: [
+        { name: 'PostgreSQL', value: 'postgres' },
+        { name: 'MySQL', value: 'mysql' },
+        { name: 'MongoDB', value: 'mongodb' },
+      ],
     });
+
+    if (dialect !== 'mongodb') {
+      connectionString = await input({
+        message: 'Connection string:',
+        default: dialect === 'postgres' ? 'postgresql://localhost:5432/seedforge' : 'mysql://root:password@localhost:3306/seedforge',
+        validate: (v: string) => v.length > 0 ? true : 'Connection string is required',
+      });
+    } else {
+      connectionString = await input({
+        message: 'MongoDB connection string:',
+        default: 'mongodb://localhost:27017',
+        validate: (v: string) => v.length > 0 ? true : 'Connection string is required',
+      });
+      databaseName = await input({
+        message: 'Database name:',
+        default: 'seedforge',
+        validate: (v: string) => v.length > 0 ? true : 'Database name is required',
+      });
+    }
   } else {
-    const defaultConn = connectionString ||
-      (dialect === 'postgres' ? 'postgresql://localhost:5432/seedforge' :
-       'mysql://root:password@localhost:3306/seedforge');
-    connectionString = await input({
-      message: 'Connection string:',
-      default: defaultConn,
-      validate: (v: string) => v.length > 0 ? true : 'Connection string is required',
-    });
-  }
-
-  // Step 4: Test connection
-  const testConn = await confirm({
-    message: 'Test the connection?',
-    default: true,
-  });
-
-  if (testConn) {
+    // Database source — existing flow
+    // Check .env
     try {
-      const connectConfig = dialect === 'mongodb'
-        ? { dialect, connectionString, database: databaseName }
-        : { dialect, connectionString };
-
-      if (dialect === 'postgres') {
-        const mod = await import('@seed-forge/adapter-postgres');
-        registerIntrospector('postgres', { introspect: mod.introspect });
-      } else if (dialect === 'mysql') {
-        const mod = await import('@seed-forge/adapter-mysql');
-        registerIntrospector('mysql', { introspect: mod.introspect });
-      } else {
-        const mod = await import('@seed-forge/adapter-mongodb');
-        registerIntrospector('mongodb', { introspect: mod.introspect });
+      const envContent = await fs.readFile('.env', 'utf-8');
+      const match = envContent.match(/^DATABASE_URL=(.+)$/m);
+      if (match) {
+        const envUrl = match[1]!.trim();
+        const useEnv = await confirm({
+          message: `Found DATABASE_URL in .env. Use it?`,
+          default: true,
+        });
+        if (useEnv) connectionString = envUrl;
       }
+    } catch { /* no .env */ }
 
-      const connResult = await introspect(connectConfig);
-      console.log(pc.green(`✔ Connection OK — ${connResult.tables.length} tables found`));
-    } catch (err) {
-      console.error(pc.red(`✖ Connection failed: ${(err as Error).message}`));
-      const retry = await confirm({ message: 'Try again with different connection details?', default: true });
-      if (retry) return initCommand(opts); // Restart
-      console.log(pc.yellow('⚠ Continuing with possibly invalid connection...'));
+    dialect = await select({
+      message: 'Select database dialect:',
+      choices: [
+        { name: 'PostgreSQL', value: 'postgres' },
+        { name: 'MySQL', value: 'mysql' },
+        { name: 'MongoDB', value: 'mongodb' },
+      ],
+    });
+
+    if (dialect === 'mongodb') {
+      connectionString = connectionString || await input({
+        message: 'MongoDB connection string:',
+        default: 'mongodb://localhost:27017',
+        validate: (v: string) => v.length > 0 ? true : 'Connection string is required',
+      });
+      databaseName = await input({
+        message: 'Database name:',
+        default: 'seedforge',
+        validate: (v: string) => v.length > 0 ? true : 'Database name is required',
+      });
+    } else {
+      const defaultConn = connectionString ||
+        (dialect === 'postgres' ? 'postgresql://localhost:5432/seedforge' :
+         'mysql://root:password@localhost:3306/seedforge');
+      connectionString = await input({
+        message: 'Connection string:',
+        default: defaultConn,
+        validate: (v: string) => v.length > 0 ? true : 'Connection string is required',
+      });
+    }
+
+    // Test connection
+    const testConn = await confirm({ message: 'Test the connection?', default: true });
+    if (testConn) {
+      try {
+        const connectConfig = dialect === 'mongodb'
+          ? { dialect, connectionString, database: databaseName }
+          : { dialect, connectionString };
+
+        if (dialect === 'postgres') {
+          const mod = await import('@seed-forge/adapter-postgres');
+          registerIntrospector('postgres', { introspect: mod.introspect });
+        } else if (dialect === 'mysql') {
+          const mod = await import('@seed-forge/adapter-mysql');
+          registerIntrospector('mysql', { introspect: mod.introspect });
+        } else {
+          const mod = await import('@seed-forge/adapter-mongodb');
+          registerIntrospector('mongodb', { introspect: mod.introspect });
+        }
+
+        const connResult = await introspect(connectConfig as ConnectConfig);
+        console.log(pc.green(`✔ Connection OK — ${connResult.tables.length} tables found`));
+      } catch (err) {
+        console.error(pc.red(`✖ Connection failed: ${(err as Error).message}`));
+        const retry = await confirm({ message: 'Try again with different connection details?', default: true });
+        if (retry) return initCommand(opts);
+        console.log(pc.yellow('⚠ Continuing with possibly invalid connection...'));
+      }
     }
   }
 
-  // Step 5: Introspect + analyze
+  // Step 2: Introspect + analyze
   console.log(pc.cyan('\nRunning introspection...'));
 
-  const connectConfig = dialect === 'mongodb'
-    ? { dialect, connectionString, database: databaseName }
-    : { dialect, connectionString };
+  const connectConfig: ConnectConfig = source === 'prisma' || source === 'drizzle'
+    ? { dialect: source, schemaPath } as ConnectConfig
+    : dialect === 'mongodb'
+      ? { dialect, connectionString, database: databaseName } as ConnectConfig
+      : { dialect, connectionString } as ConnectConfig;
 
-  await registerAdapters(dialect);
+  await registerAdapters(source === 'database' ? dialect : source);
   const schema = await introspect(connectConfig);
 
   console.log(pc.green(`✔ Found ${schema.tables.length} tables`));
@@ -170,12 +215,11 @@ export async function initCommand(opts: { config?: string; force?: boolean }): P
   }
 
   // Step 8: Write config file
+  const writeDialect = dialect as 'postgres' | 'mysql' | 'mongodb';
   const configObj: SeedForgeConfig = {
-    connection: {
-      dialect,
-      connectionString,
-      ...(dialect === 'mongodb' ? { database: databaseName } : {}),
-    },
+    connection: source === 'prisma' || source === 'drizzle'
+      ? { dialect: writeDialect, source, schemaPath, connectionString, ...(writeDialect === 'mongodb' ? { database: databaseName } : {}) }
+      : { dialect: writeDialect, connectionString, ...(writeDialect === 'mongodb' ? { database: databaseName } : {}) },
     tables,
   };
 
@@ -211,6 +255,12 @@ function generateConfigFile(config: SeedForgeConfig, _unresolved: FieldSemanticM
   lines.push('export default defineConfig({');
   lines.push('  connection: {');
   lines.push(`    dialect: '${config.connection.dialect}',`);
+  if (config.connection.source) {
+    lines.push(`    source: '${config.connection.source}',`);
+  }
+  if (config.connection.schemaPath) {
+    lines.push(`    schemaPath: '${config.connection.schemaPath}',`);
+  }
   lines.push(`    connectionString: '${config.connection.connectionString}',`);
   if (config.connection.database) {
     lines.push(`    database: '${config.connection.database}',`);

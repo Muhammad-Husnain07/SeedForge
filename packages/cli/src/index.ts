@@ -52,10 +52,12 @@ program
 
 program
   .command('introspect')
-  .description('Print or save the full DatabaseSchema from the live database')
+  .description('Print or save the full DatabaseSchema from the live database or a schema file')
   .option('-c, --config <path>', 'path to config file', 'seedforge.config.ts')
   .option('--out <file>', 'write schema JSON to file')
-  .action(async (opts: { config?: string; out?: string }) => {
+  .option('--source <source>', 'schema source: database, prisma, or drizzle (overrides config)')
+  .option('--schema <path>', 'path to schema file (required when --source is prisma or drizzle)')
+  .action(async (opts: { config?: string; out?: string; source?: string; schema?: string }) => {
     await introspectCommand(opts);
   });
 
