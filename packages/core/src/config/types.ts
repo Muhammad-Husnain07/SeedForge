@@ -21,8 +21,30 @@ export interface DerivedField {
 
 export type FieldConfig = GeneratorSpec | DistributionSpec | DerivedField;
 
+export type GrowthModel =
+  | { type: 'compound'; monthlyRate: number }
+  | { type: 'linear'; totalGrowth: number }
+  | { type: 'scurve'; inflectionPoint?: number; steepness?: number };
+
+export type SeasonalityConfig =
+  | { type: 'preset'; name: 'ecommerce-holiday' }
+  | { type: 'custom'; fn?: (date: Date) => number };
+
+export interface TimelineConfig {
+  start: string;
+  end?: string;
+  growth: GrowthModel;
+  seasonality?: SeasonalityConfig;
+}
+
+export interface ChurnConfig {
+  monthlyRate: number;
+}
+
 export interface TableConfig {
   count?: number | DistributionSpec;
+  timeline?: TimelineConfig;
+  churn?: ChurnConfig;
   fields?: Record<string, FieldConfig>;
   countPerParent?: Record<string, number | DistributionSpec>;
   personas?: Persona[];
@@ -31,6 +53,8 @@ export interface TableConfig {
 
 export interface ConnectionConfig {
   dialect: 'postgres' | 'mysql' | 'mongodb';
+  source?: 'database' | 'prisma' | 'drizzle';
+  schemaPath?: string;
   connectionString?: string;
   host?: string;
   port?: number;
@@ -54,9 +78,16 @@ export interface ResolvedField {
   confidence: number;
 }
 
+export interface ParentTimelineCtx {
+  acquiredAt: number;
+  churnedAt?: number;
+}
+
 export interface GenerationPlan {
   tables: Record<string, {
     count: number | DistributionSpec;
+    timeline?: TimelineConfig;
+    churn?: ChurnConfig;
     fields: ResolvedField[];
     countPerParent: Record<string, number | DistributionSpec>;
     personas: Persona[];

@@ -40,7 +40,7 @@ export type { PRNG } from './distributions/index.js';
 export type { Persona, PersonaSet, PersonaOverride } from './distributions/index.js';
 
 export { defineConfig, buildGenerationPlan, validateConfig } from './config/index.js';
-export type { SeedForgeConfig, ConnectionConfig, TableConfig, FieldConfig, GenerationPlan, ResolvedField, ValidationIssue } from './config/index.js';
+export type { SeedForgeConfig, ConnectionConfig, TableConfig, FieldConfig, GenerationPlan, ResolvedField, ValidationIssue, TimelineConfig, GrowthModel, SeasonalityConfig, ChurnConfig, ParentTimelineCtx } from './config/index.js';
 
 export { validatePreFlight, verifyPostWrite } from './validate/index.js';
 export type { PreFlightResult, PostWriteResult, ValidationEntry, PreFlightOptions, VerifyOptions } from './validate/index.js';

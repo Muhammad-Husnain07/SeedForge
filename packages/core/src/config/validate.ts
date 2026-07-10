@@ -24,15 +24,40 @@ const PersonaOverrideSchema = z.object({
   value: z.unknown().optional(),
 });
 
+const ChurnConfigSchema = z.object({
+  monthlyRate: z.number().min(0).max(1),
+});
+
 const PersonaSchema = z.object({
   name: z.string(),
   selectionWeight: z.number().min(0).max(1),
   overrides: z.array(PersonaOverrideSchema),
   cascades: z.record(z.number()).optional(),
+  churn: ChurnConfigSchema.optional(),
+});
+
+const GrowthModelSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('compound'), monthlyRate: z.number().positive() }),
+  z.object({ type: z.literal('linear'), totalGrowth: z.number().positive() }),
+  z.object({ type: z.literal('scurve'), inflectionPoint: z.number().min(0).max(1).optional(), steepness: z.number().positive().optional() }),
+]);
+
+const SeasonalityConfigSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('preset'), name: z.literal('ecommerce-holiday') }),
+  z.object({ type: z.literal('custom') }),
+]);
+
+const TimelineConfigSchema = z.object({
+  start: z.string(),
+  end: z.string().optional(),
+  growth: GrowthModelSchema,
+  seasonality: SeasonalityConfigSchema.optional(),
 });
 
 const TableConfigSchema = z.object({
   count: z.union([z.number().int().nonnegative(), DistributionSpecSchema]).optional(),
+  timeline: TimelineConfigSchema.optional(),
+  churn: ChurnConfigSchema.optional(),
   fields: z.record(FieldConfigSchema).optional(),
   countPerParent: z.record(z.union([z.number().int().nonnegative(), DistributionSpecSchema])).optional(),
   personas: z.array(PersonaSchema).optional(),
@@ -42,6 +67,8 @@ const TableConfigSchema = z.object({
 export const SeedForgeConfigSchema = z.object({
   connection: z.object({
     dialect: z.enum(['postgres', 'mysql', 'mongodb']),
+    source: z.enum(['database', 'prisma', 'drizzle']).optional(),
+    schemaPath: z.string().optional(),
     connectionString: z.string().optional(),
     host: z.string().optional(),
     port: z.number().int().positive().optional(),

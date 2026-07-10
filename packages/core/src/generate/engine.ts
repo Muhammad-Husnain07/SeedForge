@@ -1,9 +1,10 @@
 import type { RelationshipGraph } from '../graph/graph.js';
 import type { DatabaseSchema } from '../types/index.js';
 import type { TableSchema } from '../types/index.js';
-import type { GenerationPlan, ResolvedField } from '../config/types.js';
+import type { GenerationPlan, ResolvedField, ParentTimelineCtx } from '../config/types.js';
 import type { GeneratorSpec } from '../semantic/types.js';
 import { deriveStream } from '../distributions/prng.js';
+import type { PRNG } from '../distributions/prng.js';
 import { assignPersona } from '../distributions/persona.js';
 import type { Persona } from '../distributions/persona.js';
 import type { GenerateOptions, GenerationBatch } from './types.js';
@@ -11,6 +12,7 @@ import { generateFieldValue } from './fields.js';
 import { enforceUniqueRow, registerUnique } from './unique.js';
 import type { UniqueContext } from './unique.js';
 import { assignParents } from './parent.js';
+import { computeTimelineInfo, rowTimestamp, churnTimestamp } from './timeline.js';
 
 interface FieldEntry {
   name: string;
@@ -99,6 +101,7 @@ export async function* generate(
   }
 
   const cascadeMap = new Map<string, Map<string, number[]>>();
+  const parentTimelineCtxMap = new Map<string, Map<number, ParentTimelineCtx>>();
 
   for (const tableName of graph.insertionOrder) {
     const tableSchema = tableSchemaMap.get(tableName);
@@ -108,6 +111,7 @@ export async function* generate(
     }
 
     const parentCascades = cascadeMap.get(tableName);
+    const parentCtxForChildren = parentTimelineCtxMap.get(tableName);
     const assignments = assignParents(
       tableName,
       tableSchema,
@@ -115,6 +119,7 @@ export async function* generate(
       pkCache,
       seed,
       parentCascades,
+      parentCtxForChildren,
     );
 
     const fieldOrder = sortFieldsByDependency(tablePlan.fields);
@@ -129,6 +134,9 @@ export async function* generate(
     );
     const selfRefCol = selfRefFK?.columns[0];
 
+    // NEW: pre-compute timeline info if configured
+    const timelineInfo = tablePlan.timeline ? computeTimelineInfo(tablePlan.timeline, options?.refDate) : null;
+
     let buffer: Record<string, unknown>[] = [];
 
     for (let i = 0; i < assignments.totalCount; i++) {
@@ -142,6 +150,9 @@ export async function* generate(
       }
 
       let activePersona: Persona | null = null;
+      let rowAcquiredAt: number | undefined;
+      let rowChurnedAt: number | undefined;
+
       if (tablePlan.personas.length > 0) {
         const personaPrng = deriveStream(String(seed), tableName, '__persona__', String(i));
         activePersona = assignPersona(personaPrng, { personas: tablePlan.personas });
@@ -156,6 +167,33 @@ export async function* generate(
             arr[i] = multiplier;
           }
         }
+      }
+
+      // NEW: timeline row positioning
+      if (timelineInfo) {
+        const tlPrng = deriveStream(String(seed), tableName, '__timeline__', String(i));
+        rowAcquiredAt = rowTimestamp(i, assignments.totalCount, timelineInfo, tlPrng);
+        const tsCol = tableSchema.columns.find((c) => c.name === 'created_at')?.name
+          ?? tableSchema.columns.find((c) => c.name === 'createdAt')?.name;
+        if (tsCol) row[tsCol] = new Date(rowAcquiredAt);
+      }
+
+      // NEW: churn computation
+      const churnRate = activePersona?.churn?.monthlyRate ?? tablePlan.churn?.monthlyRate;
+      if (churnRate && rowAcquiredAt) {
+        const churnPrng = deriveStream(String(seed), tableName, '__churn__', String(i));
+        rowChurnedAt = churnTimestamp(rowAcquiredAt, churnRate, timelineInfo!.endMs, churnPrng);
+        const deactCol = tableSchema.columns.find((c) => c.name === 'deactivated_at')?.name
+          ?? tableSchema.columns.find((c) => c.name === 'deleted_at')?.name
+          ?? tableSchema.columns.find((c) => c.name === 'deactivatedAt')?.name;
+        if (deactCol) row[deactCol] = new Date(rowChurnedAt);
+      }
+
+      // Store timeline context for children
+      if (rowAcquiredAt) {
+        if (!parentTimelineCtxMap.has(tableName)) parentTimelineCtxMap.set(tableName, new Map());
+        const ctxMap = parentTimelineCtxMap.get(tableName)!;
+        ctxMap.set(i, { acquiredAt: rowAcquiredAt, churnedAt: rowChurnedAt });
       }
 
       for (const field of fieldOrder) {

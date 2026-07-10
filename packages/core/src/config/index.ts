@@ -12,4 +12,9 @@ export type {
   SeedContext,
   GenerationPlan,
   ResolvedField,
+  TimelineConfig,
+  GrowthModel,
+  SeasonalityConfig,
+  ChurnConfig,
+  ParentTimelineCtx,
 } from './types.js';

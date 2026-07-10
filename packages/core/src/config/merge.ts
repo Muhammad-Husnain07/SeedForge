@@ -112,6 +112,8 @@ export function buildGenerationPlan(
 
     plan.tables[tableName] = {
       count,
+      timeline: tableConfig.timeline,
+      churn: tableConfig.churn,
       fields,
       countPerParent,
       personas,

@@ -5,7 +5,7 @@ import { paretoInt } from '../distributions/pareto.js';
 import { exponential } from '../distributions/exponential.js';
 import { normal } from '../distributions/normal.js';
 import { zipf } from '../distributions/zipf.js';
-import type { DistributionSpec, GenerationPlan } from '../config/types.js';
+import type { DistributionSpec, GenerationPlan, ParentTimelineCtx } from '../config/types.js';
 import type { TableSchema } from '../types/index.js';
 
 export interface RowFkBinding {
@@ -49,6 +49,7 @@ export function assignParents(
   pkCache: Map<string, unknown[]>,
   rootSeed: number,
   personaCascades?: Map<string, number[]>,
+  parentTimelineCtx?: Map<number, ParentTimelineCtx>,
 ): ParentAssignmentResult {
   const childFKs = tableSchema.foreignKeys.filter(
     (fk) => !isSelfRefFK(tableSchema, fk),
@@ -71,6 +72,17 @@ export function assignParents(
     return { totalCount: 0, bindings: [] };
   }
 
+  // Determine the timeline span for churn tapering from the parent's plan
+  let parentEndMs = 0;
+  let parentStartMs = 0;
+  if (parentTimelineCtx) {
+    const allCtx = [...parentTimelineCtx.values()];
+    if (allCtx.length > 0) {
+      parentStartMs = Math.min(...allCtx.map((c) => c.acquiredAt));
+      parentEndMs = parentStartMs + allCtx.reduce((max, c) => Math.max(max, (c.churnedAt ?? c.acquiredAt) - c.acquiredAt), 0);
+    }
+  }
+
   const countPerParent = tablePlan.countPerParent ?? {};
   const dist = countPerParent[parentTable] ?? 1;
   const cascades = personaCascades?.get(parentTable);
@@ -84,6 +96,15 @@ export function assignParents(
 
     if (cascades && cascades[pi] !== undefined) {
       count = Math.round(count * cascades[pi]);
+    }
+
+    // NEW: churn tapering — reduce child count for churned parents
+    if (parentTimelineCtx && parentEndMs > parentStartMs) {
+      const parentCtx = parentTimelineCtx.get(pi);
+      if (parentCtx?.churnedAt) {
+        const activeFraction = (parentCtx.churnedAt - parentCtx.acquiredAt) / (parentEndMs - parentStartMs);
+        count = Math.max(1, Math.round(count * Math.min(1, activeFraction)));
+      }
     }
 
     for (let ci = 0; ci < count; ci++) {

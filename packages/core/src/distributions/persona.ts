@@ -1,5 +1,6 @@
 import type { PRNG } from './prng.js';
 import { weightedCategorical } from './weighted.js';
+import type { ChurnConfig } from '../config/types.js';
 
 export interface PersonaOverride {
   field: string;
@@ -12,6 +13,7 @@ export interface Persona {
   selectionWeight: number;
   overrides: PersonaOverride[];
   cascades?: Record<string, number>;
+  churn?: ChurnConfig;
 }
 
 export interface PersonaSet {
