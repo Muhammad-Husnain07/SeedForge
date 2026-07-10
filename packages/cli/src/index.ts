@@ -98,7 +98,7 @@ program
       const connectConfig = inferConnectConfig(config);
 
       await registerAdapters(connectConfig.dialect);
-      const schema = await introspect(connectConfig as Parameters<typeof introspect>[0]);
+      const schema = await introspect(connectConfig);
 
       const matches = analyzeSchema(schema);
 
@@ -354,7 +354,7 @@ program
       }
 
       await registerAdapters(connectConfig.dialect);
-      const schema = await introspect(connectConfig as Parameters<typeof introspect>[0]);
+      const schema = await introspect(connectConfig);
 
       const result = await checkDrift(config, schema, { lockfilePath, force: false });
 
@@ -491,7 +491,7 @@ program
         file: file as string,
         force: !!importOpts.force,
         introspect: async () => {
-          const liveSchema = await introspect(connectConfig as Parameters<typeof introspect>[0]);
+          const liveSchema = await introspect(connectConfig);
           return {
             schemaHash: liveSchema.schemaHash,
             tables: liveSchema.tables.map((t) => ({

@@ -9,7 +9,7 @@ export async function introspectCommand(opts: { config?: string; out?: string; s
   try {
     let connectConfig: ConnectConfig;
     if (opts.source === 'prisma' || opts.source === 'drizzle') {
-      connectConfig = { dialect: opts.source, schemaPath: opts.schema ?? 'schema.prisma' } as ConnectConfig;
+      connectConfig = { dialect: opts.source, schemaPath: opts.schema ?? 'schema.prisma' };
     } else if (opts.source) {
       const config = await loadConfig(opts.config);
       connectConfig = { ...inferConnectConfig(config), dialect: opts.source } as ConnectConfig;

@@ -43,7 +43,6 @@ export async function initCommand(opts: { config?: string; force?: boolean }): P
 
   if (source === 'prisma' || source === 'drizzle') {
     // Schema-file source
-    const ext = source === 'prisma' ? '.prisma' : '.ts';
     const defaultPath = source === 'prisma' ? 'schema.prisma' : 'schema.drizzle.ts';
     schemaPath = await input({
       message: `Path to ${source} schema file:`,
@@ -160,10 +159,10 @@ export async function initCommand(opts: { config?: string; force?: boolean }): P
   console.log(pc.cyan('\nRunning introspection...'));
 
   const connectConfig: ConnectConfig = source === 'prisma' || source === 'drizzle'
-    ? { dialect: source, schemaPath } as ConnectConfig
+    ? { dialect: source, schemaPath }
     : dialect === 'mongodb'
-      ? { dialect, connectionString, database: databaseName } as ConnectConfig
-      : { dialect, connectionString } as ConnectConfig;
+      ? { dialect, connectionString, database: databaseName }
+      : { dialect, connectionString };
 
   await registerAdapters(source === 'database' ? dialect : source);
   const schema = await introspect(connectConfig);
