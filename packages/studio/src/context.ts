@@ -58,7 +58,7 @@ function inferConnectConfig(config: SeedForgeConfig): ConnectConfig {
     return {
       dialect: conn.source,
       schemaPath: conn.schemaPath ?? 'schema.prisma',
-    } as ConnectConfig;
+    };
   }
   if (conn?.dialect) {
     return {

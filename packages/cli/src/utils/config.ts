@@ -34,14 +34,14 @@ export function inferConnectConfig(config: SeedForgeConfig): ConnectConfig {
     return {
       dialect: conn.source,
       schemaPath: conn.schemaPath ?? 'schema.prisma',
-    } as ConnectConfig;
+    };
   }
   if (conn?.dialect) {
     return {
       dialect: conn.dialect,
       connectionString: conn.connectionString,
       ...(conn.database ? { database: conn.database } : {}),
-    } as ConnectConfig;
+    };
   }
-  return { dialect: 'postgres' } as ConnectConfig;
+  return { dialect: 'postgres' };
 }
