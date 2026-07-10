@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { computeTimelineInfo, cumulativeGrowth, inverseCDF, rowTimestamp, churnTimestamp, seasonalMultiplier } from './timeline.js';
 import type { TimelineInfo } from './timeline.js';
-import type { GrowthModel, TimelineConfig, SeasonalityConfig, ChurnConfig } from '../config/types.js';
+import type { GrowthModel, TimelineConfig, SeasonalityConfig } from '../config/types.js';
 import { deriveStream } from '../distributions/prng.js';
 
 const REF_DATE = new Date('2026-01-15T12:00:00Z').getTime();
@@ -252,7 +252,6 @@ describe('churn cascade — DoD', () => {
 
     for (let pi = 0; pi < parents.length; pi++) {
       const p = parents[pi]!;
-      const pq = deriveStream('dod-churn', 'children', String(pi));
       let count = childrenPerParent;
 
       if (p.churnedAt) {

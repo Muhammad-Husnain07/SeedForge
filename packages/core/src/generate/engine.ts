@@ -4,7 +4,6 @@ import type { TableSchema } from '../types/index.js';
 import type { GenerationPlan, ResolvedField, ParentTimelineCtx } from '../config/types.js';
 import type { GeneratorSpec } from '../semantic/types.js';
 import { deriveStream } from '../distributions/prng.js';
-import type { PRNG } from '../distributions/prng.js';
 import { assignPersona } from '../distributions/persona.js';
 import type { Persona } from '../distributions/persona.js';
 import type { GenerateOptions, GenerationBatch } from './types.js';

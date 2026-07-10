@@ -122,7 +122,7 @@ export function seasonalMultiplier(
 }
 export function computeRowCount(
   timeline: TimelineInfo,
-  configCount?: number | unknown,
+  configCount?: unknown,
 ): number {
   if (typeof configCount === 'number') return Math.max(1, configCount);
   const model = timeline.growthModel;
