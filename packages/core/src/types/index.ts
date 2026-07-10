@@ -46,7 +46,7 @@ export interface TableSchema {
 }
 
 export interface DatabaseSchema {
-  dialect: 'postgres' | 'mysql' | 'mongodb';
+  dialect: 'postgres' | 'mysql' | 'mongodb' | 'prisma' | 'drizzle';
   tables: TableSchema[];
   introspectedAt: string;
   schemaHash: string;

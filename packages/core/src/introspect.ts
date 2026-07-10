@@ -4,7 +4,9 @@ import crypto from 'node:crypto';
 export type ConnectConfig =
   | { dialect: 'postgres'; connectionString: string }
   | { dialect: 'mysql'; connectionString: string }
-  | { dialect: 'mongodb'; connectionString: string; database: string };
+  | { dialect: 'mongodb'; connectionString: string; database: string }
+  | { dialect: 'prisma'; schemaPath: string }
+  | { dialect: 'drizzle'; schemaPath: string };
 
 export interface Introspector {
   introspect(

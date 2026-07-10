@@ -1,0 +1,38 @@
+{
+  "name": "@seed-forge/adapter-drizzle",
+  "version": "0.1.0",
+  "description": "Drizzle schema adapter — parse Drizzle table definitions onto the DatabaseSchema shape",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Muhammad-Husnain07/SeedForge.git"
+  },
+  "author": "Muhammad Husnain",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --dts --clean --format esm",
+    "dev": "tsup src/index.ts --dts --watch --format esm",
+    "test": "vitest run --reporter verbose",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@seed-forge/core": "workspace:^",
+    "drizzle-orm": "^0.43.0",
+    "jiti": "^2.7.0"
+  },
+  "devDependencies": {
+    "tsup": "^8.1.0",
+    "typescript": "^5.5.0",
+    "vitest": "^1.6.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

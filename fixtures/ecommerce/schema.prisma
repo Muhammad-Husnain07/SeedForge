@@ -1,0 +1,103 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  customer
+  admin
+}
+
+enum OrderStatus {
+  pending
+  shipped
+  delivered
+  cancelled
+}
+
+model User {
+  id         String   @id @default(uuid())
+  email      String   @unique
+  first_name String   @map("first_name")
+  last_name  String   @map("last_name")
+  role       UserRole @default(customer)
+  referred_by String? @map("referred_by")
+  referred   User?    @relation("Referral", fields: [referred_by], references: [id], onDelete: SetNull)
+  referrals  User[]   @relation("Referral")
+  created_at DateTime @default(now()) @map("created_at")
+  is_active  Boolean  @default(true) @map("is_active")
+  orders     Order[]
+  reviews    Review[]
+
+  @@map("users")
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  price       Decimal  @db.Decimal(12, 2)
+  sku         String   @unique
+  description String?
+  order_items OrderItem[]
+  reviews     Review[]
+  tags        ProductTag[]
+
+  @@map("products")
+}
+
+model Tag {
+  id     String       @id @default(uuid())
+  name   String       @unique
+  products ProductTag[]
+
+  @@map("tags")
+}
+
+model ProductTag {
+  product_id String
+  tag_id     String
+  product    Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  tag        Tag     @relation(fields: [tag_id], references: [id], onDelete: Cascade)
+
+  @@id([product_id, tag_id])
+  @@map("product_tags")
+}
+
+model Order {
+  id         String    @id @default(uuid())
+  user_id    String    @map("user_id")
+  user       User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  status     OrderStatus @default(pending)
+  total      Decimal   @db.Decimal(14, 2)
+  created_at DateTime  @default(now()) @map("created_at")
+  items      OrderItem[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id         String  @id @default(uuid())
+  order_id   String  @map("order_id")
+  order      Order   @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  product_id String  @map("product_id")
+  product    Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  quantity   Int
+  unit_price Decimal @db.Decimal(12, 2) @map("unit_price")
+
+  @@map("order_items")
+}
+
+model Review {
+  id         String  @id @default(uuid())
+  product_id String  @map("product_id")
+  product    Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  user_id    String  @map("user_id")
+  user       User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  rating     Int
+  body       String?
+
+  @@map("reviews")
+}

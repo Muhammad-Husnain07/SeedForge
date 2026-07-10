@@ -1,0 +1,37 @@
+{
+  "name": "@seed-forge/adapter-prisma",
+  "version": "0.1.0",
+  "description": "Prisma schema adapter — parse schema.prisma via @prisma/internals getDMMF onto the DatabaseSchema shape",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Muhammad-Husnain07/SeedForge.git"
+  },
+  "author": "Muhammad Husnain",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --dts --clean --format esm",
+    "dev": "tsup src/index.ts --dts --watch --format esm",
+    "test": "vitest run --reporter verbose",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@prisma/internals": "^7.8.0",
+    "@seed-forge/core": "workspace:^"
+  },
+  "devDependencies": {
+    "tsup": "^8.1.0",
+    "typescript": "^5.5.0",
+    "vitest": "^1.6.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}
