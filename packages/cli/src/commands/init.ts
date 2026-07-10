@@ -37,7 +37,7 @@ export async function initCommand(opts: { config?: string; force?: boolean }): P
   });
 
   let schemaPath = '';
-  let dialect = 'postgres' as string;
+  let dialect: 'postgres' | 'mysql' | 'mongodb' = 'postgres';
   let connectionString = '';
   let databaseName = '';
 
@@ -51,7 +51,7 @@ export async function initCommand(opts: { config?: string; force?: boolean }): P
     });
 
     // Also ask for the target write dialect
-    dialect = await select({
+    dialect = await select<'postgres' | 'mysql' | 'mongodb'>({
       message: 'Target database dialect (for seeding):',
       choices: [
         { name: 'PostgreSQL', value: 'postgres' },
@@ -94,7 +94,7 @@ export async function initCommand(opts: { config?: string; force?: boolean }): P
       }
     } catch { /* no .env */ }
 
-    dialect = await select({
+    dialect = await select<'postgres' | 'mysql' | 'mongodb'>({
       message: 'Select database dialect:',
       choices: [
         { name: 'PostgreSQL', value: 'postgres' },
@@ -144,7 +144,7 @@ export async function initCommand(opts: { config?: string; force?: boolean }): P
           registerIntrospector('mongodb', { introspect: mod.introspect });
         }
 
-        const connResult = await introspect(connectConfig as ConnectConfig);
+        const connResult = await introspect(connectConfig);
         console.log(pc.green(`✔ Connection OK — ${connResult.tables.length} tables found`));
       } catch (err) {
         console.error(pc.red(`✖ Connection failed: ${(err as Error).message}`));
@@ -214,7 +214,7 @@ export async function initCommand(opts: { config?: string; force?: boolean }): P
   }
 
   // Step 8: Write config file
-  const writeDialect = dialect as 'postgres' | 'mysql' | 'mongodb';
+  const writeDialect = dialect;
   const configObj: SeedForgeConfig = {
     connection: source === 'prisma' || source === 'drizzle'
       ? { dialect: writeDialect, source, schemaPath, connectionString, ...(writeDialect === 'mongodb' ? { database: databaseName } : {}) }
