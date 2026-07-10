@@ -1,5 +1,11 @@
 # @seed-forge/core
 
+## 0.2.4
+
+### Patch Changes
+
+- Auto-generated patch release
+
 ## 0.2.3
 
 ### Patch Changes

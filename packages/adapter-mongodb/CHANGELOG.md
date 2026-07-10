@@ -1,5 +1,13 @@
 # @seed-forge/adapter-mongodb
 
+## 0.2.4
+
+### Patch Changes
+
+- Auto-generated patch release
+- Updated dependencies
+  - @seed-forge/core@0.2.4
+
 ## 0.2.3
 
 ### Patch Changes

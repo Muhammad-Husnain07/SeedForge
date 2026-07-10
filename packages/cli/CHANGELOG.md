@@ -1,5 +1,19 @@
 # @seed-forge/cli
 
+## 0.2.4
+
+### Patch Changes
+
+- Auto-generated patch release
+- Updated dependencies
+  - @seed-forge/adapter-drizzle@0.1.1
+  - @seed-forge/adapter-mongodb@0.2.4
+  - @seed-forge/adapter-mysql@0.2.4
+  - @seed-forge/adapter-postgres@0.2.4
+  - @seed-forge/adapter-prisma@0.1.1
+  - @seed-forge/core@0.2.4
+  - @seed-forge/studio@0.2.4
+
 ## 0.2.3
 
 ### Patch Changes

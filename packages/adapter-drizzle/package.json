@@ -1,6 +1,6 @@
 {
   "name": "@seed-forge/adapter-drizzle",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Drizzle schema adapter — parse Drizzle table definitions onto the DatabaseSchema shape",
   "license": "MIT",
   "repository": {
