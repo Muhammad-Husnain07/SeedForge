@@ -1,0 +1,74 @@
+name: 'SeedForge'
+description: 'Seed a database with deterministic synthetic data using SeedForge'
+author: 'Muhammad Husnain'
+branding:
+  icon: 'database'
+  color: 'green'
+
+inputs:
+  connection-string:
+    description: 'Database connection string (pass as a secret)'
+    required: true
+  config-path:
+    description: 'Path to seedforge config file'
+    required: false
+    default: 'seedforge.config.ts'
+  profile:
+    description: 'Registry profile ref (<org>/<project>/<name>[:version]) to pull before seeding'
+    required: false
+  mode:
+    description: 'Write mode: fresh | truncate | append'
+    required: false
+    default: 'fresh'
+  registry-url:
+    description: 'SeedForge registry URL (required if profile is set)'
+    required: false
+  registry-token:
+    description: 'SeedForge registry API token (required if profile is set)'
+    required: false
+  seed:
+    description: 'Seed value override for deterministic generation'
+    required: false
+  force:
+    description: 'Acknowledge schema drift and proceed with pull (pass --force to pull)'
+    required: false
+    default: 'false'
+  json:
+    description: 'Output JSON machine-readable format'
+    required: false
+    default: 'false'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Pull profile from registry
+      if: inputs.profile != ''
+      shell: bash
+      run: >
+        npx @seed-forge/cli pull "${{ inputs.profile }}"
+        ${{ inputs.json == 'true' && '--json' || '' }}
+        ${{ inputs.force == 'true' && '--force' || '' }}
+      env:
+        SEEDFORGE_REGISTRY_URL: ${{ inputs.registry-url }}
+        SEEDFORGE_REGISTRY_TOKEN: ${{ inputs.registry-token }}
+
+    - name: Seed database
+      shell: bash
+      run: >
+        npx @seed-forge/cli seed
+        --config "${{ inputs.config-path }}"
+        --mode "${{ inputs.mode }}"
+        ${{ inputs.seed && format('--seed {0}', inputs.seed) || '' }}
+        ${{ inputs.json == 'true' && '--json' || '' }}
+      env:
+        SEEDFORGE_CONNECTION_STRING: ${{ inputs.connection-string }}
+
+    - name: Verify seeded data
+      if: always()
+      shell: bash
+      run: >
+        npx @seed-forge/cli doctor
+        --config "${{ inputs.config-path }}"
+        ${{ inputs.json == 'true' && '--json' || '' }}
+      env:
+        SEEDFORGE_CONNECTION_STRING: ${{ inputs.connection-string }}
