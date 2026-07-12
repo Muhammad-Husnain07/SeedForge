@@ -61,6 +61,11 @@ packages/
                             REST APIs for schema, graph, config, plan, seed execution.
                             SSE-based live progress. ER diagram via React Flow.
 
+  testing/              — In-process seed helpers for Vitest and Jest. Calls core
+                            generation + writer pipeline directly (no CLI subprocess).
+                            Supports file-scoped and suite-scoped seed lifecycle.
+                            Deps: @seed-forge/core (private, monorepo-only).
+
   integration-tests/    — Testcontainers-based end-to-end pipeline tests
                             (private, not published).
 
@@ -194,14 +199,14 @@ The implementation evolved during development in several ways worth noting:
 
 5. **Lockfile/drift and export/import were implemented earlier than the roadmap planned.** These shipped in Milestone IX/X rather than being separate milestones, because the bundle format was needed for the studio's "download snapshot" feature.
 
-6. **Package count grew.** The original doc listed 6 packages (core, 3 adapters, cli, studio). The actual monorepo now contains 9 packages (adding `integration-tests` and `seedforge-plugin-geo`).
+6. **Package count grew.** The original doc listed 6 packages (core, 3 adapters, cli, studio). The actual monorepo now contains 11 packages (adding `integration-tests`, `seedforge-plugin-geo`, `testing`, `adapter-drizzle`, `adapter-prisma`).
 
 7. **All packages ship at the same version.** With `@changesets/cli` and the `fixed` config, all publishable packages (`@seed-forge/core`, `@seed-forge/adapter-*`, `@seed-forge/cli`, `@seed-forge/studio`) are released together with synced version numbers. This was not part of the original design but simplifies the install experience.
 
-## Current State (Milestone XI Complete)
+## Current State (Phase 2 Complete)
 
 - ✅ Monorepo tooling — pnpm workspaces, Turborepo, TypeScript strict
-- ✅ Core domain types — `LogicalType`, `DatabaseSchema`, `TableSchema`, `ColumnSchema`, `ForeignKey`
+- ✅ Core domain types — `LogicalType`, `DatabaseSchema`, `TableSchema`, `ColumnSchema`
 - ✅ Postgres introspection — 7 information_schema queries, enum detection, 6 tests
 - ✅ MySQL introspection — equivalent queries, enum parsing, `TINYINT(1)` → boolean, 7 tests
 - ✅ MongoDB inference — document sampling, nested flattening, extended JSON, 8 tests
@@ -225,23 +230,33 @@ The implementation evolved during development in several ways worth noting:
 - ✅ Studio dashboard — Fastify backend + React/Vite frontend, ER diagram (React Flow), live progress (SSE), "Seed now" button
 - ✅ Changesets monorepo versioning — `@changesets/cli` with `fixed` config for synced releases
 - ✅ CI workflows — lint + unit + integration on PR, publish-on-tag with npm provenance
-- ✅ README with verified 60-second quick-start — copy-pasteable `docker run` → `npx @seed-forge/cli init` → `npx @seed-forge/cli seed`
+- ✅ README with verified 60-second quick-start — copy-pasteable `docker run` → `npx @seed-forge/seedforge init` → `npx @seed-forge/seedforge seed`
 - ✅ Config DSL reference — all options, generators, distributions, personas documented
 - ✅ CLI reference — auto-generated from Commander's `--help` output (always in sync)
 - ✅ Plugin-authoring guide — updated to match actual `afterGenerate` metadata signature
 - ✅ Examples project — `examples/ecommerce/` runnable out of the box
 - ✅ License, contributing guide, issue templates — MIT, CONTRIBUTING.md, bug report + feature request templates
+- ✅ **Phase 2, Milestone A** — Single-command install (`npx @seed-forge/seedforge`), `create-seedforge` scaffolding, `@fastify/static` security bump, programmatic CLI exports
+- ✅ **Phase 2, Milestone B** — ORM-native schema parsing (Prisma, Drizzle adapters), `seedforge suggest --describe` natural-language config authoring, `seedforge clone` production anonymization
+- ✅ **Phase 2, Milestone C** — GitHub Actions CI plugin (`.github/actions/seedforge-action/`), test-framework bindings (`@seed-forge/testing` with Vitest + Jest adapters), `diff --ci` PR gate, preview-database recipes (Neon, Supabase, PlanetScale)
 - 🔄 **Next: Production hardening — HTTPS, auth, multi-user workspaces, cloud-hosted studio**
 
 ## Test Suite
 
 | Package | Test count | Environment |
 |---|---|---|
-| `@seed-forge/core` | ~130+ | Standalone (unit + property) |
-| `@seed-forge/adapter-postgres` | ~18 | Docker Postgres 16 |
-| `@seed-forge/adapter-mysql` | ~17 | Docker MySQL 8 |
-| `@seed-forge/adapter-mongodb` | ~16 | Docker MongoDB 7 |
-| `@seed-forge/cli` | ~5 | Standalone |
-| **Total** | **~190+** | `docker compose up -d` |
+| `@seed-forge/core` | 176 | Standalone (unit + property) |
+| `@seed-forge/adapter-postgres` | 18 | Docker Postgres 16 |
+| `@seed-forge/adapter-mysql` | 17 | Docker MySQL 8 |
+| `@seed-forge/adapter-mongodb` | 16 | Docker MongoDB 7 |
+| `@seed-forge/adapter-prisma` | 10 | Standalone (Prisma schema parsing) |
+| `@seed-forge/adapter-drizzle` | 10 | Standalone (Drizzle schema parsing) |
+| `@seed-forge/cli` | 77 | Standalone |
+| `@seed-forge/integration-tests` | 13 | Docker Postgres + MySQL + MongoDB |
+| `@seed-forge/registry` | 2 | Standalone |
+| `@seed-forge/studio` | 1 | Standalone |
+| `@seed-forge/plugin-geo` | 7 | Standalone |
+| `@seed-forge/example-testing-vitest` | 3 | Docker Postgres 16 |
+| **Total** | **350** | See above |
 
-> **Note**: All 258 tests pass across 28 test files as of Milestone X.
+> **Note**: All 350 tests pass across 36 test files as of Phase 2, Milestone C.

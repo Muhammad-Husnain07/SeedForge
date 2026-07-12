@@ -14,7 +14,7 @@ This directory contains a ready-to-run SeedForge configuration for an e-commerce
 docker compose -f ../../fixtures/ecommerce/docker-compose.yml up -d
 
 # 2. Seed the database
-npx @seed-forge/cli seed -c seedforge.config.ts
+npx @seed-forge/seedforge seed -c seedforge.config.ts
 ```
 
 ## What it does
