@@ -2,7 +2,7 @@
 
 > Auto-generated from `seedforge --help`. Do not edit by hand.
 > Regenerate with: `node scripts/gen-cli-docs.mjs`
-> Generated on: 2026-07-06
+> Generated on: 2026-07-12
 
 ## Usage
 
@@ -36,11 +36,15 @@ Options:
 ```
 Usage: seedforge introspect [options]
 
-Print or save the full DatabaseSchema from the live database
+Print or save the full DatabaseSchema from the live database or a schema file
 
 Options:
   -c, --config <path>  path to config file (default: "seedforge.config.ts")
   --out <file>         write schema JSON to file
+  --source <source>    schema source: database, prisma, or drizzle (overrides
+                       config)
+  --schema <path>      path to schema file (required when --source is prisma or
+                       drizzle)
   -h, --help           display help for command
 ```
 
@@ -72,6 +76,8 @@ Options:
   --include-samples    WARNING: include sample distinct values from the
                        database. This may include real user PII. Only use on
                        databases you own.
+  --describe <text>    describe your dataset in plain English to get a full
+                       config draft
   --provider <name>    LLM provider: anthropic, openai, google, deepseek, xai,
                        openrouter, ollama
   --model <name>       model name override (defaults to provider-appropriate
@@ -135,11 +141,17 @@ Options:
 ```
 Usage: seedforge diff [options]
 
-Check for schema drift between lockfile and live database (CI gate)
+Check for schema drift between lockfile/live database/registry profile (CI
+gate)
 
 Options:
   -c, --config <path>    path to config file (default: "seedforge.config.ts")
   -l, --lockfile <path>  path to lockfile
+  --ci                   output drift as GitHub Actions annotations, exit
+                         non-zero on drift
+  --profile <ref>        compare against a registry profile
+                         (<org>/<project>/<name>[:version])
+  --force                acknowledge drift and exit 0
   -h, --help             display help for command
 ```
 
@@ -197,6 +209,68 @@ Usage: seedforge doctor [options]
 Sanity-check the environment: config, database connection, and lockfile
 
 Options:
+  -c, --config <path>  path to config file (default: "seedforge.config.ts")
+  -h, --help           display help for command
+```
+
+### `seedforge clone`
+
+```
+Usage: seedforge clone [options]
+
+Clone and optionally anonymize data from a source database
+
+Options:
+  --source <connection>    source database connection string
+  --anonymize              replace PII columns with generated values
+  --i-understand-the-risk  acknowledge cloning from a production database
+  --out <dir>              output directory for anonymized NDJSON files
+                           (default: "./anonymized")
+  --max-rows <n>           maximum rows to sample per table (default: all rows)
+  -h, --help               display help for command
+```
+
+### `seedforge login`
+
+```
+Usage: seedforge login [options]
+
+Log in to a SeedForge profile registry
+
+Options:
+  -h, --help  display help for command
+```
+
+### `seedforge push`
+
+```
+Usage: seedforge push [options] <profile-name>
+
+Push a named seed profile to the registry
+
+Arguments:
+  profile-name           profile name
+
+Options:
+  --version <version>    version tag (default: latest)
+  --project <name>       project name (default: CWD directory name)
+  -c, --config <path>    path to config file (default: "seedforge.config.ts")
+  -l, --lockfile <path>  path to lockfile
+  -h, --help             display help for command
+```
+
+### `seedforge pull`
+
+```
+Usage: seedforge pull [options] <ref>
+
+Pull a seed profile from the registry and import it
+
+Arguments:
+  ref                  <org>/<project>/<profile-name>[:version]
+
+Options:
+  --force              skip schema mismatch warning
   -c, --config <path>  path to config file (default: "seedforge.config.ts")
   -h, --help           display help for command
 ```
