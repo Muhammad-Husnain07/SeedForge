@@ -15,7 +15,7 @@ export async function sample(
     const size = maxRows !== undefined ? Math.min(maxRows, count) : count;
     if (size === 0) return [];
     const pipeline = size < count ? [{ $sample: { size } }] : [];
-    return (await coll.aggregate(pipeline).toArray()) as Record<string, unknown>[];
+    return await coll.aggregate(pipeline).toArray();
   } finally {
     await client.close();
   }

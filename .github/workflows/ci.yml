@@ -57,10 +57,10 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
-      # Dogfood the CLI path: pipeline helpers use "node dist/index.js" instead of core lib
+      # Dogfood the CLI path: pipeline helpers use the CLI binary instead of core lib
       - run: pnpm test:integration
         env:
-          SEEDFORGE_CLI_PATH: node dist/index.js
+          SEEDFORGE_CLI_PATH: node ${{ github.workspace }}/packages/cli/dist/index.js
 
   test-action:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -96,13 +96,7 @@ jobs:
         env:
           PGPASSWORD: seedforge
 
-      # Check for schema drift before seeding (PR-gate pattern)
-      - name: Check schema drift
-        run: npx @seed-forge/cli diff --ci --config fixtures/configs/postgres.ecommerce.ts
-        env:
-          SEEDFORGE_CONNECTION_STRING: postgresql://seedforge:seedforge@localhost:5432/seedforge
-
-      # Run the action to seed the database
+      # Run the action to seed the database (creates lockfile)
       - name: Seed database via SeedForge action
         uses: ./.github/actions/seedforge-action
         with:
@@ -110,6 +104,12 @@ jobs:
           config-path: fixtures/configs/postgres.ecommerce.ts
           mode: fresh
           json: 'true'
+
+      # Check for schema drift after seeding (lockfile now exists)
+      - name: Check schema drift
+        run: npx @seed-forge/cli diff --ci --config fixtures/configs/postgres.ecommerce.ts
+        env:
+          SEEDFORGE_CONNECTION_STRING: postgresql://seedforge:seedforge@localhost:5432/seedforge
 
       # Verify rows were written
       - name: Verify seeded rows
