@@ -777,7 +777,8 @@ export async function runPgPipeline(connStr: string, fixture: string, seed = 42)
     await fs.unlink(tmpConfig).catch(() => {});
     const schema = await pgIntrospect({ connectionString: connStr });
     const graph = buildGraph(schema);
-    const plan = buildGenerationPlan(schema, config, []);
+    const matches = analyzeSchema(schema);
+    const plan = buildGenerationPlan(schema, config, matches);
     const allTables = schema.tables.map((t) => t.name);
     const rowsWritten = await getRowCountsPG(connStr, allTables);
     return { schema, graph, plan, rowsWritten, tableData: {}, bundleFile: '' };
@@ -808,7 +809,8 @@ export async function runMysqlPipeline(connStr: string, fixture: string, seed = 
     await fs.unlink(tmpConfig).catch(() => {});
     const schema = await mysqlIntrospect({ connectionString: connStr });
     const graph = buildGraph(schema);
-    const plan = buildGenerationPlan(schema, config, []);
+    const matches = analyzeSchema(schema);
+    const plan = buildGenerationPlan(schema, config, matches);
     const allTables = schema.tables.map((t) => t.name);
     const rowsWritten = await getRowCountsMySQL(connStr, allTables);
     return { schema, graph, plan, rowsWritten, tableData: {}, bundleFile: '' };
@@ -852,12 +854,13 @@ export async function runMongoPipeline(connStr: string, dbName: string, fixture:
     await fs.writeFile(tmpConfig, JSON.stringify({ ...config, seed }));
     execSync(
       `${cliPath} seed --config "${tmpConfig}" --mode fresh --seed ${seed}`,
-      { env: { ...process.env, SEEDFORGE_CONNECTION_STRING: connStr }, stdio: 'pipe' },
+      { stdio: 'pipe' },
     );
     await fs.unlink(tmpConfig).catch(() => {});
     const schema = await mongoIntrospect({ connectionString: connStr, database: dbName });
     const graph = buildGraph(schema);
-    const plan = buildGenerationPlan(schema, config, []);
+    const matches = analyzeSchema(schema);
+    const plan = buildGenerationPlan(schema, config, matches);
     const allTables = schema.tables.map((t) => t.name);
     const rowsWritten = await getRowCountsMongo(connStr, dbName, allTables);
     return { schema, graph, plan, rowsWritten, tableData: {}, bundleFile: '' };

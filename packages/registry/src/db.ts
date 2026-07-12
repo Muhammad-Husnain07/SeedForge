@@ -8,7 +8,7 @@ export async function queryTokenByHash(
   pool: pg.Pool,
   tokenHash: string,
 ): Promise<{ id: string; org: string } | null> {
-  const result = await pool.query(
+  const result = await pool.query<{ id: string; org: string }>(
     'SELECT id, org FROM api_tokens WHERE token_hash = $1',
     [tokenHash],
   );
@@ -27,7 +27,7 @@ export async function insertProfile(
     lockfile: unknown;
   },
 ): Promise<string> {
-  const result = await pool.query(
+  const result = await pool.query<{ id: string }>(
     `INSERT INTO profiles (org, project, name, version, manifest, config, lockfile)
      VALUES ($1, $2, $3, $4, $5::jsonb, $6::jsonb, $7::jsonb)
      ON CONFLICT (org, project, name, version)
@@ -53,7 +53,13 @@ export async function fetchProfile(
   created_at: string;
 } | null> {
   const v = version ?? 'latest';
-  const result = await pool.query(
+  const result = await pool.query<{
+    id: string;
+    manifest: unknown;
+    config: unknown;
+    lockfile: unknown;
+    created_at: string;
+  }>(
     `SELECT id, manifest, config, lockfile, created_at
      FROM profiles
      WHERE org = $1 AND project = $2 AND name = $3 AND version = $4`,
@@ -67,7 +73,7 @@ export async function listProfiles(
   org: string,
   project: string,
 ): Promise<Array<{ name: string; version: string; created_at: string }>> {
-  const result = await pool.query(
+  const result = await pool.query<{ name: string; version: string; created_at: string }>(
     `SELECT name, version, created_at
      FROM profiles
      WHERE org = $1 AND project = $2

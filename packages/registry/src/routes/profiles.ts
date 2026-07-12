@@ -9,10 +9,10 @@ interface PublishBody {
   lockfile: unknown;
 }
 
-export async function profileRoutes(
+export function profileRoutes(
   server: FastifyInstance,
   _opts: unknown,
-): Promise<void> {
+): void {
   server.post<{ Body: PublishBody; Params: { project: string } }>(
     '/org/:project',
     async (request: FastifyRequest<{ Body: PublishBody; Params: { project: string } }>, reply: FastifyReply) => {

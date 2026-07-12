@@ -12,10 +12,10 @@ declare module 'fastify' {
   }
 }
 
-export async function authMiddleware(
+export function authMiddleware(
   server: FastifyInstance,
   _opts: unknown,
-): Promise<void> {
+): void {
   server.decorateRequest('authOrg', undefined);
 
   server.addHook('onRequest', async (request: FastifyRequest, reply: FastifyReply) => {

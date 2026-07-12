@@ -13,8 +13,6 @@ export interface RegistryOptions {
 }
 
 export async function createRegistry(opts: RegistryOptions = {}) {
-  const port = opts.port ?? 3457;
-  const host = opts.host ?? '0.0.0.0';
   const databaseUrl = opts.databaseUrl ?? process.env.DATABASE_URL!;
   if (!databaseUrl) {
     throw new Error('DATABASE_URL is required');
@@ -30,7 +28,7 @@ export async function createRegistry(opts: RegistryOptions = {}) {
   await server.register(cors);
 
   // Public routes
-  server.get('/health', async () => ({ status: 'ok' }));
+  server.get('/health', () => ({ status: 'ok' }));
 
   // Auth-protected routes
   await server.register(authMiddleware);

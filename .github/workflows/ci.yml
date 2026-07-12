@@ -96,7 +96,13 @@ jobs:
         env:
           PGPASSWORD: seedforge
 
-      # Run the action to seed the database (creates lockfile)
+      # Seed with local CLI first (creates lockfile for diff)
+      - name: Seed database (local CLI)
+        run: node packages/cli/dist/index.js seed --config fixtures/configs/postgres.ecommerce.ts --mode fresh --seed 42
+        env:
+          SEEDFORGE_CONNECTION_STRING: postgresql://seedforge:seedforge@localhost:5432/seedforge
+
+      # Run the action to seed the database (tests the action itself)
       - name: Seed database via SeedForge action
         uses: ./.github/actions/seedforge-action
         with:
@@ -107,7 +113,7 @@ jobs:
 
       # Check for schema drift after seeding (lockfile now exists)
       - name: Check schema drift
-        run: npx @seed-forge/cli diff --ci --config fixtures/configs/postgres.ecommerce.ts
+        run: node packages/cli/dist/index.js diff --ci --config fixtures/configs/postgres.ecommerce.ts
         env:
           SEEDFORGE_CONNECTION_STRING: postgresql://seedforge:seedforge@localhost:5432/seedforge
 
