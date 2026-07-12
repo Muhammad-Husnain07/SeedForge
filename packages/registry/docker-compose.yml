@@ -1,0 +1,26 @@
+version: '3.9'
+services:
+  registry-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: seedforge
+      POSTGRES_PASSWORD: seedforge
+      POSTGRES_DB: seedforge_registry
+    ports:
+      - '5433:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  registry:
+    build: .
+    ports:
+      - '3457:3457'
+    environment:
+      PORT: '3457'
+      DATABASE_URL: 'postgresql://seedforge:seedforge@registry-db:5432/seedforge_registry'
+      SEEDFORGE_REGISTRY_TOKEN_SEED: 'sf_tkn_demo_secret_token_change_me'
+    depends_on:
+      - registry-db
+
+volumes:
+  pgdata:
