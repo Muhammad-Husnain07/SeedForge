@@ -1,0 +1,42 @@
+{
+  "name": "@seed-forge/registry",
+  "version": "0.1.0",
+  "description": "Seed profile registry — publish and fetch named, versioned seed profiles via HTTP",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "seedforge-registry": "./dist/main.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts src/main.ts --dts --clean --format esm --no-splitting",
+    "dev": "tsup src/index.ts src/main.ts --dts --watch --format esm --no-splitting",
+    "test": "vitest run --reporter verbose",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@fastify/cors": "^10.0.0",
+    "@seed-forge/core": "workspace:^",
+    "fastify": "^5.0.0",
+    "pg": "^8.13.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/pg": "^8.11.0",
+    "tsup": "^8.1.0",
+    "typescript": "^5.5.0",
+    "vitest": "^1.6.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
