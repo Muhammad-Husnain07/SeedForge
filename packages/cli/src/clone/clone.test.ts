@@ -3,7 +3,8 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { classifyColumns, anonymizeRow, isSensitiveSemanticType } from './anonymizer.js';
 import { clone, formatCloneSummary } from './clone.js';
-import type { AnonymizedColumn, CloneOptions } from './types.js';
+import type { DatabaseSchema } from '@seed-forge/core';
+import type { AnonymizedColumn } from './types.js';
 
 // ─── Sensitive type classification ─────────────────────────────────────
 
@@ -53,8 +54,8 @@ describe('isSensitiveSemanticType', () => {
 // ─── classifyColumns ───────────────────────────────────────────────────
 
 describe('classifyColumns', () => {
-  const mockSchema = {
-    dialect: 'postgres' as const,
+    const mockSchema: DatabaseSchema = {
+    dialect: 'postgres',
     introspectedAt: new Date().toISOString(),
     schemaHash: 'abc',
     tables: [
@@ -62,11 +63,11 @@ describe('classifyColumns', () => {
         name: 'users',
         primaryKey: ['id'],
         columns: [
-          { name: 'id', logicalType: 'uuid' as const, nativeType: 'uuid', nullable: false, isPrimaryKey: true, isUnique: true },
-          { name: 'email', logicalType: 'string' as const, nativeType: 'varchar', nullable: false, isPrimaryKey: false, isUnique: true },
-          { name: 'name', logicalType: 'string' as const, nativeType: 'varchar', nullable: false, isPrimaryKey: false, isUnique: false },
-          { name: 'tier', logicalType: 'string' as const, nativeType: 'varchar', nullable: true, isPrimaryKey: false, isUnique: false, enumValues: ['free', 'pro'] },
-          { name: 'order_total', logicalType: 'float' as const, nativeType: 'decimal', nullable: false, isPrimaryKey: false, isUnique: false },
+          { name: 'id', logicalType: 'uuid', nativeType: 'uuid', nullable: false, isPrimaryKey: true, isUnique: true },
+          { name: 'email', logicalType: 'string', nativeType: 'varchar', nullable: false, isPrimaryKey: false, isUnique: true },
+          { name: 'name', logicalType: 'string', nativeType: 'varchar', nullable: false, isPrimaryKey: false, isUnique: false },
+          { name: 'tier', logicalType: 'string', nativeType: 'varchar', nullable: true, isPrimaryKey: false, isUnique: false, enumValues: ['free', 'pro'] },
+          { name: 'order_total', logicalType: 'float', nativeType: 'decimal', nullable: false, isPrimaryKey: false, isUnique: false },
         ],
         foreignKeys: [],
         uniqueConstraints: [],
@@ -75,9 +76,9 @@ describe('classifyColumns', () => {
         name: 'orders',
         primaryKey: ['id'],
         columns: [
-          { name: 'id', logicalType: 'integer' as const, nativeType: 'int', nullable: false, isPrimaryKey: true, isUnique: true },
-          { name: 'user_id', logicalType: 'uuid' as const, nativeType: 'uuid', nullable: false, isPrimaryKey: false, isUnique: false },
-          { name: 'total', logicalType: 'float' as const, nativeType: 'decimal', nullable: false, isPrimaryKey: false, isUnique: false },
+          { name: 'id', logicalType: 'integer', nativeType: 'int', nullable: false, isPrimaryKey: true, isUnique: true },
+          { name: 'user_id', logicalType: 'uuid', nativeType: 'uuid', nullable: false, isPrimaryKey: false, isUnique: false },
+          { name: 'total', logicalType: 'float', nativeType: 'decimal', nullable: false, isPrimaryKey: false, isUnique: false },
         ],
         foreignKeys: [{ columns: ['user_id'], referencedTable: 'users', referencedColumns: ['id'] }],
         uniqueConstraints: [],
@@ -86,46 +87,46 @@ describe('classifyColumns', () => {
   };
 
   const mockMatches = [
-    { table: 'users', column: 'email', semanticType: 'email', confidence: 1, suggestedGenerator: { kind: 'faker', params: { method: 'internet.email' } }, source: 'rule' as const },
-    { table: 'users', column: 'name', semanticType: 'fullName', confidence: 1, suggestedGenerator: { kind: 'fullName', params: {} }, source: 'rule' as const },
-    { table: 'users', column: 'tier', semanticType: 'enum', confidence: 1, suggestedGenerator: { kind: 'weighted-categorical', params: { values: { free: 0.7, pro: 0.3 } } }, source: 'rule' as const },
-    { table: 'orders', column: 'user_id', semanticType: 'foreignKey', confidence: 0.8, suggestedGenerator: { kind: 'fk-reference', params: { referencedTable: 'users', referencedColumn: 'id' } }, source: 'rule' as const },
+    { table: 'users', column: 'email', semanticType: 'email', confidence: 1, suggestedGenerator: { kind: 'faker', params: { method: 'internet.email' } }, source: 'rule' },
+    { table: 'users', column: 'name', semanticType: 'fullName', confidence: 1, suggestedGenerator: { kind: 'fullName', params: {} }, source: 'rule' },
+    { table: 'users', column: 'tier', semanticType: 'enum', confidence: 1, suggestedGenerator: { kind: 'weighted-categorical', params: { values: { free: 0.7, pro: 0.3 } } }, source: 'rule' },
+    { table: 'orders', column: 'user_id', semanticType: 'foreignKey', confidence: 0.8, suggestedGenerator: { kind: 'fk-reference', params: { referencedTable: 'users', referencedColumn: 'id' } }, source: 'rule' },
   ];
 
   it('marks email as replace when not PK', () => {
-    const result = classifyColumns(mockSchema as any, mockMatches);
+    const result = classifyColumns(mockSchema, mockMatches);
     const emailCol = result.columns.find((c) => c.column === 'email');
     expect(emailCol?.strategy).toBe('replace');
     expect(emailCol?.generator?.kind).toBe('faker');
   });
 
   it('marks fullName as replace', () => {
-    const result = classifyColumns(mockSchema as any, mockMatches);
+    const result = classifyColumns(mockSchema, mockMatches);
     const nameCol = result.columns.find((c) => c.column === 'name');
     expect(nameCol?.strategy).toBe('replace');
     expect(nameCol?.generator?.kind).toBe('fullName');
   });
 
   it('keeps PK columns even if sensitive', () => {
-    const result = classifyColumns(mockSchema as any, mockMatches);
+    const result = classifyColumns(mockSchema, mockMatches);
     const pkCol = result.columns.find((c) => c.column === 'id');
     expect(pkCol?.strategy).toBe('keep');
   });
 
   it('keeps non-sensitive resolved columns', () => {
-    const result = classifyColumns(mockSchema as any, mockMatches);
+    const result = classifyColumns(mockSchema, mockMatches);
     const tierCol = result.columns.find((c) => c.column === 'tier');
     expect(tierCol?.strategy).toBe('keep');
   });
 
   it('keeps unresolved columns', () => {
-    const result = classifyColumns(mockSchema as any, mockMatches);
+    const result = classifyColumns(mockSchema, mockMatches);
     const totalCol = result.columns.find((c) => c.column === 'total');
     expect(totalCol?.strategy).toBe('keep');
   });
 
   it('keeps FK columns', () => {
-    const result = classifyColumns(mockSchema as any, mockMatches);
+    const result = classifyColumns(mockSchema, mockMatches);
     const fkCol = result.columns.find((c) => c.column === 'user_id');
     expect(fkCol?.strategy).toBe('keep');
   });
@@ -160,8 +161,8 @@ describe('anonymizeRow', () => {
 describe('clone', () => {
   const testDir = path.join(process.cwd(), '.test-clone-output');
 
-    const mockSchema = {
-    dialect: 'postgres' as const,
+  const mockSchema: DatabaseSchema = {
+    dialect: 'postgres',
     introspectedAt: new Date().toISOString(),
     schemaHash: 'abc',
     tables: [
@@ -169,13 +170,13 @@ describe('clone', () => {
         name: 'users',
         primaryKey: ['id'],
         columns: [
-          { name: 'id', logicalType: 'uuid' as const, nativeType: 'uuid', nullable: false, isPrimaryKey: true, isUnique: true },
-          { name: 'email', logicalType: 'string' as const, nativeType: 'varchar', nullable: false, isPrimaryKey: false, isUnique: true },
-          { name: 'full_name', logicalType: 'string' as const, nativeType: 'varchar', nullable: false, isPrimaryKey: false, isUnique: false },
-          { name: 'first_name', logicalType: 'string' as const, nativeType: 'varchar', nullable: false, isPrimaryKey: false, isUnique: false },
-          { name: 'phone', logicalType: 'string' as const, nativeType: 'varchar', nullable: false, isPrimaryKey: false, isUnique: false },
-          { name: 'tier', logicalType: 'string' as const, nativeType: 'varchar', nullable: true, isPrimaryKey: false, isUnique: false, enumValues: ['free', 'pro'] },
-          { name: 'order_total', logicalType: 'float' as const, nativeType: 'decimal', nullable: false, isPrimaryKey: false, isUnique: false },
+          { name: 'id', logicalType: 'uuid', nativeType: 'uuid', nullable: false, isPrimaryKey: true, isUnique: true },
+          { name: 'email', logicalType: 'string', nativeType: 'varchar', nullable: false, isPrimaryKey: false, isUnique: true },
+          { name: 'full_name', logicalType: 'string', nativeType: 'varchar', nullable: false, isPrimaryKey: false, isUnique: false },
+          { name: 'first_name', logicalType: 'string', nativeType: 'varchar', nullable: false, isPrimaryKey: false, isUnique: false },
+          { name: 'phone', logicalType: 'string', nativeType: 'varchar', nullable: false, isPrimaryKey: false, isUnique: false },
+          { name: 'tier', logicalType: 'string', nativeType: 'varchar', nullable: true, isPrimaryKey: false, isUnique: false, enumValues: ['free', 'pro'] },
+          { name: 'order_total', logicalType: 'float', nativeType: 'decimal', nullable: false, isPrimaryKey: false, isUnique: false },
         ],
         foreignKeys: [],
         uniqueConstraints: [],
@@ -184,9 +185,9 @@ describe('clone', () => {
         name: 'orders',
         primaryKey: ['id'],
         columns: [
-          { name: 'id', logicalType: 'integer' as const, nativeType: 'int', nullable: false, isPrimaryKey: true, isUnique: true },
-          { name: 'user_id', logicalType: 'uuid' as const, nativeType: 'uuid', nullable: false, isPrimaryKey: false, isUnique: false },
-          { name: 'total', logicalType: 'float' as const, nativeType: 'decimal', nullable: false, isPrimaryKey: false, isUnique: false },
+          { name: 'id', logicalType: 'integer', nativeType: 'int', nullable: false, isPrimaryKey: true, isUnique: true },
+          { name: 'user_id', logicalType: 'uuid', nativeType: 'uuid', nullable: false, isPrimaryKey: false, isUnique: false },
+          { name: 'total', logicalType: 'float', nativeType: 'decimal', nullable: false, isPrimaryKey: false, isUnique: false },
         ],
         foreignKeys: [{ columns: ['user_id'], referencedTable: 'users', referencedColumns: ['id'] }],
         uniqueConstraints: [],
@@ -203,23 +204,24 @@ describe('clone', () => {
   });
 
   it('writes anonymized NDJSON files and returns summary', async () => {
-    const mockSampleFn = async (
+    const mockSampleFn = (
       _config: Record<string, unknown>,
       tableName: string,
     ): Promise<Record<string, unknown>[]> => {
+
       if (tableName === 'users') {
-        return [
+        return Promise.resolve([
           { id: 'u1', email: 'alice@real.com', full_name: 'Alice Smith', first_name: 'Alice', phone: '555-0100', tier: 'free', order_total: 10 },
           { id: 'u2', email: 'bob@real.com', full_name: 'Bob Jones', first_name: 'Bob', phone: '555-0200', tier: 'pro', order_total: 50 },
-        ];
+        ]);
       }
       if (tableName === 'orders') {
-        return [
+        return Promise.resolve([
           { id: 1, user_id: 'u1', total: 25 },
           { id: 2, user_id: 'u2', total: 75 },
-        ];
+        ]);
       }
-      return [];
+      return Promise.resolve([]);
     };
 
     const summary = await clone(
@@ -231,26 +233,26 @@ describe('clone', () => {
         outputDir: testDir,
       },
       mockSampleFn,
-      mockSchema as any,
+      mockSchema,
     );
 
     expect(summary.totalRows).toBe(4);
     expect(summary.tables).toHaveLength(2);
 
     const usersFile = await fs.readFile(path.join(testDir, 'users.ndjson'), 'utf-8');
-    const userRows = usersFile.trim().split('\n').map((l) => JSON.parse(l));
+    const userRows: Record<string, unknown>[] = usersFile.trim().split('\n').map((l) => JSON.parse(l) as Record<string, unknown>);
     expect(userRows).toHaveLength(2);
     // Email should be replaced (different from original)
-    expect(userRows[0]?.email).not.toBe('alice@real.com');
+    expect(userRows[0]?.email as string).not.toBe('alice@real.com');
     expect(userRows[0]?.email).toBeTruthy();
     // full_name should be replaced
-    expect(userRows[0]?.full_name).not.toBe('Alice Smith');
+    expect(userRows[0]?.full_name as string).not.toBe('Alice Smith');
     expect(userRows[0]?.full_name).toBeTruthy();
     // first_name should be replaced
-    expect(userRows[0]?.first_name).not.toBe('Alice');
+    expect(userRows[0]?.first_name as string).not.toBe('Alice');
     expect(userRows[0]?.first_name).toBeTruthy();
     // phone should be replaced
-    expect(userRows[0]?.phone).not.toBe('555-0100');
+    expect(userRows[0]?.phone as string).not.toBe('555-0100');
     expect(userRows[0]?.phone).toBeTruthy();
     // Non-sensitive fields should stay
     expect(userRows[0]?.tier).toBe('free');
@@ -259,7 +261,7 @@ describe('clone', () => {
     expect(userRows[0]?.id).toBe('u1');
 
     const ordersFile = await fs.readFile(path.join(testDir, 'orders.ndjson'), 'utf-8');
-    const orderRows = ordersFile.trim().split('\n').map((l) => JSON.parse(l));
+    const orderRows: Record<string, unknown>[] = ordersFile.trim().split('\n').map((l) => JSON.parse(l) as Record<string, unknown>);
     expect(orderRows).toHaveLength(2);
     // FK should stay
     expect(orderRows[0]?.user_id).toBe('u1');
@@ -267,7 +269,7 @@ describe('clone', () => {
   });
 
   it('returns empty summary when no rows sampled', async () => {
-    const mockEmpty = async (): Promise<Record<string, unknown>[]> => [];
+    const mockEmpty = (): Promise<Record<string, unknown>[]> => Promise.resolve([]);
     const summary = await clone(
       {
         sourceConnection: 'postgresql://test:test@localhost:5432/test',
@@ -277,7 +279,7 @@ describe('clone', () => {
         outputDir: testDir,
       },
       mockEmpty,
-      mockSchema as any,
+      mockSchema,
     );
     expect(summary.totalRows).toBe(0);
     expect(summary.tables).toHaveLength(0);

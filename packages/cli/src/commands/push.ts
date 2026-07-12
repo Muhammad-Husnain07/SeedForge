@@ -3,7 +3,7 @@ import path from 'node:path';
 import { readLockfile, computeConfigHash } from '@seed-forge/core';
 import { loadConfig, inferConnectConfig } from '../utils/config.js';
 import { readRegistryConfig, registryFetch } from '../utils/registry.js';
-import { isJsonMode, printJson, printSuccess, printError, printInfo } from '../utils/format.js';
+import { isJsonMode, printJson, printSuccess, printError } from '../utils/format.js';
 
 export interface PushOptions {
   profileName: string;
@@ -75,7 +75,7 @@ export async function pushCommand(opts: PushOptions): Promise<void> {
     );
 
     if (!res.ok) {
-      const errBody = await res.json().catch(() => ({ error: res.statusText }));
+      const errBody = await res.json().catch(() => ({ error: res.statusText })) as Record<string, unknown>;
       throw new Error(`Push failed (HTTP ${res.status}): ${(errBody as { error?: string }).error ?? res.statusText}`);
     }
 

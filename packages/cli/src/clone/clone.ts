@@ -8,7 +8,7 @@ import {
 } from '@seed-forge/core';
 import type { DatabaseSchema } from '@seed-forge/core';
 import { classifyColumns, anonymizeRow } from './anonymizer.js';
-import type { CloneOptions, CloneSummary, CloneTableSummary, AnonymizedRow, SampleFunction } from './types.js';
+import type { AnonymizedRow, CloneOptions, CloneSummary, CloneTableSummary, SampleFunction } from './types.js';
 
 export async function clone(
   options: CloneOptions,
@@ -33,7 +33,7 @@ export async function clone(
 
     const tableColumns = classification.columns.filter((c) => c.table === tableName);
 
-    const anonymizedRows: AnonymizedRow[] = rows.map((row, idx) => {
+    const anonymizedRows: AnonymizedRow[] = rows.map((row, idx): AnonymizedRow => {
       const rowPrng = deriveStream(seed, 'clone', tableName, String(idx));
       const anonymized = anonymizeRow(row, tableName, tableColumns, (generator) => {
         const fieldPrng = deriveStream(rowPrng, generator.kind);
@@ -43,7 +43,7 @@ export async function clone(
           fieldPrng,
           new Map(),
           tableSchema,
-          {} as any,
+          {} as Record<string, unknown>,
           { table: tableName, rowIndex: idx },
         );
       });
@@ -52,7 +52,11 @@ export async function clone(
 
     const outDir = options.outputDir;
     await fs.mkdir(outDir, { recursive: true });
-    const ndjson = anonymizedRows.map((r) => JSON.stringify(r.anonymized)).join('\n');
+    const ndjsonLines: string[] = [];
+    for (const ar of anonymizedRows) {
+      ndjsonLines.push(JSON.stringify(ar.anonymized));
+    }
+    const ndjson = ndjsonLines.join('\n');
     await fs.writeFile(path.join(outDir, `${tableName}.ndjson`), ndjson, 'utf-8');
 
     const replacedCount = tableColumns.filter((c) => c.strategy === 'replace').length;

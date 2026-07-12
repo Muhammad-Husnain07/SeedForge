@@ -46,7 +46,7 @@ export async function pullCommand(opts: PullOptions): Promise<void> {
       if (res.status === 404) {
         throw new Error(`Profile "${opts.ref}" not found in registry`);
       }
-      const errBody = await res.json().catch(() => ({ error: res.statusText }));
+      const errBody = await res.json().catch(() => ({ error: res.statusText })) as Record<string, unknown>;
       throw new Error(`Pull failed (HTTP ${res.status}): ${(errBody as { error?: string }).error ?? res.statusText}`);
     }
 
@@ -96,7 +96,7 @@ export async function pullCommand(opts: PullOptions): Promise<void> {
       const { manifest: m } = await readBundle(bundlePath);
       if (!isJsonMode()) {
         printInfo(`\n  Profile: ${opts.ref}`);
-        printInfo(`  Schema:  ${(m.schemaHash as string).slice(0, 16)}…`);
+        printInfo(`  Schema:  ${m.schemaHash.slice(0, 16)}…`);
         printInfo(`  Seed:    ${m.seedValue}`);
         printInfo(`  Rows:    ${m.totalRows}`);
         printInfo('');

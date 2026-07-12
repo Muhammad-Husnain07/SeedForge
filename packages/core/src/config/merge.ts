@@ -17,12 +17,16 @@ function isDistributionSpec(v: unknown): v is DistributionSpec {
   return typeof v === 'object' && v !== null && 'kind' in v && 'params' in v && !('fn' in v);
 }
 
-function toGeneratorSpec(fieldConfig: unknown): { kind: string; params: Record<string, unknown> } {
+function toGeneratorSpec(fieldConfig: unknown): { kind: string; params: Record<string, unknown> } | null {
+  if (fieldConfig === null || typeof fieldConfig !== 'object') return null;
   if (isDerived(fieldConfig)) {
     return { kind: 'derived', params: { fn: fieldConfig.fn } };
   }
   if (isDistributionSpec(fieldConfig)) {
     return { kind: fieldConfig.kind, params: fieldConfig.params };
+  }
+  if (!('kind' in (fieldConfig as Record<string, unknown>))) {
+    return null;
   }
   const g = fieldConfig as { kind: string; params: Record<string, unknown> };
   return { kind: g.kind, params: g.params };
@@ -60,11 +64,13 @@ export function buildGenerationPlan(
     // fall back to config fields directly so generated rows carry the expected data.
     if (tableSchema.columns.length === 0 && tableConfig.fields) {
       for (const [colName, fieldConfig] of Object.entries(tableConfig.fields)) {
+        const spec = toGeneratorSpec(fieldConfig);
+        if (!spec) continue;
         fields.push({
           table: tableName,
           column: colName,
           source: 'config',
-          generator: toGeneratorSpec(fieldConfig),
+          generator: spec,
           confidence: 1,
         });
       }
@@ -73,12 +79,17 @@ export function buildGenerationPlan(
         const configField = tableConfig.fields?.[column.name];
         const inferredMatch = inferredMap.get(`${tableName}.${column.name}`);
 
+        let spec: { kind: string; params: Record<string, unknown> } | null = null;
         if (configField !== undefined) {
+          spec = toGeneratorSpec(configField);
+        }
+
+        if (spec) {
           fields.push({
             table: tableName,
             column: column.name,
             source: 'config',
-            generator: toGeneratorSpec(configField),
+            generator: spec,
             confidence: 1,
           });
         } else if (inferredMatch && inferredMatch.source === 'rule') {
@@ -89,11 +100,15 @@ export function buildGenerationPlan(
             generator: inferredMatch.suggestedGenerator,
             confidence: inferredMatch.confidence,
           });
+        } else if (column.nullable) {
+          continue;
         } else {
+          const hint = configField !== undefined
+            ? 'config is empty (likely a function lost during serialization)'
+            : 'is unresolved and has no config override';
           issues.push(
-            `Column '${tableName}.${column.name}' is unresolved and has no config override. ` +
-            `SeedForge refuses to generate low-quality data. Add an explicit field config or ` +
-            `use the AI-assist command (Prompt 12) to resolve this column.`,
+            `Column '${tableName}.${column.name}' ${hint}. ` +
+            `Add an explicit field config or use the AI-assist command (Prompt 12) to resolve this column.`,
           );
         }
       }

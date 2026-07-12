@@ -20,33 +20,33 @@ const mockPrintInfo = vi.fn();
 const mockRenderDiffTable = vi.fn().mockReturnValue('(diff table)');
 
 vi.mock('@seed-forge/core', () => ({
-  readLockfile: (...args: unknown[]) => mockReadLockfile(...args),
-  checkDrift: (...args: unknown[]) => mockCheckDrift(...args),
-  introspect: (...args: unknown[]) => mockIntrospect(...args),
-  diffSchemas: (...args: unknown[]) => mockDiffSchemas(...args),
+  readLockfile: (...args: unknown[]) => (mockReadLockfile as (...a: unknown[]) => unknown)(...args),
+  checkDrift: (...args: unknown[]) => (mockCheckDrift as (...a: unknown[]) => unknown)(...args),
+  introspect: (...args: unknown[]) => (mockIntrospect as (...a: unknown[]) => unknown)(...args),
+  diffSchemas: (...args: unknown[]) => (mockDiffSchemas as (...a: unknown[]) => unknown)(...args),
 }));
 
 vi.mock('../utils/config.js', () => ({
-  loadConfig: (...args: unknown[]) => mockLoadConfig(...args),
-  inferConnectConfig: (...args: unknown[]) => mockInferConnectConfig(...args),
+  loadConfig: (...args: unknown[]) => (mockLoadConfig as (...a: unknown[]) => unknown)(...args),
+  inferConnectConfig: (...args: unknown[]) => (mockInferConnectConfig as (...a: unknown[]) => unknown)(...args),
 }));
 
 vi.mock('../utils/adapters.js', () => ({
-  registerAdapters: (...args: unknown[]) => mockRegisterAdapters(...args),
+  registerAdapters: (...args: unknown[]) => (mockRegisterAdapters as (...a: unknown[]) => unknown)(...args),
 }));
 
 vi.mock('../utils/registry.js', () => ({
-  readRegistryConfig: (...args: unknown[]) => mockReadRegistryConfig(...args),
-  registryFetch: (...args: unknown[]) => mockRegistryFetch(...args),
+  readRegistryConfig: (...args: unknown[]) => (mockReadRegistryConfig as (...a: unknown[]) => unknown)(...args),
+  registryFetch: (...args: unknown[]) => (mockRegistryFetch as (...a: unknown[]) => unknown)(...args),
 }));
 
 vi.mock('../utils/format.js', () => ({
-  isJsonMode: (...args: unknown[]) => mockIsJsonMode(...args),
-  printJson: (...args: unknown[]) => mockPrintJson(...args),
-  printError: (...args: unknown[]) => mockPrintError(...args),
-  printSuccess: (...args: unknown[]) => mockPrintSuccess(...args),
-  printInfo: (...args: unknown[]) => mockPrintInfo(...args),
-  renderDiffTable: (...args: unknown[]) => mockRenderDiffTable(...args),
+  isJsonMode: (...args: unknown[]) => (mockIsJsonMode as (...a: unknown[]) => unknown)(...args),
+  printJson: (...args: unknown[]) => (mockPrintJson as (...a: unknown[]) => unknown)(...args),
+  printError: (...args: unknown[]) => (mockPrintError as (...a: unknown[]) => unknown)(...args),
+  printSuccess: (...args: unknown[]) => (mockPrintSuccess as (...a: unknown[]) => unknown)(...args),
+  printInfo: (...args: unknown[]) => (mockPrintInfo as (...a: unknown[]) => unknown)(...args),
+  renderDiffTable: (...args: unknown[]) => (mockRenderDiffTable as (...a: unknown[]) => unknown)(...args),
 }));
 
 import { diffCommand, type DiffOptions } from './diff.js';
@@ -54,13 +54,10 @@ import { diffCommand, type DiffOptions } from './diff.js';
 /* ── Helpers ──────────────────────────────────────────────────────── */
 
 let _exitCode: number | null = null;
-let _origExit: typeof process.exit;
 
 function mockExit(): void {
-  _origExit = process.exit;
-  vi.spyOn(process, 'exit').mockImplementation((code?: number) => {
+  vi.spyOn(process, 'exit').mockImplementation((code?: number): void => {
     _exitCode = code ?? 0;
-    // Don't throw — diffCommand wrap in try/catch and would re-exit(1)
   });
 }
 
@@ -217,11 +214,11 @@ describe('--profile path (registry comparison)', () => {
     mockRegistryFetch.mockResolvedValue({
       ok: true,
       status: 200,
-      json: async () => ({
+      json: () => Promise.resolve({
         manifest: { schemaHash: 'abc123' },
         lockfile: { schema: { dialect: 'postgres', tables: [] } },
       }),
-    } as Response);
+    } );
   });
 
   it('exits 0 when hashes match', async () => {
@@ -234,11 +231,11 @@ describe('--profile path (registry comparison)', () => {
     mockRegistryFetch.mockResolvedValue({
       ok: true,
       status: 200,
-      json: async () => ({
+      json: () => Promise.resolve({
         manifest: { schemaHash: 'xyz999' },
         lockfile: { schema: { dialect: 'postgres', tables: [] } },
       }),
-    } as Response);
+    } );
     mockDiffSchemas.mockReturnValue({ hasDrift: true, entries: [makeEntry()] });
 
     const code = await runDiff(profileOpts);
@@ -250,11 +247,11 @@ describe('--profile path (registry comparison)', () => {
     mockRegistryFetch.mockResolvedValue({
       ok: true,
       status: 200,
-      json: async () => ({
+      json: () => Promise.resolve({
         manifest: { schemaHash: 'xyz999' },
         lockfile: { schema: { dialect: 'postgres', tables: [] } },
       }),
-    } as Response);
+    } );
     mockDiffSchemas.mockReturnValue({ hasDrift: true, entries: [makeEntry()] });
 
     const code = await runDiff({ ...profileOpts, force: true });
@@ -270,7 +267,7 @@ describe('--profile path (registry comparison)', () => {
   });
 
   it('exits 1 when profile not found (404)', async () => {
-    mockRegistryFetch.mockResolvedValue({ ok: false, status: 404 } as Response);
+    mockRegistryFetch.mockResolvedValue({ ok: false, status: 404 } );
     const code = await runDiff(profileOpts);
     expect(code).toBe(1);
     // The error is caught by diffCommand's try/catch, so printError
@@ -279,7 +276,7 @@ describe('--profile path (registry comparison)', () => {
   });
 
   it('exits 1 on registry fetch error', async () => {
-    mockRegistryFetch.mockResolvedValue({ ok: false, status: 500 } as Response);
+    mockRegistryFetch.mockResolvedValue({ ok: false, status: 500 } );
     const code = await runDiff(profileOpts);
     expect(code).toBe(1);
     expect(mockPrintError).toHaveBeenCalledWith(expect.stringContaining('Profile fetch failed'));
@@ -289,14 +286,14 @@ describe('--profile path (registry comparison)', () => {
     mockRegistryFetch.mockResolvedValue({
       ok: true,
       status: 200,
-      json: async () => ({
+      json: () => Promise.resolve({
         manifest: { schemaHash: 'abc123' },
         lockfile: { schema: {} },
       }),
-    } as Response);
+    } );
     await runDiff({ profile: 'org/proj/name:v2' });
-    const fetchCall = mockRegistryFetch.mock.calls[0]!;
-    expect(fetchCall[2]).toContain('?version=v2');
+    const fetchCall = mockRegistryFetch.mock.calls[0] as unknown[];
+    expect(fetchCall[2] as string).toContain('?version=v2');
   });
 });
 
@@ -310,11 +307,11 @@ describe('--profile + --ci mode', () => {
     mockRegistryFetch.mockResolvedValue({
       ok: true,
       status: 200,
-      json: async () => ({
+      json: () => Promise.resolve({
         manifest: { schemaHash: 'abc123' },
         lockfile: { schema: {} },
       }),
-    } as Response);
+    } );
   });
 
   it('exits 0 when hashes match in CI mode', async () => {
@@ -326,11 +323,11 @@ describe('--profile + --ci mode', () => {
     mockRegistryFetch.mockResolvedValue({
       ok: true,
       status: 200,
-      json: async () => ({
+      json: () => Promise.resolve({
         manifest: { schemaHash: 'xyz999' },
         lockfile: { schema: {} },
       }),
-    } as Response);
+    } );
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     const code = await runDiff(opts);
     expect(code).toBe(1);

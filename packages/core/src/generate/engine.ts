@@ -21,7 +21,7 @@ interface FieldEntry {
 
 function sortFieldsByDependency(fields: ResolvedField[]): FieldEntry[] {
   const entries: FieldEntry[] = fields.map((f) => {
-    const dependsOn = f.generator.params.dependsOn as string | undefined;
+    const dependsOn = (f.generator.params?.dependsOn as string | undefined) ?? undefined;
     return { name: f.column, generator: f.generator, dependsOn };
   });
 

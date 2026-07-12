@@ -7,7 +7,6 @@ import {
   readBundle,
   cleanupBundle,
   readLockfile,
-  checkDrift,
   introspect,
   analyzeSchema,
   buildGraph,
@@ -28,7 +27,7 @@ import { pullCommand } from './commands/pull.js';
 import { diffCommand } from './commands/diff.js';
 import { loadConfig, inferConnectConfig } from './utils/config.js';
 import { registerAdapters } from './utils/adapters.js';
-import { isJsonMode, printJson, printError, printSuccess, printInfo, printWarning, renderDiffTable } from './utils/format.js';
+import { isJsonMode, printJson, printError, printSuccess, printInfo, printWarning } from './utils/format.js';
 
 const program = new Command();
 

@@ -373,7 +373,7 @@ describe('buildGenerationPlan', () => {
           name: 'foo',
           columns: [
             { name: 'id', logicalType: 'uuid', nativeType: 'uuid', nullable: false, isPrimaryKey: true, isUnique: true },
-            { name: 'bar', logicalType: 'string', nativeType: 'text', nullable: true, isPrimaryKey: false, isUnique: false },
+            { name: 'bar', logicalType: 'string', nativeType: 'text', nullable: false, isPrimaryKey: false, isUnique: false },
           ],
           primaryKey: ['id'],
           foreignKeys: [],

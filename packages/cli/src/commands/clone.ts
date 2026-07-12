@@ -3,6 +3,7 @@ import { printError, printSuccess, printInfo, printWarning } from '../utils/form
 import { resolveSampleFunction } from '../utils/adapters.js';
 import { clone, formatCloneSummary } from '../clone/clone.js';
 import type { CloneOptions } from '../clone/types.js';
+import type { SampleFunction } from '../clone/types.js';
 
 export async function cloneCommand(opts: {
   source?: string;
@@ -39,10 +40,10 @@ export async function cloneCommand(opts: {
   const outputDir = opts.out ?? './anonymized';
   const maxRows = opts.maxRows ? parseInt(opts.maxRows, 10) : undefined;
 
-  const sampleFn = await resolveSampleFunction(dialect).catch(() => {
+  const sampleFn: SampleFunction = await resolveSampleFunction(dialect).catch(() => {
     printError(`No sampler available for dialect '${dialect}'`);
     process.exit(1);
-  }) as any;
+  });
 
   const adapterMod = await importAdapter(dialect);
   if (adapterMod?.introspect) {

@@ -1,5 +1,5 @@
 import type { DatabaseSchema, FieldSemanticMatch, GeneratorSpec } from '@seed-forge/core';
-import type { AnonymizedColumn, AnonymizedRow } from './types.js';
+import type { AnonymizedColumn } from './types.js';
 
 const SENSITIVE_SEMANTIC_TYPES = new Set([
   'email',
