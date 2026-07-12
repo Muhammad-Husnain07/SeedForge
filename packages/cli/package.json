@@ -47,7 +47,8 @@
     "jiti": "^2.7.0",
     "openai": "^6.45.0",
     "ora": "^9.4.1",
-    "picocolors": "^1.1.1"
+    "picocolors": "^1.1.1",
+    "tar": "^7.5.19"
   },
   "devDependencies": {
     "tsup": "^8.1.0",

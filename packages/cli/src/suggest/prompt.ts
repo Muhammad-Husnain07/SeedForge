@@ -191,3 +191,85 @@ function groupByTable(columns: UnresolvedColumn[]): Record<string, UnresolvedCol
   }
   return map;
 }
+
+// ─── Describe prompts ─────────────────────────────────────────────────
+
+const DESCRIBE_SYSTEM_INSTRUCTIONS = `You are a seed-data configuration assistant for SeedForge, a deterministic data-generation framework.
+
+Your job: given a database schema, the user's plain-English description of the dataset they want, and the already-resolved column generators (for context — don't re-derive them), produce a complete config draft.
+
+SeedForge config format:
+- Each table gets an entry with optional count, countPerParent, timeline, churn, and personas.
+- count: number of rows for a root table.
+- countPerParent: for child tables, how many child rows per parent row (e.g. {"users": 5} means 5 rows per user).
+- timeline: time horizon for data. { start: "2024-01-01", end?: "2025-12-31", growth: {...}, seasonality?: {...} }
+  Growth models:
+  - compound: { type: "compound", monthlyRate: 0.15 } — exponential growth (15% more each month)
+  - linear: { type: "linear", totalGrowth: 4.0 } — linear growth reaching 4x by the end
+  - scurve: { type: "scurve", inflectionPoint?: 0.5, steepness?: 5 } — S-curve (slow-fast-slow)
+  Seasonality preset: { type: "preset", name: "ecommerce-holiday" } — boosts Nov/Dec order volume.
+- churn: { monthlyRate: 0.05 } — 5% of users per month go inactive.
+- Personas: groups with selectionWeight and field overrides.
+  Example: { name: "enterprise", selectionWeight: 0.2, overrides: ["tier: enterprise"], cascades: { "orders": 0.3 } }
+  cascades reduce child row count for this persona (e.g. enterprise users place fewer orders).
+
+CRITICAL: The LLM is ONLY consulted at suggestion time. SeedForge's generate/seed path NEVER calls an LLM — it uses deterministic PRNGs. Your suggestions are REVIEWED by a human before being merged into the config.
+
+Do NOT re-suggest column-level generators for columns that already have resolved generators in the context below. Only propose whole-table config (count, timeline, personas, churn).
+
+RESPONSE FORMAT — You MUST respond with a JSON object matching this schema:
+{
+  "tables": {
+    "[table_name]": {
+      "count": number,
+      "countPerParent": { "[parent_table]": number },
+      "timeline": {
+        "start": "2024-01-01",
+        "end": "2025-12-31",
+        "growth": { "type": "compound", "monthlyRate": 0.15 },
+        "seasonality": { "type": "preset", "name": "ecommerce-holiday" }
+      },
+      "churn": { "monthlyRate": 0.05 },
+      "personas": [
+        { "name": "enterprise", "selectionWeight": 0.2, "overrides": ["col: value"], "cascades": { "orders": 0.3 } }
+      ]
+    }
+  },
+  "reasoning": "Explain the key decisions made."
+}
+
+RULES:
+- Only include tables where you have a suggestion. Omit tables that should use defaults.
+- timeline should be set on root/entity tables (users, organizations) when the description implies a time horizon.
+- churn should be set when the description mentions churn, retention, or inactivity.
+- Persona overrides reference column:value pairs like "tier: enterprise" or "plan: free".
+- Persona cascades reference child table names. The value (0.0-1.0) is a multiplier on child row count.
+- countPerParent values should reference actual FK parent tables from the schema.
+- Be specific with numbers but they don't need to be exact — directionally plausible is fine.
+- The reasoning field must explain the key design decisions in 2-3 sentences.
+`;
+
+export function buildDescribeSystemPrompt(): string {
+  return DESCRIBE_SYSTEM_INSTRUCTIONS;
+}
+
+export function buildDescribeUserMessages(
+  schemaDescription: string,
+  resolvedColumns: string,
+  graphEdges: string,
+  description: string,
+): string[] {
+  const blocks: string[] = [];
+
+  let schemaBlock = '## Database Schema\n\n';
+  schemaBlock += schemaDescription;
+  schemaBlock += '\n\n## Already-Resolved Columns (do NOT re-derive)\n\n';
+  schemaBlock += resolvedColumns || '(none — all columns still need suggestions)';
+  schemaBlock += '\n\n## Relationship Graph\n\n';
+  schemaBlock += graphEdges || '(empty — no FK relationships detected)';
+  blocks.push(schemaBlock);
+
+  blocks.push(`## User Description\n\n${description}`);
+
+  return blocks;
+}

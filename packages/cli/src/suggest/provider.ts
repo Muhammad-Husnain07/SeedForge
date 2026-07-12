@@ -269,3 +269,78 @@ export function createProvider(config: ProviderConfig): LLMProvider {
 export function getResponseSchema(): Record<string, unknown> {
   return RESPONSE_SCHEMA;
 }
+
+const DESCRIBE_RESPONSE_SCHEMA: Record<string, unknown> = {
+  type: 'object',
+  properties: {
+    tables: {
+      type: 'object',
+      additionalProperties: {
+        type: 'object',
+        properties: {
+          count: { type: 'integer', minimum: 0 },
+          countPerParent: {
+            type: 'object',
+            additionalProperties: { type: 'integer', minimum: 0 },
+          },
+          timeline: {
+            type: 'object',
+            properties: {
+              start: { type: 'string' },
+              end: { type: 'string' },
+              growth: {
+                type: 'object',
+                properties: {
+                  type: { type: 'string', enum: ['compound', 'linear', 'scurve'] },
+                  monthlyRate: { type: 'number', minimum: 0 },
+                  totalGrowth: { type: 'number', minimum: 0 },
+                  inflectionPoint: { type: 'number' },
+                  steepness: { type: 'number', minimum: 0 },
+                },
+                required: ['type'],
+              },
+              seasonality: {
+                type: 'object',
+                properties: {
+                  type: { type: 'string', enum: ['preset'] },
+                  name: { type: 'string', enum: ['ecommerce-holiday'] },
+                },
+                required: ['type', 'name'],
+              },
+            },
+            required: ['start', 'growth'],
+          },
+          churn: {
+            type: 'object',
+            properties: {
+              monthlyRate: { type: 'number', minimum: 0, maximum: 1 },
+            },
+            required: ['monthlyRate'],
+          },
+          personas: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                name: { type: 'string' },
+                selectionWeight: { type: 'number', minimum: 0, maximum: 1 },
+                overrides: { type: 'array', items: { type: 'string' } },
+                cascades: {
+                  type: 'object',
+                  additionalProperties: { type: 'number' },
+                },
+              },
+              required: ['name', 'selectionWeight', 'overrides'],
+            },
+          },
+        },
+      },
+    },
+    reasoning: { type: 'string' },
+  },
+  required: ['tables', 'reasoning'],
+};
+
+export function getDescribeResponseSchema(): Record<string, unknown> {
+  return DESCRIBE_RESPONSE_SCHEMA;
+}
