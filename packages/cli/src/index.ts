@@ -10,9 +10,10 @@ import {
   checkDrift,
   introspect,
   analyzeSchema,
+  buildGraph,
 } from '@seed-forge/core';
-import type { BundleManifest, FieldSemanticMatch } from '@seed-forge/core';
-import { suggest as runSuggest } from './suggest/index.js';
+import type { BundleManifest, FieldSemanticMatch, ResolvedField } from '@seed-forge/core';
+import { suggest as runSuggest, suggestDescribe, renderConfigDraft } from './suggest/index.js';
 import { initCommand } from './commands/init.js';
 import { introspectCommand } from './commands/introspect.js';
 import { validateCommand } from './commands/validate.js';
@@ -20,6 +21,11 @@ import { generateCommand } from './commands/generate.js';
 import { seedCommand } from './commands/seed.js';
 import { resetCommand } from './commands/reset.js';
 import { doctorCommand } from './commands/doctor.js';
+import { cloneCommand } from './commands/clone.js';
+import { loginCommand } from './commands/login.js';
+import { pushCommand } from './commands/push.js';
+import { pullCommand } from './commands/pull.js';
+import { diffCommand } from './commands/diff.js';
 import { loadConfig, inferConnectConfig } from './utils/config.js';
 import { registerAdapters } from './utils/adapters.js';
 import { isJsonMode, printJson, printError, printSuccess, printInfo, printWarning, renderDiffTable } from './utils/format.js';
@@ -87,18 +93,62 @@ program
     'WARNING: include sample distinct values from the database. ' +
     'This may include real user PII. Only use on databases you own.',
   )
+  .option('--describe <text>', 'describe your dataset in plain English to get a full config draft')
   .option('--provider <name>', 'LLM provider: anthropic, openai, google, deepseek, xai, openrouter, ollama')
   .option('--model <name>', 'model name override (defaults to provider-appropriate model)')
   .option('--tables <names...>', 'only suggest for these tables')
   .option('--dry-run', 'print what would be sent to the LLM without calling it')
   .action(async (opts) => {
     try {
-      const o = opts as { config?: string; output?: string; includeSamples?: boolean; provider?: string; model?: string; tables?: string[]; dryRun?: boolean };
+      const o = opts as { config?: string; output?: string; includeSamples?: boolean; describe?: string; provider?: string; model?: string; tables?: string[]; dryRun?: boolean };
       const config = await loadConfig(o.config);
       const connectConfig = inferConnectConfig(config);
 
       await registerAdapters(connectConfig.dialect);
       const schema = await introspect(connectConfig);
+
+      // ─── Describe flow ──────────────────────────────────────────
+      if (o.describe) {
+        const matches = analyzeSchema(schema);
+        const resolved: ResolvedField[] = matches
+          .filter((m: FieldSemanticMatch) => m.source === 'rule')
+          .map((m: FieldSemanticMatch) => ({
+            table: m.table,
+            column: m.column,
+            source: 'inferred' as const,
+            generator: m.suggestedGenerator,
+            confidence: m.confidence,
+          }));
+        const graph = buildGraph(schema);
+
+        const providerName = o.provider ?? process.env.SEEDFORGE_LLM_PROVIDER ?? 'anthropic';
+        const modelName = o.model ?? process.env.SEEDFORGE_LLM_MODEL;
+        const providerConfig: { provider: string; model?: string } = { provider: providerName };
+        if (modelName) providerConfig.model = modelName;
+
+        const draft = await suggestDescribe({
+          schema,
+          resolved,
+          graph,
+          description: o.describe,
+          provider: providerConfig as Parameters<typeof suggestDescribe>[0]['provider'],
+        });
+
+        const outputPath = o.output ?? 'seedforge.config.suggested.ts';
+        const rendered = renderConfigDraft(
+          draft,
+          connectConfig.dialect,
+          config.connection.connectionString,
+          config.connection.database,
+          config.connection.source,
+          config.connection.schemaPath,
+        );
+
+        await fs.writeFile(outputPath, rendered, 'utf-8');
+        printSuccess(`Config draft written to ${outputPath}`);
+        printInfo('Review and test the file before using it.');
+        return;
+      }
 
       const matches = analyzeSchema(schema);
 
@@ -326,61 +376,15 @@ program
 
 program
   .command('diff')
-  .description('Check for schema drift between lockfile and live database (CI gate)')
+  .description('Check for schema drift between lockfile/live database/registry profile (CI gate)')
   .option('-c, --config <path>', 'path to config file', 'seedforge.config.ts')
   .option('-l, --lockfile <path>', 'path to lockfile')
+  .option('--ci', 'output drift as GitHub Actions annotations, exit non-zero on drift')
+  .option('--profile <ref>', 'compare against a registry profile (<org>/<project>/<name>[:version])')
+  .option('--force', 'acknowledge drift and exit 0')
   .action(async (opts) => {
-    try {
-      const diffOpts = opts as { config?: string; lockfile?: string };
-      const lockfilePath = diffOpts.lockfile;
-      const lockfile = await readLockfile(lockfilePath);
-
-      if (!lockfile) {
-        if (isJsonMode()) {
-          printJson({ error: true, message: 'No lockfile found. Run seed generation first.' });
-        } else {
-          printError('No lockfile found. Run seed generation first.');
-        }
-        process.exit(1);
-      }
-
-      const config = await loadConfig(diffOpts.config);
-      const connectConfig = inferConnectConfig(config);
-
-      // Fall back to lockfile schema dialect if config has no connection
-      const lf = lockfile as unknown as Record<string, unknown>;
-      if (!connectConfig.dialect && lf.schema) {
-        (connectConfig as Record<string, string | undefined>).dialect = (lf.schema as Record<string, string | undefined>).dialect;
-      }
-
-      await registerAdapters(connectConfig.dialect);
-      const schema = await introspect(connectConfig);
-
-      const result = await checkDrift(config, schema, { lockfilePath, force: false });
-
-      if (isJsonMode()) {
-        printJson(result);
-        return;
-      }
-
-      if (result.canProceed && !result.diff) {
-        printSuccess('No schema drift detected.');
-        process.exit(0);
-      } else if (result.canProceed && result.diff) {
-        console.log(renderDiffTable(result.diff.entries));
-        console.log('');
-        printInfo('Proceeding with --force (acknowledged or forced).');
-        process.exit(0);
-      } else {
-        console.log(renderDiffTable(result.diff!.entries));
-        console.log('');
-        printError('Schema drift detected. Use --force to proceed, or acknowledge the drift.');
-        process.exit(1);
-      }
-    } catch (err) {
-      printError(`Diff check failed: ${(err as Error).message}`);
-      process.exit(1);
-    }
+    const o = opts as { config?: string; lockfile?: string; ci?: boolean; profile?: string; force?: boolean };
+    await diffCommand(o);
   });
 
 // ─── export ───────────────────────────────────────────────────────────
@@ -563,6 +567,63 @@ program
   .option('-c, --config <path>', 'path to config file', 'seedforge.config.ts')
   .action(async (opts) => {
     await doctorCommand(opts as { config?: string });
+  });
+
+// ─── clone ──────────────────────────────────────────────────────────
+
+program
+  .command('clone')
+  .description('Clone and optionally anonymize data from a source database')
+  .option('--source <connection>', 'source database connection string')
+  .option('--anonymize', 'replace PII columns with generated values')
+  .option('--i-understand-the-risk', 'acknowledge cloning from a production database')
+  .option('--out <dir>', 'output directory for anonymized NDJSON files', './anonymized')
+  .option('--max-rows <n>', 'maximum rows to sample per table (default: all rows)')
+  .action(async (opts) => {
+    try {
+      const o = opts as { source?: string; anonymize?: boolean; iUnderstandTheRisk?: boolean; out?: string; maxRows?: string };
+      await cloneCommand(o);
+    } catch (err) {
+      printError((err as Error).message);
+      process.exit(1);
+    }
+  });
+
+// ─── login ──────────────────────────────────────────────────────────
+
+program
+  .command('login')
+  .description('Log in to a SeedForge profile registry')
+  .action(async () => {
+    await loginCommand();
+  });
+
+// ─── push ──────────────────────────────────────────────────────────
+
+program
+  .command('push')
+  .description('Push a named seed profile to the registry')
+  .argument('<profile-name>', 'profile name')
+  .option('--version <version>', 'version tag (default: latest)')
+  .option('--project <name>', 'project name (default: CWD directory name)')
+  .option('-c, --config <path>', 'path to config file', 'seedforge.config.ts')
+  .option('-l, --lockfile <path>', 'path to lockfile')
+  .action(async (profileName, opts) => {
+    const o = opts as { version?: string; project?: string; config?: string; lockfile?: string };
+    await pushCommand({ profileName: profileName as string, ...o });
+  });
+
+// ─── pull ──────────────────────────────────────────────────────────
+
+program
+  .command('pull')
+  .description('Pull a seed profile from the registry and import it')
+  .argument('<ref>', '<org>/<project>/<profile-name>[:version]')
+  .option('--force', 'skip schema mismatch warning')
+  .option('-c, --config <path>', 'path to config file', 'seedforge.config.ts')
+  .action(async (ref, opts) => {
+    const o = opts as { force?: boolean; config?: string };
+    await pullCommand({ ref: ref as string, ...o });
   });
 
 // ─── Main ─────────────────────────────────────────────────────────────

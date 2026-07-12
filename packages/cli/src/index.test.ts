@@ -7,9 +7,10 @@ describe('@seed-forge/cli', () => {
     expect(program.name()).toBe('seedforge');
   });
 
-  it('has all 12 commands', () => {
+  it('has all 16 commands', () => {
     const commands = program.commands.map((c) => c.name()).sort();
     expect(commands).toEqual([
+      'clone',
       'diff',
       'doctor',
       'export',
@@ -17,6 +18,9 @@ describe('@seed-forge/cli', () => {
       'import',
       'init',
       'introspect',
+      'login',
+      'pull',
+      'push',
       'reset',
       'seed',
       'studio',
