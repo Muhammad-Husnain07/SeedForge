@@ -29,18 +29,22 @@ export async function loadConfig(configPath?: string): Promise<SeedForgeConfig> 
 }
 
 export function inferConnectConfig(config: SeedForgeConfig): ConnectConfig {
+  // Env var overrides for CI/action usage, following existing dotenv convention
+  const envConnStr = process.env.SEEDFORGE_CONNECTION_STRING;
+  const envDialect = process.env.SEEDFORGE_DIALECT;
+
   const conn = config.connection;
   if (conn?.source === 'prisma' || conn?.source === 'drizzle') {
     return {
-      dialect: conn.source,
+      dialect: envDialect ?? conn.source,
       schemaPath: conn.schemaPath ?? 'schema.prisma',
     };
   }
-  if (conn?.dialect) {
+  if (conn?.dialect || envDialect || envConnStr) {
     return {
-      dialect: conn.dialect,
-      connectionString: conn.connectionString,
-      ...(conn.database ? { database: conn.database } : {}),
+      dialect: envDialect ?? conn?.dialect ?? 'postgres',
+      connectionString: envConnStr ?? conn?.connectionString,
+      ...(conn?.database ? { database: conn.database } : {}),
     };
   }
   return { dialect: 'postgres' };

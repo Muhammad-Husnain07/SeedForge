@@ -6,6 +6,7 @@ import type {
   WriteOptions,
   WriteResult,
 } from '@seed-forge/core';
+import type { SampleFunction } from '../clone/types.js';
 
 export async function registerAdapters(dialect: string): Promise<void> {
   switch (dialect) {
@@ -61,5 +62,26 @@ export async function getWriteFunction(dialect: string): Promise<
     }
     default:
       throw new Error(`Unknown dialect: ${dialect}`);
+  }
+}
+
+export async function resolveSampleFunction(
+  dialect: string,
+): Promise<SampleFunction> {
+  switch (dialect) {
+    case 'postgres': {
+      const mod = await import('@seed-forge/adapter-postgres');
+      return mod.sample.bind(mod) as SampleFunction;
+    }
+    case 'mysql': {
+      const mod = await import('@seed-forge/adapter-mysql');
+      return mod.sample.bind(mod) as SampleFunction;
+    }
+    case 'mongodb': {
+      const mod = await import('@seed-forge/adapter-mongodb');
+      return mod.sample.bind(mod) as SampleFunction;
+    }
+    default:
+      throw new Error(`No sampler for dialect: ${dialect}`);
   }
 }

@@ -45,7 +45,7 @@ export type { SeedForgeConfig, ConnectionConfig, TableConfig, FieldConfig, Gener
 export { validatePreFlight, verifyPostWrite } from './validate/index.js';
 export type { PreFlightResult, PostWriteResult, ValidationEntry, PreFlightOptions, VerifyOptions } from './validate/index.js';
 
-export { generate, generateParallel } from './generate/index.js';
+export { generate, generateParallel, generateFieldValue } from './generate/index.js';
 export type { GenerateOptions, GenerationBatch } from './generate/index.js';
 export { GenerationError } from './generate/index.js';
 

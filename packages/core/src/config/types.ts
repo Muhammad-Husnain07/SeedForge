@@ -62,6 +62,7 @@ export interface ConnectionConfig {
   user?: string;
   password?: string;
   ssl?: boolean | Record<string, unknown>;
+  environment?: 'development' | 'staging' | 'production';
 }
 
 export interface SeedForgeConfig {

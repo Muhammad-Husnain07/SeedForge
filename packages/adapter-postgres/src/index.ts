@@ -5,3 +5,5 @@ export type { PostgresIntrospectConfig } from './introspect.js';
 
 export { write } from './writer.js';
 export type { PostgresWriteConfig } from './writer.js';
+
+export { sample } from './sampler.js';
