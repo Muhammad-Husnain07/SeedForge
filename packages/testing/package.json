@@ -1,0 +1,35 @@
+{
+  "name": "@seed-forge/testing",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "In-process seed helpers for Vitest and Jest: seed a database via the core pipeline, not the CLI",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./vitest": {
+      "import": "./dist/vitest.js",
+      "types": "./dist/vitest.d.ts"
+    },
+    "./jest": {
+      "import": "./dist/jest.js",
+      "types": "./dist/jest.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts src/vitest.ts src/jest.ts --dts --clean --format esm --external @jest/globals --external vitest",
+    "dev": "tsup src/index.ts src/vitest.ts src/jest.ts --dts --watch --format esm --external @jest/globals --external vitest",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@seed-forge/core": "workspace:^"
+  },
+  "devDependencies": {
+    "@jest/globals": "^29.7.0",
+    "tsup": "^8.1.0",
+    "typescript": "^5.5.0",
+    "vitest": "^1.6.0"
+  }
+}
