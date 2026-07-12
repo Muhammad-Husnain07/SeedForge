@@ -6,3 +6,5 @@ export type { MongoIntrospectConfig } from './introspect.js';
 
 export { write } from './writer.js';
 export type { MongoWriteConfig } from './writer.js';
+
+export { sample } from './sampler.js';

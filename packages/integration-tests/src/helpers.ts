@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import * as path from 'node:path';
 import * as fs from 'node:fs/promises';
 import * as os from 'node:os';
+import { execSync } from 'node:child_process';
 import pg from 'pg';
 import mysql from 'mysql2/promise';
 import { MongoClient } from 'mongodb';
@@ -763,6 +764,25 @@ export interface PipelineResult {
 export async function runPgPipeline(connStr: string, fixture: string, seed = 42): Promise<PipelineResult> {
   await loadFixtureSchemaPG(connStr, fixture);
   const config = getFixtureConfig(fixture, connStr, 'postgres');
+
+  // When SEEDFORGE_CLI_PATH is set, dogfood the CLI instead of calling core lib
+  const cliPath = process.env.SEEDFORGE_CLI_PATH;
+  if (cliPath) {
+    const tmpConfig = path.join(os.tmpdir(), `sf-config-${Date.now()}.json`);
+    await fs.writeFile(tmpConfig, JSON.stringify({ ...config, seed }));
+    execSync(
+      `${cliPath} seed --config "${tmpConfig}" --mode fresh --seed ${seed}`,
+      { env: { ...process.env, SEEDFORGE_CONNECTION_STRING: connStr }, stdio: 'pipe' },
+    );
+    await fs.unlink(tmpConfig).catch(() => {});
+    const schema = await pgIntrospect({ connectionString: connStr });
+    const graph = buildGraph(schema);
+    const plan = buildGenerationPlan(schema, config, []);
+    const allTables = schema.tables.map((t) => t.name);
+    const rowsWritten = await getRowCountsPG(connStr, allTables);
+    return { schema, graph, plan, rowsWritten, tableData: {}, bundleFile: '' };
+  }
+
   const schema = await pgIntrospect({ connectionString: connStr });
   const matches = analyzeSchema(schema);
   const graph = buildGraph(schema);
@@ -776,6 +796,24 @@ export async function runPgPipeline(connStr: string, fixture: string, seed = 42)
 export async function runMysqlPipeline(connStr: string, fixture: string, seed = 42): Promise<PipelineResult> {
   await loadFixtureSchemaMySQL(connStr, fixture);
   const config = getFixtureConfig(fixture, connStr, 'mysql');
+
+  const cliPath = process.env.SEEDFORGE_CLI_PATH;
+  if (cliPath) {
+    const tmpConfig = path.join(os.tmpdir(), `sf-config-${Date.now()}.json`);
+    await fs.writeFile(tmpConfig, JSON.stringify({ ...config, seed }));
+    execSync(
+      `${cliPath} seed --config "${tmpConfig}" --mode fresh --seed ${seed}`,
+      { env: { ...process.env, SEEDFORGE_CONNECTION_STRING: connStr }, stdio: 'pipe' },
+    );
+    await fs.unlink(tmpConfig).catch(() => {});
+    const schema = await mysqlIntrospect({ connectionString: connStr });
+    const graph = buildGraph(schema);
+    const plan = buildGenerationPlan(schema, config, []);
+    const allTables = schema.tables.map((t) => t.name);
+    const rowsWritten = await getRowCountsMySQL(connStr, allTables);
+    return { schema, graph, plan, rowsWritten, tableData: {}, bundleFile: '' };
+  }
+
   const schema = await mysqlIntrospect({ connectionString: connStr });
   const matches = analyzeSchema(schema);
   const graph = buildGraph(schema);
@@ -807,6 +845,24 @@ export async function runMongoPipeline(connStr: string, dbName: string, fixture:
   } finally {
     await createClient.close();
   }
+
+  const cliPath = process.env.SEEDFORGE_CLI_PATH;
+  if (cliPath) {
+    const tmpConfig = path.join(os.tmpdir(), `sf-config-${Date.now()}.json`);
+    await fs.writeFile(tmpConfig, JSON.stringify({ ...config, seed }));
+    execSync(
+      `${cliPath} seed --config "${tmpConfig}" --mode fresh --seed ${seed}`,
+      { env: { ...process.env, SEEDFORGE_CONNECTION_STRING: connStr }, stdio: 'pipe' },
+    );
+    await fs.unlink(tmpConfig).catch(() => {});
+    const schema = await mongoIntrospect({ connectionString: connStr, database: dbName });
+    const graph = buildGraph(schema);
+    const plan = buildGenerationPlan(schema, config, []);
+    const allTables = schema.tables.map((t) => t.name);
+    const rowsWritten = await getRowCountsMongo(connStr, dbName, allTables);
+    return { schema, graph, plan, rowsWritten, tableData: {}, bundleFile: '' };
+  }
+
   const schema = await mongoIntrospect({ connectionString: connStr, database: dbName });
   const matches = analyzeSchema(schema);
   const graph = buildGraph(schema);
