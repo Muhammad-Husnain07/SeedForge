@@ -40,8 +40,8 @@
 ## Phase 2 — Next Level
 
 - [x] **A. Single-command install & real branding** — `npx @seed-forge/seedforge init` / `seed forge seed` as primary entry point, `npx create-seedforge` scaffolding, `workspace:^` range specifiers, `@fastify/static` security bump, programmatic `@seed-forge/cli` exports
-- [ ] **B. Deepen the business-logic story** — ORM-native schema parsing (Prisma, Drizzle), time-series / cohort / event-stream generation, natural-language config authoring via LLM, production clone-and-anonymize mode (copy production schema → generate anonymized replica)
-- [ ] **C. Team collaboration & ecosystem** — Hosted profile registry (share + discover generator profiles), GitHub Actions CI plugin, test-framework bindings (Vitest fixture setup / teardown)
+- [x] **B. Deepen the business-logic story** — ORM-native schema parsing (Prisma, Drizzle), time-series / cohort / event-stream generation, natural-language config authoring via LLM (`suggest --describe`), production clone-and-anonymize mode (`seedforge clone --anonymize`)
+- [x] **C. Team collaboration & ecosystem** — Hosted profile registry (share + discover generator profiles), GitHub Actions CI plugin (`.github/actions/seedforge-action/`), test-framework bindings (`@seed-forge/testing` with Vitest + Jest adapters, `diff --ci` PR gate, preview-database recipes)
 - [ ] **D. More engines, harder studio** — SQLite adapter (zero-Docker seed), studio hardening (auth, saved configurations, multi-project workspaces, one-click re-seed)
 - [ ] **E. Depth & confidence** — Test coverage expansion (property-based tests for generation engine, edge-case fuzzing), `seedforge audit` command (data-quality checks: referential integrity, cardinality boundaries, outlier detection)
 

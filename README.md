@@ -93,7 +93,7 @@ seedforge seed
 
 ### Plugin System
 - **Generator registry** — plugins register custom generator kinds (e.g. `geo.city`)
-- **Lifecycle hooks** — `onSchemaIntrospected`, `onBeforeGenerate`, `onAfterWrite`
+- **Lifecycle hooks** — `registerGenerators`, `onSchemaIntrospected`, `beforeGenerate`, `afterGenerate`, `beforeInsert`, `afterInsert`
 - **Example plugin** — `@seed-forge/plugin-geo` provides realistic geographic data
 
 ### Local Studio Dashboard
@@ -102,6 +102,13 @@ seedforge seed
 - **Inline config editing** — in-memory config overrides applied before seed; persist edits back to `seedforge.config.ts`
 - **Deterministic parity** — studio's "Seed now" produces identical results to CLI `seedforge seed` for the same config + seed
 
+### Test Framework Integration
+- **In-process seeding** — `@seed-forge/testing` calls the core generation + writer pipeline directly, no CLI subprocess
+- **Vitest & Jest adapters** — `seedForgeSetup()` / `seedForgeJestSetup()` wire seeding into `beforeAll`/`afterAll` with a single function call
+- **File-scoped or suite-scoped** — call at module top-level for per-file fresh seeds, or inside `describe` for suite-wide seed-once
+- **Deterministic per-test** — same seed produces identical data across test runs, including timestamps (`refDate` derived from seed)
+- **Example** — `examples/testing-vitest/` demonstrates all patterns against the e-commerce fixture
+
 ### LLM-Assisted Suggestions
 - **`seedforge suggest`** — sends unresolved column metadata to an LLM (Claude, GPT, Gemini, etc.)
 - **Schema-only by default** — safe for any database; `--include-samples` for value-aware suggestions
@@ -109,10 +116,10 @@ seedforge seed
 
 ## Package Reference
 
-The `npx @seed-forge/seedforge` entry point auto-installs `@seed-forge/cli` and all adapters. If you prefer a minimal install, pull only the packages you need:
+The `npx @seed-forge/seedforge` entry point auto-installs `@seed-forge/cli` (adapters are resolved at runtime). If you prefer a minimal install, pull only the packages you need:
 
 ```bash
-npm install @seed-forge/adapter-postgres
+npm install @seed-forge/adapter-postgres @seed-forge/cli
 npx @seed-forge/cli seed
 ```
 
@@ -126,6 +133,7 @@ npx @seed-forge/cli seed
 | `@seed-forge/adapter-mysql` | MySQL introspection + bulk writer |
 | `@seed-forge/adapter-mongodb` | MongoDB schema inference + bulk writer |
 | `@seed-forge/studio` | Web dashboard (Fastify + React/Vite) |
+| `@seed-forge/testing` | In-process seed helpers for Vitest and Jest (private, monorepo-only) |
 
 ## Project Scripts
 
@@ -158,6 +166,7 @@ See [docs/benchmarks.md](docs/benchmarks.md) for full numbers across 10K / 100K 
 - [Setup Guide](docs/SETUP.md)
 - [Roadmap](docs/ROADMAP.md)
 - [Benchmarks](docs/benchmarks.md)
+- [Testing with Vitest](examples/testing-vitest/)
 
 ## Contributing
 

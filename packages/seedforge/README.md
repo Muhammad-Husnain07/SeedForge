@@ -156,6 +156,7 @@ Use AI to propose generator config for unresolved columns.
 | `--include-samples` | Include sample values from DB (may include PII) | — |
 | `--provider <name>` | LLM provider: `anthropic`, `openai`, `google`, `deepseek`, `xai`, `openrouter`, `ollama` | `anthropic` |
 | `--model <name>` | Model name override | Provider default |
+| `--describe <text>` | Describe your dataset in plain English to get a full config draft | — |
 | `--tables <names...>` | Only suggest for these tables | All unresolved |
 | `--dry-run` | Print what would be sent without calling the LLM | — |
 
@@ -174,14 +175,17 @@ Supported LLM providers:
 
 ### `seedforge diff`
 
-Check schema drift between lockfile and live database. Acts as a CI gate.
+Check schema drift between lockfile/live database/registry profile. Acts as a CI gate.
 
 | Option | Description | Default |
 |--------|-------------|---------|
 | `-c, --config <path>` | Path to config file | `seedforge.config.ts` |
 | `-l, --lockfile <path>` | Path to lockfile | — |
+| `--ci` | Output drift as GitHub Actions annotations, exit non-zero on drift | — |
+| `--profile <ref>` | Compare against a registry profile (`<org>/<project>/<name>[:version]`) | — |
+| `--force` | Acknowledge drift and exit 0 | — |
 
-Exits with code 1 if drift is detected and not acknowledged.
+Exits with code 1 if drift is detected and not acknowledged (unless `--force` is used).
 
 ### `seedforge export`
 
@@ -234,6 +238,51 @@ Sanity-check the environment: config parsing, database connectivity, and lockfil
 |--------|-------------|---------|
 | `-c, --config <path>` | Path to config file | `seedforge.config.ts` |
 
+### `seedforge clone`
+
+Clone and optionally anonymize data from a source database.
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--source <connection>` | Source database connection string | Required |
+| `--anonymize` | Replace PII columns with generated values | — |
+| `--i-understand-the-risk` | Acknowledge cloning from a production database | — |
+| `--out <dir>` | Output directory for anonymized NDJSON files | `./anonymized` |
+| `--max-rows <n>` | Maximum rows to sample per table | All rows |
+
+### `seedforge login`
+
+Log in to a SeedForge profile registry.
+
+| Option | Description |
+|--------|-------------|
+| `-h, --help` | Display help |
+
+### `seedforge push`
+
+Push a named seed profile to the registry.
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `<profile-name>` | Profile name | Required |
+| `--version <version>` | Version tag | `latest` |
+| `--project <name>` | Project name | CWD directory name |
+| `-c, --config <path>` | Path to config file | `seedforge.config.ts` |
+| `-l, --lockfile <path>` | Path to lockfile | — |
+
+### `seedforge pull`
+
+Pull a seed profile from the registry and import it.
+
+| Argument | Description |
+|----------|-------------|
+| `<ref>` | `<org>/<project>/<profile-name>[:version]` |
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--force` | Skip schema mismatch warning | — |
+| `-c, --config <path>` | Path to config file | `seedforge.config.ts` |
+
 ---
 
 ## Configuration
@@ -246,14 +295,14 @@ import { defineConfig } from '@seed-forge/core';
 export default defineConfig({
   connection: {
     dialect: 'postgres',
-    url: process.env.DATABASE_URL!,
+    connectionString: process.env.DATABASE_URL!,
   },
   tables: {
     users: {
-      rowCount: 50,
+      count: 50,
       fields: {
-        email: { kind: 'email' },
-        name: { kind: 'name' },
+        email: { kind: 'faker', params: { method: 'internet.email' } },
+        name: { kind: 'faker', params: { method: 'person.fullName' } },
       },
     },
   },
@@ -273,55 +322,45 @@ export default defineConfig({
 
 ### Generator Kinds
 
-| Kind | Description |
-|------|-------------|
-| `uuid` | UUID v4 |
-| `email` | Realistic email addresses |
-| `name` | First and last name |
-| `phone` | Phone numbers |
-| `address` | Street, city, state, zip |
-| `currency` | Price/cost values |
-| `url` | URLs |
-| `ip` | IPv4/IPv6 addresses |
-| `slug` | URL-safe slugs |
-| `sku` | Product SKU codes |
-| `rating` | Numeric ratings |
-| `timestamp` | Date/time values |
-| `boolean` | True/false |
-| `enum` | Values from ENUM/CHECK constraints |
-| `fk-reference` | References to parent table rows |
-| `bounded-integer` | Integer within a range |
-| `weighted-categorical` | Weighted category selection |
-| `uniform-int` | Uniform random integer |
-| `uniform-real` | Uniform random float |
-| `pareto-int` | Pareto-distributed integer |
-| `exponential` | Exponentially distributed values |
-| `normal` | Normally distributed values |
-| `zipf` | Zipf-distributed values |
-| `recency-weighted` | Recent values more likely |
-| `derived` | Custom `fn(row, ctx)` function |
+| Kind | Params | Description |
+|------|--------|-------------|
+| `uuid` | — | Random UUID v4 |
+| `faker` | `method: string` | Faker.js method (e.g. `'internet.email'`, `'person.firstName'`) |
+| `bounded-integer` | `min: number`, `max: number` | Random integer in range |
+| `float` | `min: number`, `max: number`, `decimals?: number` | Random float in range |
+| `boolean` | — | Random boolean |
+| `timestamp` | `start?: string`, `end?: string` | Random datetime in range (ISO 8601) |
+| `currency` | — | Random USD amount (decimal) |
+| `enum` | `values: string[]` | Random value from enum set |
+| `weighted-categorical` | `values: any[]`, `weights: number[]` | Weighted random selection |
+| `constant` | `value: any` | Always returns the same value |
+| `derived` | `fn: (row, ctx?) => any` | Computed from other columns |
+| `slug` | — | URL-safe slug from faker |
+| `reference` | — | FK reference (auto-resolved) |
+| `geo.city` | `country?: string`, `countryCode?: string` | Real city with lat/lng (plugin) |
 
 ### Custom Generators via Plugin System
 
 Plugins register new generator kinds and lifecycle hooks:
 
 ```ts
-import { definePlugin } from '@seed-forge/core';
+import type { SeedForgePlugin } from '@seed-forge/core';
 
-export default definePlugin({
+const plugin: SeedForgePlugin = {
   name: 'geo',
-  generators: {
-    'geo.city': {
-      kind: 'geo.city',
-      generate: (params, ctx) => randomCity(ctx.seed),
-    },
+
+  registerGenerators(registry) {
+    registry.register('geo.city', Object.assign(
+      (_params, _row, prng) => randomCity(prng.next()),
+      { compatibleTypes: ['string'] },
+    ));
   },
-  hooks: {
-    onSchemaIntrospected: (schema) => { /* ... */ },
-    onBeforeGenerate: (plan) => { /* ... */ },
-    onAfterWrite: (result) => { /* ... */ },
-  },
-});
+
+  onSchemaIntrospected(schema) { /* ... */ },
+  beforeGenerate(plan) { /* ... */ },
+};
+
+export default plugin;
 ```
 
 Example plugin: `@seed-forge/plugin-geo` provides realistic geographic data (cities, countries, coordinates).
@@ -398,6 +437,7 @@ npm install @seed-forge/adapter-postgres
 | `@seed-forge/adapter-mysql` | MySQL introspection + bulk writer |
 | `@seed-forge/adapter-mongodb` | MongoDB schema inference + bulk writer |
 | `@seed-forge/studio` | Web dashboard (Fastify + React/Vite) |
+| `@seed-forge/testing` | In-process seed helpers for Vitest and Jest (private, monorepo-only) |
 
 ---
 
