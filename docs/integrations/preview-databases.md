@@ -268,16 +268,4 @@ The `test-action` CI job in this repository demonstrates this pattern — it run
     SEEDFORGE_CONNECTION_STRING: postgresql://seedforge:seedforge@localhost:5432/seedforge
 ```
 
-## Neon validation
 
-This repository includes `.github/workflows/preview-neon.yml` which validates the
-Neon recipe end-to-end against a real Neon project. It runs on `push` to `main` and:
-
-1. Creates a Neon branch via the API
-2. Loads the e-commerce fixture schema
-3. Seeds via the action
-4. Verifies row counts in all 7 tables
-5. Deletes the branch (cleanup)
-
-To activate it, set `NEON_API_KEY`, `NEON_PROJECT_ID`, and `NEON_PASSWORD` as
-repository secrets. The workflow is a no-op when these secrets are absent.
