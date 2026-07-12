@@ -1,0 +1,77 @@
+name: Preview DB Demo
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  preview-demo:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: seedforge
+          POSTGRES_PASSWORD: seedforge
+          POSTGRES_DB: seedforge
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+
+      # Step 1: Load schema into "main" database (simulating migrated main branch)
+      - name: Load fixture schema into main
+        run: |
+          PGPASSWORD=seedforge psql -h localhost -U seedforge -d seedforge -f fixtures/ecommerce/schema.sql
+
+      # Step 2: Create a "preview" database (simulating Neon branch API)
+      - name: Create preview database branch
+        run: |
+          PGPASSWORD=seedforge psql -h localhost -U seedforge -d seedforge -c "CREATE DATABASE preview_pr_123;"
+
+      # Step 3: Load same schema into preview branch
+      - name: Load schema into preview
+        run: |
+          PGPASSWORD=seedforge psql -h localhost -U seedforge -d preview_pr_123 -f fixtures/ecommerce/schema.sql
+
+      # Step 4: Seed the preview database via the action
+      - name: Seed preview database
+        uses: ./.github/actions/seedforge-action
+        with:
+          connection-string: postgresql://seedforge:seedforge@localhost:5432/preview_pr_123
+          config-path: fixtures/configs/postgres.ecommerce.ts
+          mode: fresh
+          json: 'true'
+
+      # Step 5: Verify seeded data in preview branch
+      - name: Verify preview seed
+        run: |
+          echo "=== Preview DB row counts ==="
+          for TABLE in users products tags product_tags orders order_items reviews; do
+            COUNT=$(PGPASSWORD=seedforge psql -h localhost -U seedforge -d preview_pr_123 -t -A -c "SELECT COUNT(*) FROM \"$TABLE\";")
+            echo "  $TABLE: $COUNT rows"
+            if [ "$COUNT" -eq 0 ]; then
+              echo "::error::$TABLE has 0 rows — seed failed"
+              exit 1
+            fi
+          done
+
+      # Step 6: Cleanup — drop the preview branch (simulating PR close)
+      - name: Cleanup preview branch
+        if: always()
+        run: |
+          PGPASSWORD=seedforge psql -h localhost -U seedforge -d seedforge -c "DROP DATABASE IF EXISTS preview_pr_123;"
+          echo "Preview database dropped — cleanup complete"

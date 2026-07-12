@@ -34,6 +34,20 @@ jobs:
   test-integration:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: seedforge
+          POSTGRES_PASSWORD: seedforge
+          POSTGRES_DB: seedforge
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
+        ports:
+          - 5432:5432
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -43,4 +57,71 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
+      # Dogfood the CLI path: pipeline helpers use "node dist/index.js" instead of core lib
       - run: pnpm test:integration
+        env:
+          SEEDFORGE_CLI_PATH: node dist/index.js
+
+  test-action:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: seedforge
+          POSTGRES_PASSWORD: seedforge
+          POSTGRES_DB: seedforge
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+
+      # Load e-commerce fixture schema into the Postgres service
+      - name: Load fixture schema
+        run: |
+          PGPASSWORD=seedforge psql -h localhost -U seedforge -d seedforge -f fixtures/ecommerce/schema.sql
+        env:
+          PGPASSWORD: seedforge
+
+      # Check for schema drift before seeding (PR-gate pattern)
+      - name: Check schema drift
+        run: npx @seed-forge/cli diff --ci --config fixtures/configs/postgres.ecommerce.ts
+        env:
+          SEEDFORGE_CONNECTION_STRING: postgresql://seedforge:seedforge@localhost:5432/seedforge
+
+      # Run the action to seed the database
+      - name: Seed database via SeedForge action
+        uses: ./.github/actions/seedforge-action
+        with:
+          connection-string: postgresql://seedforge:seedforge@localhost:5432/seedforge
+          config-path: fixtures/configs/postgres.ecommerce.ts
+          mode: fresh
+          json: 'true'
+
+      # Verify rows were written
+      - name: Verify seeded rows
+        run: |
+          ROWS=$(PGPASSWORD=seedforge psql -h localhost -U seedforge -d seedforge -t -A -c "SELECT COUNT(*) FROM users;")
+          if [ "$ROWS" -eq 0 ]; then
+            echo "::error::SeedForge action seeded 0 rows in users table"
+            exit 1
+          fi
+          echo "users table has $ROWS rows — action verified"
+          echo ""
+          for TABLE in users products tags product_tags orders order_items reviews; do
+            COUNT=$(PGPASSWORD=seedforge psql -h localhost -U seedforge -d seedforge -t -A -c "SELECT COUNT(*) FROM \"$TABLE\";")
+            echo "  $TABLE: $COUNT rows"
+          done
