@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { fileURLToPath } from 'node:url';
 import { Command } from 'commander';
 import fs from 'node:fs/promises';
 import {
@@ -627,7 +628,7 @@ program
 
 // ─── Main ─────────────────────────────────────────────────────────────
 
-if (!process.env.VITEST) {
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
   program.parse(process.argv);
 }
 
