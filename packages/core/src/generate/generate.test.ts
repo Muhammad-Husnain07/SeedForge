@@ -485,7 +485,6 @@ describe('generate', () => {
 
     const gen = generate(graph, plan, tinySchema, seed);
     try {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       for await (const _unused of gen) {
         // no-op: just iterating to trigger potential error
       }

@@ -49,7 +49,8 @@ function schemaData(
 /** Full DatabaseSchema with a correctly-computed schemaHash. */
 function baseSchema(): DatabaseSchema {
   const d = schemaData();
-  return { ...d, schemaHash: computeSchemaHash(d) };
+  const { introspectedAt: _t, ...dWithoutMeta } = d;
+  return { ...d, schemaHash: computeSchemaHash(dWithoutMeta) };
 }
 
 /** Returns schemaData plus a NOT NULL tax_id column on the users table. */
@@ -316,7 +317,8 @@ describe('checkDrift', () => {
     const lp = path.join(tmp, 'seedforge.lock.json');
     const config = baseConfig();
     const d = schemaData();
-    const h = computeSchemaHash(d);
+    const { introspectedAt: _t, ...dWithoutMeta } = d;
+    const h = computeSchemaHash(dWithoutMeta);
     const schema: DatabaseSchema = { ...d, schemaHash: h };
 
     await createLockfile(config, schema, 42, '0.1.0', { users: 10 }, { lockfilePath: lp });
@@ -413,9 +415,11 @@ describe('checkDrift', () => {
     const config = baseConfig();
 
     const original = schemaData();
-    const originalHash = computeSchemaHash(original);
+    const { introspectedAt: _t, ...originalWithoutMeta } = original;
+    const originalHash = computeSchemaHash(originalWithoutMeta);
     const drifted = driftedSchemaData();
-    const driftHash = computeSchemaHash(drifted);
+    const { introspectedAt: _t2, ...driftedWithoutMeta } = drifted;
+    const driftHash = computeSchemaHash(driftedWithoutMeta);
 
     // Write lockfile manually with acknowledgedSchemaHash already set to driftHash
     await writeLockfile({
@@ -453,7 +457,8 @@ describe('acknowledgeDrift', () => {
     await createLockfile(config, original, 42, '0.1.0', { users: 10 }, { lockfilePath: lp });
 
     const drifted = driftedSchemaData();
-    const driftHash = computeSchemaHash(drifted);
+    const { introspectedAt: _t, ...driftedWithoutMeta } = drifted;
+    const driftHash = computeSchemaHash(driftedWithoutMeta);
 
     // acknowledgeDrift accepts Omit<DatabaseSchema, 'schemaHash'>
     const updated = await acknowledgeDrift(drifted, { lockfilePath: lp });

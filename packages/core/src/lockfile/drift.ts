@@ -33,7 +33,6 @@ function stripRuntimeMeta(
   schema: Omit<DatabaseSchema, 'schemaHash'>,
 ): Omit<DatabaseSchema, 'schemaHash'> {
   if ('introspectedAt' in schema) {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { introspectedAt: _introspectedAt, ...rest } = schema as Omit<DatabaseSchema, 'schemaHash'> & { introspectedAt: string };
     return rest as unknown as Omit<DatabaseSchema, 'schemaHash'>;
   }
@@ -128,7 +127,7 @@ export async function createLockfile(
     seedforgeVersion,
     generatedAt: new Date().toISOString(),
     perTableRowCounts,
-    schema: schemaRest as unknown as Omit<DatabaseSchema, 'schemaHash'>,
+    schema: schemaRest,
   };
 
   await writeLockfile(lockfile, options.lockfilePath);
