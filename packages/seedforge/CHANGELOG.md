@@ -1,5 +1,13 @@
 # @seed-forge/seedforge
 
+## 0.2.5
+
+### Patch Changes
+
+- Auto-generated patch release
+- Updated dependencies
+  - @seed-forge/cli@0.2.5
+
 ## 0.2.4
 
 ### Patch Changes
