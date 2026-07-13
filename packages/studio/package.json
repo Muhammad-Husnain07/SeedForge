@@ -34,6 +34,8 @@
     "@seed-forge/adapter-mongodb": "workspace:^",
     "@seed-forge/adapter-mysql": "workspace:^",
     "@seed-forge/adapter-postgres": "workspace:^",
+    "@seed-forge/adapter-prisma": "workspace:^",
+    "@seed-forge/adapter-drizzle": "workspace:^",
     "@seed-forge/core": "workspace:^",
     "fastify": "^5.0.0",
     "jiti": "^2.7.0"

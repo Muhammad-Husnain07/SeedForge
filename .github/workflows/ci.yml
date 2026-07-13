@@ -109,7 +109,7 @@ jobs:
         with:
           connection-string: postgresql://seedforge:seedforge@localhost:5432/seedforge
           config-path: fixtures/configs/postgres.ecommerce.ts
-          mode: fresh
+          mode: truncate
           json: 'true'
 
       # Check for schema drift after seeding (lockfile now exists)
