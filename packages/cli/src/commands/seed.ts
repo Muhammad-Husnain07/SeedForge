@@ -119,6 +119,8 @@ export async function seedCommand(opts: {
         verifyResult = verifyPostWrite(plan, schema, rowsByTable);
       }
 
+      await createLockfile(config, schema, seed, '0.1.0', result.rowsWritten);
+
       printJson({
         seed,
         mode,
