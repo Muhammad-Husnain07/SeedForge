@@ -22,9 +22,20 @@ function stripSchemaHash(
   schema: Omit<DatabaseSchema, 'schemaHash'>,
 ): Omit<DatabaseSchema, 'schemaHash'> {
   if ('schemaHash' in schema) {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { schemaHash, ...rest } = schema as DatabaseSchema;
     return rest;
+  }
+  return schema;
+}
+
+function stripRuntimeMeta(
+  schema: Omit<DatabaseSchema, 'schemaHash'>,
+): Omit<DatabaseSchema, 'schemaHash'> {
+  if ('introspectedAt' in schema) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { introspectedAt: _introspectedAt, ...rest } = schema as Omit<DatabaseSchema, 'schemaHash'> & { introspectedAt: string };
+    return rest as unknown as Omit<DatabaseSchema, 'schemaHash'>;
   }
   return schema;
 }
@@ -37,7 +48,7 @@ export async function checkDrift(
     force?: boolean;
   } = {},
 ): Promise<DriftResult> {
-  const schemaNoHash = stripSchemaHash(schema);
+  const schemaNoHash = stripRuntimeMeta(stripSchemaHash(schema));
   const liveHash = computeSchemaHash(schemaNoHash);
   const lockfile = await readLockfile(options.lockfilePath);
 
@@ -117,7 +128,7 @@ export async function createLockfile(
     seedforgeVersion,
     generatedAt: new Date().toISOString(),
     perTableRowCounts,
-    schema: schemaRest,
+    schema: schemaRest as unknown as Omit<DatabaseSchema, 'schemaHash'>,
   };
 
   await writeLockfile(lockfile, options.lockfilePath);
@@ -130,7 +141,7 @@ export async function acknowledgeDrift(
     lockfilePath?: string;
   } = {},
 ): Promise<SeedForgeLockfile> {
-  const schemaNoHash = stripSchemaHash(schema);
+  const schemaNoHash = stripRuntimeMeta(stripSchemaHash(schema));
   const liveHash = computeSchemaHash(schemaNoHash);
   const lockfile = await readLockfile(options.lockfilePath);
 

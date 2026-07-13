@@ -62,9 +62,11 @@ export async function introspect(
     );
   }
   const raw = await introspector.introspect(config);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { introspectedAt, ...rawForHash } = raw;
   const schema: DatabaseSchema = {
     ...raw,
-    schemaHash: computeSchemaHash(raw),
+    schemaHash: computeSchemaHash(rawForHash as unknown as Omit<DatabaseSchema, 'schemaHash'>),
   };
   return schema;
 }
