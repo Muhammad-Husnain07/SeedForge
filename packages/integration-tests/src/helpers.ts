@@ -774,7 +774,7 @@ export async function runPgPipeline(connStr: string, fixture: string, seed = 42)
     try {
       stdout = execSync(
         `${cliPath} seed --config "${tmpConfig}" --mode fresh --seed ${seed} --json`,
-        { env: { ...process.env, SEEDFORGE_CONNECTION_STRING: connStr }, stdio: 'pipe' },
+        { env: { ...process.env, SEEDFORGE_CONNECTION_STRING: connStr, SEEDFORGE_JSON: 'true' }, stdio: 'pipe' },
       ).toString();
     } catch (err) {
       await fs.unlink(tmpConfig).catch(() => {});
@@ -828,7 +828,7 @@ export async function runMysqlPipeline(connStr: string, fixture: string, seed = 
     try {
       stdout = execSync(
         `${cliPath} seed --config "${tmpConfig}" --mode fresh --seed ${seed} --json`,
-        { env: { ...process.env, SEEDFORGE_CONNECTION_STRING: connStr }, stdio: 'pipe' },
+        { env: { ...process.env, SEEDFORGE_CONNECTION_STRING: connStr, SEEDFORGE_JSON: 'true' }, stdio: 'pipe' },
       ).toString();
     } catch (err) {
       await fs.unlink(tmpConfig).catch(() => {});
@@ -899,7 +899,7 @@ export async function runMongoPipeline(connStr: string, dbName: string, fixture:
     try {
       stdout = execSync(
         `${cliPath} seed --config "${tmpConfig}" --mode fresh --seed ${seed} --json`,
-        { stdio: 'pipe' },
+        { env: { ...process.env, SEEDFORGE_JSON: 'true' }, stdio: 'pipe' },
       ).toString();
     } catch (err) {
       await fs.unlink(tmpConfig).catch(() => {});

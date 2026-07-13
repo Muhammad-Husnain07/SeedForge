@@ -2,7 +2,7 @@ import pc from 'picocolors';
 import Table from 'cli-table3';
 
 export function isJsonMode(): boolean {
-  return process.argv.includes('--json');
+  return process.argv.includes('--json') || process.env.SEEDFORGE_JSON === 'true';
 }
 
 export function printJson(data: unknown): void {
