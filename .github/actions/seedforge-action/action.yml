@@ -45,7 +45,7 @@ runs:
       if: inputs.profile != ''
       shell: bash
       run: >
-        npx @seed-forge/cli pull "${{ inputs.profile }}"
+        node ${{ github.workspace }}/packages/cli/dist/index.js pull "${{ inputs.profile }}"
         ${{ inputs.json == 'true' && '--json' || '' }}
         ${{ inputs.force == 'true' && '--force' || '' }}
       env:
@@ -55,7 +55,7 @@ runs:
     - name: Seed database
       shell: bash
       run: >
-        npx @seed-forge/cli seed
+        node ${{ github.workspace }}/packages/cli/dist/index.js seed
         --config "${{ inputs.config-path }}"
         --mode "${{ inputs.mode }}"
         ${{ inputs.seed && format('--seed {0}', inputs.seed) || '' }}
@@ -67,7 +67,7 @@ runs:
       if: always()
       shell: bash
       run: >
-        npx @seed-forge/cli doctor
+        node ${{ github.workspace }}/packages/cli/dist/index.js doctor
         --config "${{ inputs.config-path }}"
         ${{ inputs.json == 'true' && '--json' || '' }}
       env:

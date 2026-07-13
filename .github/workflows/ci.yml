@@ -98,9 +98,10 @@ jobs:
 
       # Seed with local CLI first (creates lockfile for diff)
       - name: Seed database (local CLI)
-        run: node packages/cli/dist/index.js seed --config fixtures/configs/postgres.ecommerce.ts --mode fresh --seed 42
+        run: node packages/cli/dist/index.js seed --config fixtures/configs/postgres.ecommerce.ts --mode fresh --seed 42 --json
         env:
           SEEDFORGE_CONNECTION_STRING: postgresql://seedforge:seedforge@localhost:5432/seedforge
+          SEEDFORGE_JSON: 'true'
 
       # Run the action to seed the database (tests the action itself)
       - name: Seed database via SeedForge action

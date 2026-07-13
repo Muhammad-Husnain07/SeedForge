@@ -801,9 +801,11 @@ export async function runPgPipeline(connStr: string, fixture: string, seed = 42)
     const graph = buildGraph(schema);
     const matches = analyzeSchema(schema);
     const plan = buildGenerationPlan(schema, config, matches);
+    const { tableData } = await collectBatches(graph, plan, schema, seed);
+    const bundleFile = await exportBundleFile(config, schema, tableData, seed);
     const allTables = schema.tables.map((t) => t.name);
     const rowsWritten = await getRowCountsPG(connStr, allTables);
-    return { schema, graph, plan, rowsWritten, tableData: {}, bundleFile: '' };
+    return { schema, graph, plan, rowsWritten, tableData, bundleFile };
   }
 
   const schema = await pgIntrospect({ connectionString: connStr });
@@ -854,9 +856,11 @@ export async function runMysqlPipeline(connStr: string, fixture: string, seed = 
     const graph = buildGraph(schema);
     const matches = analyzeSchema(schema);
     const plan = buildGenerationPlan(schema, config, matches);
+    const { tableData } = await collectBatches(graph, plan, schema, seed);
+    const bundleFile = await exportBundleFile(config, schema, tableData, seed);
     const allTables = schema.tables.map((t) => t.name);
     const rowsWritten = await getRowCountsMySQL(connStr, allTables);
-    return { schema, graph, plan, rowsWritten, tableData: {}, bundleFile: '' };
+    return { schema, graph, plan, rowsWritten, tableData, bundleFile };
   }
 
   const schema = await mysqlIntrospect({ connectionString: connStr });
@@ -925,9 +929,11 @@ export async function runMongoPipeline(connStr: string, dbName: string, fixture:
     const graph = buildGraph(schema);
     const matches = analyzeSchema(schema);
     const plan = buildGenerationPlan(schema, config, matches);
+    const { tableData } = await collectBatches(graph, plan, schema, seed);
+    const bundleFile = await exportBundleFile(config, schema, tableData, seed);
     const allTables = schema.tables.map((t) => t.name);
     const rowsWritten = await getRowCountsMongo(connStr, dbName, allTables);
-    return { schema, graph, plan, rowsWritten, tableData: {}, bundleFile: '' };
+    return { schema, graph, plan, rowsWritten, tableData, bundleFile };
   }
 
   const schema = await mongoIntrospect({ connectionString: connStr, database: dbName });
