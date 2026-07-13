@@ -770,11 +770,33 @@ export async function runPgPipeline(connStr: string, fixture: string, seed = 42)
   if (cliPath) {
     const tmpConfig = path.join(os.tmpdir(), `sf-config-${Date.now()}.json`);
     await fs.writeFile(tmpConfig, JSON.stringify({ ...config, seed }));
-    execSync(
-      `${cliPath} seed --config "${tmpConfig}" --mode fresh --seed ${seed}`,
-      { env: { ...process.env, SEEDFORGE_CONNECTION_STRING: connStr }, stdio: 'pipe' },
-    );
+    let stdout: string;
+    try {
+      stdout = execSync(
+        `${cliPath} seed --config "${tmpConfig}" --mode fresh --seed ${seed} --json`,
+        { env: { ...process.env, SEEDFORGE_CONNECTION_STRING: connStr }, stdio: 'pipe' },
+      ).toString();
+    } catch (err) {
+      await fs.unlink(tmpConfig).catch(() => {});
+      const execErr = err as { stdout?: Buffer; stderr?: Buffer; message?: string };
+      throw new Error(
+        `CLI seed failed:\n` +
+        `  ${execErr.message ?? 'unknown'}\n` +
+        `  STDOUT: ${(execErr.stdout?.toString() ?? '').slice(0, 2000)}\n` +
+        `  STDERR: ${(execErr.stderr?.toString() ?? '').slice(0, 2000)}`,
+      );
+    }
     await fs.unlink(tmpConfig).catch(() => {});
+    // Validate CLI JSON output — catch errors the CLI reported but still exited 0
+    let cliResult: { rowsWritten?: Record<string, number>; error?: boolean; message?: string };
+    try {
+      cliResult = JSON.parse(stdout) as typeof cliResult;
+    } catch {
+      throw new Error(`CLI produced non-JSON output:\n${stdout.slice(0, 2000)}`);
+    }
+    if (cliResult.error) {
+      throw new Error(`CLI reported error: ${cliResult.message}`);
+    }
     const schema = await pgIntrospect({ connectionString: connStr });
     const graph = buildGraph(schema);
     const matches = analyzeSchema(schema);
@@ -802,11 +824,32 @@ export async function runMysqlPipeline(connStr: string, fixture: string, seed = 
   if (cliPath) {
     const tmpConfig = path.join(os.tmpdir(), `sf-config-${Date.now()}.json`);
     await fs.writeFile(tmpConfig, JSON.stringify({ ...config, seed }));
-    execSync(
-      `${cliPath} seed --config "${tmpConfig}" --mode fresh --seed ${seed}`,
-      { env: { ...process.env, SEEDFORGE_CONNECTION_STRING: connStr }, stdio: 'pipe' },
-    );
+    let stdout: string;
+    try {
+      stdout = execSync(
+        `${cliPath} seed --config "${tmpConfig}" --mode fresh --seed ${seed} --json`,
+        { env: { ...process.env, SEEDFORGE_CONNECTION_STRING: connStr }, stdio: 'pipe' },
+      ).toString();
+    } catch (err) {
+      await fs.unlink(tmpConfig).catch(() => {});
+      const execErr = err as { stdout?: Buffer; stderr?: Buffer; message?: string };
+      throw new Error(
+        `CLI seed failed:\n` +
+        `  ${execErr.message ?? 'unknown'}\n` +
+        `  STDOUT: ${(execErr.stdout?.toString() ?? '').slice(0, 2000)}\n` +
+        `  STDERR: ${(execErr.stderr?.toString() ?? '').slice(0, 2000)}`,
+      );
+    }
     await fs.unlink(tmpConfig).catch(() => {});
+    let cliResult: { rowsWritten?: Record<string, number>; error?: boolean; message?: string };
+    try {
+      cliResult = JSON.parse(stdout) as typeof cliResult;
+    } catch {
+      throw new Error(`CLI produced non-JSON output:\n${stdout.slice(0, 2000)}`);
+    }
+    if (cliResult.error) {
+      throw new Error(`CLI reported error: ${cliResult.message}`);
+    }
     const schema = await mysqlIntrospect({ connectionString: connStr });
     const graph = buildGraph(schema);
     const matches = analyzeSchema(schema);
@@ -852,11 +895,32 @@ export async function runMongoPipeline(connStr: string, dbName: string, fixture:
   if (cliPath) {
     const tmpConfig = path.join(os.tmpdir(), `sf-config-${Date.now()}.json`);
     await fs.writeFile(tmpConfig, JSON.stringify({ ...config, seed }));
-    execSync(
-      `${cliPath} seed --config "${tmpConfig}" --mode fresh --seed ${seed}`,
-      { stdio: 'pipe' },
-    );
+    let stdout: string;
+    try {
+      stdout = execSync(
+        `${cliPath} seed --config "${tmpConfig}" --mode fresh --seed ${seed} --json`,
+        { stdio: 'pipe' },
+      ).toString();
+    } catch (err) {
+      await fs.unlink(tmpConfig).catch(() => {});
+      const execErr = err as { stdout?: Buffer; stderr?: Buffer; message?: string };
+      throw new Error(
+        `CLI seed failed:\n` +
+        `  ${execErr.message ?? 'unknown'}\n` +
+        `  STDOUT: ${(execErr.stdout?.toString() ?? '').slice(0, 2000)}\n` +
+        `  STDERR: ${(execErr.stderr?.toString() ?? '').slice(0, 2000)}`,
+      );
+    }
     await fs.unlink(tmpConfig).catch(() => {});
+    let cliResult: { rowsWritten?: Record<string, number>; error?: boolean; message?: string };
+    try {
+      cliResult = JSON.parse(stdout) as typeof cliResult;
+    } catch {
+      throw new Error(`CLI produced non-JSON output:\n${stdout.slice(0, 2000)}`);
+    }
+    if (cliResult.error) {
+      throw new Error(`CLI reported error: ${cliResult.message}`);
+    }
     const schema = await mongoIntrospect({ connectionString: connStr, database: dbName });
     const graph = buildGraph(schema);
     const matches = analyzeSchema(schema);

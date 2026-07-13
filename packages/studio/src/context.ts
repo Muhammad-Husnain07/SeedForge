@@ -73,28 +73,28 @@ function inferConnectConfig(config: SeedForgeConfig): ConnectConfig {
 async function registerAdapters(dialect: string): Promise<void> {
   switch (dialect) {
     case 'postgres': {
-      const mod = await import('@seed-forge/adapter-postgres');
-      registerIntrospector('postgres', { introspect: mod.introspect });
+      const { introspect: pgIntro } = await import('@seed-forge/adapter-postgres');
+      registerIntrospector('postgres', { introspect: pgIntro });
       break;
     }
     case 'mysql': {
-      const mod = await import('@seed-forge/adapter-mysql');
-      registerIntrospector('mysql', { introspect: mod.introspect });
+      const { introspect: myIntro } = await import('@seed-forge/adapter-mysql');
+      registerIntrospector('mysql', { introspect: myIntro });
       break;
     }
     case 'mongodb': {
-      const mod = await import('@seed-forge/adapter-mongodb');
-      registerIntrospector('mongodb', { introspect: mod.introspect });
+      const { introspect: moIntro } = await import('@seed-forge/adapter-mongodb');
+      registerIntrospector('mongodb', { introspect: moIntro });
       break;
     }
     case 'prisma': {
-      const mod = await import('@seed-forge/adapter-prisma');
-      registerIntrospector('prisma', { introspect: mod.introspect });
+      const { introspect: prIntro } = await import('@seed-forge/adapter-prisma');
+      registerIntrospector('prisma', { introspect: prIntro });
       break;
     }
     case 'drizzle': {
-      const mod = await import('@seed-forge/adapter-drizzle');
-      registerIntrospector('drizzle', { introspect: mod.introspect });
+      const { introspect: dzIntro } = await import('@seed-forge/adapter-drizzle');
+      registerIntrospector('drizzle', { introspect: dzIntro });
       break;
     }
   }

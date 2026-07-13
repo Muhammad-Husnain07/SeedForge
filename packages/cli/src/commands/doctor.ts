@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { readLockfile, resolveLockfilePath, validateConfig } from '@seed-forge/core';
+import type { DatabaseSchema } from '@seed-forge/core';
 import { loadConfig, inferConnectConfig } from '../utils/config.js';
 import { registerAdapters } from '../utils/adapters.js';
 import { isJsonMode, printJson, renderDoctorReport, printHeading } from '../utils/format.js';
@@ -19,11 +20,32 @@ export async function doctorCommand(opts: { config?: string }): Promise<void> {
     checks.push({ name: 'Config file', status: 'fail', message: `Not found at ${configPath}` });
   }
 
-  // Check 2: Config is valid
+  let schema: DatabaseSchema | null = null;
+
+  // Check 2: Database connection + schema introspection
   if (configExists) {
     try {
       const config = await loadConfig(opts.config);
-      const issues = validateConfig(config);
+      const connectConfig = inferConnectConfig(config);
+      await registerAdapters(connectConfig.dialect);
+
+      const { introspect } = await import('@seed-forge/core');
+      schema = await introspect(connectConfig);
+      checks.push({
+        name: 'Database connection',
+        status: 'pass',
+        message: `Connected to ${connectConfig.dialect} (${schema.tables.length} tables)`,
+      });
+    } catch (err) {
+      checks.push({ name: 'Database connection', status: 'fail', message: (err as Error).message });
+    }
+  }
+
+  // Check 3: Config is valid (requires schema for column/generator validation)
+  if (configExists && schema) {
+    try {
+      const config = await loadConfig(opts.config);
+      const issues = validateConfig(config, schema);
       if (issues.length > 0) {
         checks.push({
           name: 'Config validation',
@@ -36,25 +58,8 @@ export async function doctorCommand(opts: { config?: string }): Promise<void> {
     } catch (err) {
       checks.push({ name: 'Config validation', status: 'fail', message: `Parse error: ${(err as Error).message}` });
     }
-  }
-
-  // Check 3: Database connection
-  if (configExists) {
-    try {
-      const config = await loadConfig(opts.config);
-      const connectConfig = inferConnectConfig(config);
-      await registerAdapters(connectConfig.dialect);
-
-      const { introspect } = await import('@seed-forge/core');
-      const schema = await introspect(connectConfig);
-      checks.push({
-        name: 'Database connection',
-        status: 'pass',
-        message: `Connected to ${connectConfig.dialect} (${schema.tables.length} tables)`,
-      });
-    } catch (err) {
-      checks.push({ name: 'Database connection', status: 'fail', message: (err as Error).message });
-    }
+  } else if (configExists && !schema) {
+    checks.push({ name: 'Config validation', status: 'fail', message: 'Skipped: database connection failed' });
   }
 
   // Check 4: Lockfile
