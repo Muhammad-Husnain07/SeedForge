@@ -228,12 +228,21 @@ rules.push({
   name: 'boolean-flag',
   priority: 82,
   match(col, _table, _schema, _allTables) {
-    if (/^is_/i.test(col.name) && col.logicalType === 'boolean') {
-      return {
-        semanticType: 'boolean',
-        confidence: 1,
-        generator: { kind: 'boolean-skewed', params: { skew: 0.8 } },
-      };
+    if (/^is_/i.test(col.name)) {
+      if (col.logicalType === 'boolean') {
+        return {
+          semanticType: 'boolean',
+          confidence: 1,
+          generator: { kind: 'boolean-skewed', params: { skew: 0.8 } },
+        };
+      }
+      if (col.logicalType === 'integer') {
+        return {
+          semanticType: 'boolean',
+          confidence: 0.85,
+          generator: { kind: 'boolean-skewed', params: { skew: 0.8 } },
+        };
+      }
     }
     return null;
   },
@@ -244,32 +253,37 @@ rules.push({
   name: 'timestamp',
   priority: 81,
   match(col, table) {
-    if (!TIMESTAMP_TYPES.has(col.logicalType)) return null;
+    const isTimestampType = TIMESTAMP_TYPES.has(col.logicalType);
+    const isStringTimestamp = col.logicalType === 'string' && /_at$|_date$|_time$/i.test(col.name);
+
+    if (!isTimestampType && !isStringTimestamp) return null;
+
+    const confidenceMultiplier = isTimestampType ? 1 : 0.9;
 
     const name = col.name.toLowerCase();
 
     if (name === 'created_at' || name === 'createdat') {
       return {
         semanticType: 'timestamp',
-        confidence: 1,
+        confidence: 1 * confidenceMultiplier,
         generator: { kind: 'recent-timestamp', params: { weighted: 'recent' } },
       };
     }
 
     if (name === 'updated_at' || name === 'updatedat') {
       const hasCreatedAt = table.columns.some(
-        (c) => (c.name.toLowerCase() === 'created_at' || c.name.toLowerCase() === 'createdat') && TIMESTAMP_TYPES.has(c.logicalType),
+        (c) => (c.name.toLowerCase() === 'created_at' || c.name.toLowerCase() === 'createdat') && (TIMESTAMP_TYPES.has(c.logicalType) || (c.logicalType === 'string' && /_at$|_date$|_time$|at$|date$|time$/i.test(c.name))),
       );
       if (hasCreatedAt) {
         return {
           semanticType: 'timestamp',
-          confidence: 1,
+          confidence: 1 * confidenceMultiplier,
           generator: { kind: 'dependent-timestamp', params: { dependsOn: 'created_at', min: 'created_at' } },
         };
       }
       return {
         semanticType: 'timestamp',
-        confidence: 1,
+        confidence: 1 * confidenceMultiplier,
         generator: { kind: 'recent-timestamp', params: { weighted: 'recent' } },
       };
     }
@@ -277,7 +291,7 @@ rules.push({
     if (name === 'deleted_at' || name === 'deletedat') {
       return {
         semanticType: 'timestamp',
-        confidence: 1,
+        confidence: 1 * confidenceMultiplier,
         generator: { kind: 'recent-timestamp', params: { weighted: 'recent', nullable: true } },
       };
     }
@@ -285,7 +299,7 @@ rules.push({
     if (name.endsWith('_at') || name.endsWith('_date') || name.endsWith('at') || name.endsWith('date')) {
       return {
         semanticType: 'timestamp',
-        confidence: 0.9,
+        confidence: 0.9 * confidenceMultiplier,
         generator: { kind: 'recent-timestamp', params: { weighted: 'recent' } },
       };
     }

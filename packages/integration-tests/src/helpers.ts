@@ -1,7 +1,7 @@
 import { GenericContainer, StartedTestContainer } from 'testcontainers';
 import { fileURLToPath } from 'node:url';
 import * as path from 'node:path';
-import * as fs from 'node:fs/promises';
+import * as fs from 'node:fs';
 import * as os from 'node:os';
 import { execSync } from 'node:child_process';
 import pg from 'pg';
@@ -129,7 +129,7 @@ export async function stopMongoDB(): Promise<void> {
 
 export async function loadFixtureSchemaPG(connStr: string, fixture: string): Promise<void> {
   const sqlPath = path.join(FIXTURES_DIR, fixture, 'schema.sql');
-  const sql = await fs.readFile(sqlPath, 'utf-8');
+  const sql = await fs.promises.readFile(sqlPath, 'utf-8');
   const pool = new pg.Pool({ connectionString: connStr });
   try {
     await clearAllTablesPG(pool);
@@ -141,7 +141,7 @@ export async function loadFixtureSchemaPG(connStr: string, fixture: string): Pro
 
 export async function loadFixtureSchemaMySQL(connStr: string, fixture: string): Promise<void> {
   const sqlPath = path.join(FIXTURES_DIR, fixture, 'schema.mysql.sql');
-  const sql = await fs.readFile(sqlPath, 'utf-8');
+  const sql = await fs.promises.readFile(sqlPath, 'utf-8');
   const conn = await mysql.createConnection({ uri: connStr, multipleStatements: true });
   try {
     await clearAllTablesMySQL(conn);
@@ -242,7 +242,7 @@ export async function loadFixtureSchemaSQLite(dbPath: string, fixture: string): 
   const initSqlJs = mod.default;
   const SQL = await initSqlJs();
   const sqlPath = path.join(FIXTURES_DIR, fixture, 'schema.sqlite.sql');
-  const ddl = await fs.readFile(sqlPath, 'utf-8');
+  const ddl = await fs.promises.readFile(sqlPath, 'utf-8');
   const db = new SQL.Database();
   try {
     db.run('PRAGMA foreign_keys = OFF');
@@ -915,7 +915,7 @@ export async function runPgPipeline(connStr: string, fixture: string, seed = 42)
   const cliPath = process.env.SEEDFORGE_CLI_PATH;
   if (cliPath) {
     const tmpConfig = path.join(os.tmpdir(), `sf-config-${Date.now()}.json`);
-    await fs.writeFile(tmpConfig, JSON.stringify({ ...config, seed }));
+    await fs.promises.writeFile(tmpConfig, JSON.stringify({ ...config, seed }));
     let stdout: string;
     try {
       stdout = execSync(
@@ -923,7 +923,7 @@ export async function runPgPipeline(connStr: string, fixture: string, seed = 42)
         { env: { ...process.env, SEEDFORGE_CONNECTION_STRING: connStr, SEEDFORGE_JSON: 'true' }, stdio: 'pipe' },
       ).toString();
     } catch (err) {
-      await fs.unlink(tmpConfig).catch(() => {});
+      await fs.promises.unlink(tmpConfig).catch(() => {});
       const execErr = err as { stdout?: Buffer; stderr?: Buffer; message?: string };
       throw new Error(
         `CLI seed failed:\n` +
@@ -932,7 +932,7 @@ export async function runPgPipeline(connStr: string, fixture: string, seed = 42)
         `  STDERR: ${(execErr.stderr?.toString() ?? '').slice(0, 2000)}`,
       );
     }
-    await fs.unlink(tmpConfig).catch(() => {});
+    await fs.promises.unlink(tmpConfig).catch(() => {});
     // Validate CLI JSON output — catch errors the CLI reported but still exited 0
     let cliResult: { rowsWritten?: Record<string, number>; error?: boolean; message?: string };
     try {
@@ -971,7 +971,7 @@ export async function runMysqlPipeline(connStr: string, fixture: string, seed = 
   const cliPath = process.env.SEEDFORGE_CLI_PATH;
   if (cliPath) {
     const tmpConfig = path.join(os.tmpdir(), `sf-config-${Date.now()}.json`);
-    await fs.writeFile(tmpConfig, JSON.stringify({ ...config, seed }));
+    await fs.promises.writeFile(tmpConfig, JSON.stringify({ ...config, seed }));
     let stdout: string;
     try {
       stdout = execSync(
@@ -979,7 +979,7 @@ export async function runMysqlPipeline(connStr: string, fixture: string, seed = 
         { env: { ...process.env, SEEDFORGE_CONNECTION_STRING: connStr, SEEDFORGE_JSON: 'true' }, stdio: 'pipe' },
       ).toString();
     } catch (err) {
-      await fs.unlink(tmpConfig).catch(() => {});
+      await fs.promises.unlink(tmpConfig).catch(() => {});
       const execErr = err as { stdout?: Buffer; stderr?: Buffer; message?: string };
       throw new Error(
         `CLI seed failed:\n` +
@@ -988,7 +988,7 @@ export async function runMysqlPipeline(connStr: string, fixture: string, seed = 
         `  STDERR: ${(execErr.stderr?.toString() ?? '').slice(0, 2000)}`,
       );
     }
-    await fs.unlink(tmpConfig).catch(() => {});
+    await fs.promises.unlink(tmpConfig).catch(() => {});
     let cliResult: { rowsWritten?: Record<string, number>; error?: boolean; message?: string };
     try {
       cliResult = JSON.parse(stdout) as typeof cliResult;
@@ -1044,7 +1044,7 @@ export async function runMongoPipeline(connStr: string, dbName: string, fixture:
   const cliPath = process.env.SEEDFORGE_CLI_PATH;
   if (cliPath) {
     const tmpConfig = path.join(os.tmpdir(), `sf-config-${Date.now()}.json`);
-    await fs.writeFile(tmpConfig, JSON.stringify({ ...config, seed }));
+    await fs.promises.writeFile(tmpConfig, JSON.stringify({ ...config, seed }));
     let stdout: string;
     try {
       stdout = execSync(
@@ -1052,7 +1052,7 @@ export async function runMongoPipeline(connStr: string, dbName: string, fixture:
         { env: { ...process.env, SEEDFORGE_JSON: 'true' }, stdio: 'pipe' },
       ).toString();
     } catch (err) {
-      await fs.unlink(tmpConfig).catch(() => {});
+      await fs.promises.unlink(tmpConfig).catch(() => {});
       const execErr = err as { stdout?: Buffer; stderr?: Buffer; message?: string };
       throw new Error(
         `CLI seed failed:\n` +
@@ -1061,7 +1061,7 @@ export async function runMongoPipeline(connStr: string, dbName: string, fixture:
         `  STDERR: ${(execErr.stderr?.toString() ?? '').slice(0, 2000)}`,
       );
     }
-    await fs.unlink(tmpConfig).catch(() => {});
+    await fs.promises.unlink(tmpConfig).catch(() => {});
     let cliResult: { rowsWritten?: Record<string, number>; error?: boolean; message?: string };
     try {
       cliResult = JSON.parse(stdout) as typeof cliResult;
