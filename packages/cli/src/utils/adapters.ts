@@ -25,6 +25,11 @@ export async function registerAdapters(dialect: string): Promise<void> {
       registerIntrospector('mongodb', { introspect: mod.introspect });
       break;
     }
+    case 'sqlite': {
+      const mod = await import('@seed-forge/adapter-sqlite');
+      registerIntrospector('sqlite', { introspect: mod.introspect });
+      break;
+    }
     case 'prisma': {
       const mod = await import('@seed-forge/adapter-prisma');
       registerIntrospector('prisma', { introspect: mod.introspect });
@@ -60,6 +65,10 @@ export async function getWriteFunction(dialect: string): Promise<
       const mod = await import('@seed-forge/adapter-mongodb');
       return mod.write;
     }
+    case 'sqlite': {
+      const mod = await import('@seed-forge/adapter-sqlite');
+      return mod.write;
+    }
     default:
       throw new Error(`Unknown dialect: ${dialect}`);
   }
@@ -79,6 +88,10 @@ export async function resolveSampleFunction(
     }
     case 'mongodb': {
       const mod = await import('@seed-forge/adapter-mongodb');
+      return mod.sample.bind(mod) as SampleFunction;
+    }
+    case 'sqlite': {
+      const mod = await import('@seed-forge/adapter-sqlite');
       return mod.sample.bind(mod) as SampleFunction;
     }
     default:

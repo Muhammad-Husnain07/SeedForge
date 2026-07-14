@@ -29,9 +29,11 @@ import type {
 import { introspect as pgIntrospect } from '@seed-forge/adapter-postgres';
 import { introspect as mysqlIntrospect } from '@seed-forge/adapter-mysql';
 import { introspect as mongoIntrospect } from '@seed-forge/adapter-mongodb';
+import { introspect as sqliteIntrospect } from '@seed-forge/adapter-sqlite';
 import { write as pgWrite } from '@seed-forge/adapter-postgres';
 import { write as mysqlWrite } from '@seed-forge/adapter-mysql';
 import { write as mongoWrite } from '@seed-forge/adapter-mongodb';
+import { write as sqliteWrite } from '@seed-forge/adapter-sqlite';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const FIXTURES_DIR = path.resolve(__dirname, '../../../fixtures');
@@ -227,10 +229,119 @@ export async function truncateAllMongo(connStr: string, dbName: string, tables: 
 }
 
 /* ------------------------------------------------------------------ */
+/*  SQLite helpers (no Docker — file-based)                            */
+/* ------------------------------------------------------------------ */
+
+export function startSQLite(): string {
+  const tmpFile = path.join(os.tmpdir(), `sf-sqlite-${Date.now()}.db`);
+  return tmpFile;
+}
+
+export async function loadFixtureSchemaSQLite(dbPath: string, fixture: string): Promise<void> {
+  const mod = await import('sql.js');
+  const initSqlJs = mod.default;
+  const SQL = await initSqlJs();
+  const sqlPath = path.join(FIXTURES_DIR, fixture, 'schema.sqlite.sql');
+  const ddl = await fs.readFile(sqlPath, 'utf-8');
+  const db = new SQL.Database();
+  try {
+    db.run('PRAGMA foreign_keys = OFF');
+    const results = db.exec(
+      `SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'`,
+    );
+    if (results.length > 0) {
+      for (const row of results[0].values) {
+        db.run(`DROP TABLE IF EXISTS "${row[0]}"`);
+      }
+    }
+    db.run(ddl);
+    fs.writeFileSync(dbPath, Buffer.from(db.export()));
+  } finally {
+    db.close();
+  }
+}
+
+export async function truncateAllSQLite(dbPath: string, tables: string[]): Promise<void> {
+  if (tables.length === 0) return;
+  const mod = await import('sql.js');
+  const initSqlJs = mod.default;
+  const SQL = await initSqlJs();
+  const buffer = fs.readFileSync(dbPath);
+  const db = new SQL.Database(buffer);
+  try {
+    db.run('PRAGMA foreign_keys = OFF');
+    for (let i = tables.length - 1; i >= 0; i--) {
+      db.run(`DELETE FROM "${tables[i]}"`);
+    }
+    fs.writeFileSync(dbPath, Buffer.from(db.export()));
+  } finally {
+    db.close();
+  }
+}
+
+export async function getRowCountsSQLite(dbPath: string, tables: string[]): Promise<Record<string, number>> {
+  const mod = await import('sql.js');
+  const initSqlJs = mod.default;
+  const SQL = await initSqlJs();
+  const buffer = fs.readFileSync(dbPath);
+  const db = new SQL.Database(buffer);
+  try {
+    const counts: Record<string, number> = {};
+    for (const t of tables) {
+      const results = db.exec(`SELECT COUNT(*) AS cnt FROM "${t}"`);
+      counts[t] = results.length > 0 && results[0].values.length > 0 ? Number(results[0].values[0][0]) : 0;
+    }
+    return counts;
+  } finally {
+    db.close();
+  }
+}
+
+export async function checkForeignKeyOrphansSQLite(dbPath: string, schema: DatabaseSchema): Promise<number> {
+  const mod = await import('sql.js');
+  const initSqlJs = mod.default;
+  const SQL = await initSqlJs();
+  const buffer = fs.readFileSync(dbPath);
+  const db = new SQL.Database(buffer);
+  try {
+    let totalOrphans = 0;
+    for (const table of schema.tables) {
+      for (const fk of table.foreignKeys) {
+        const fkCol = fk.columns[0];
+        const pkCol = fk.referencedColumns[0];
+        const refTable = fk.referencedTable;
+        if (!fkCol || !pkCol || !refTable) continue;
+        const results = db.exec(
+          `SELECT COUNT(*) AS orphans FROM "${table.name}" t ` +
+          `WHERE t."${fkCol}" IS NOT NULL ` +
+          `AND NOT EXISTS (SELECT 1 FROM "${refTable}" p WHERE p."${pkCol}" = t."${fkCol}")`,
+        );
+        totalOrphans += results.length > 0 && results[0].values.length > 0 ? Number(results[0].values[0][0]) : 0;
+      }
+    }
+    return totalOrphans;
+  } finally {
+    db.close();
+  }
+}
+
+export async function seedSQLite(
+  dbPath: string,
+  batches: GenerationBatch[],
+  graph: RelationshipGraph,
+  schema: DatabaseSchema,
+): Promise<Record<string, number>> {
+  async function* iter() { yield* batches; }
+  const emitter = new WriteProgressEmitter();
+  const result = await sqliteWrite({ connectionString: dbPath }, iter(), graph, schema, { mode: 'fresh', progressEmitter: emitter });
+  return result.rowsWritten;
+}
+
+/* ------------------------------------------------------------------ */
 /*  Fixture configs                                                    */
 /* ------------------------------------------------------------------ */
 
-export function getFixtureConfig(fixture: string, connStr: string, dialect: 'postgres' | 'mysql'): SeedForgeConfig {
+export function getFixtureConfig(fixture: string, connStr: string, dialect: 'postgres' | 'mysql' | 'sqlite'): SeedForgeConfig {
   const base = { connection: { connectionString: connStr, dialect } };
   const uuid = { kind: 'uuid' as const, params: {} };
   switch (fixture) {
@@ -656,7 +767,7 @@ export async function exportBundleFile(
 export async function importBundleFile(
   file: string,
   connStr: string,
-  dialect: 'postgres' | 'mysql' | 'mongodb',
+  dialect: 'postgres' | 'mysql' | 'mongodb' | 'sqlite',
   mongoDbName?: string,
 ): Promise<{ rowsImported: Record<string, number>; blocked: boolean }> {
   const result = await importBundle({
@@ -675,12 +786,17 @@ export async function importBundleFile(
         const s = await mongoIntrospect({ connectionString: connStr, database: mongoDbName! });
         return { schemaHash: s.schemaHash, tables: s.tables.map((t: any) => ({ name: t.name, columns: t.columns.map((c: any) => ({ name: c.name })) })) };
       }
+      if (dialect === 'sqlite') {
+        const s = await sqliteIntrospect({ connectionString: connStr });
+        return { schemaHash: s.schemaHash, tables: s.tables.map((t: any) => ({ name: t.name, columns: t.columns.map((c: any) => ({ name: c.name })) })) };
+      }
       throw new Error(`Unknown dialect: ${dialect}`);
     },
     writeRows: async (table: string, rows: Record<string, unknown>[]) => {
       if (dialect === 'postgres') return writeRowsPG(connStr, table, rows);
       if (dialect === 'mysql') return writeRowsMySQL(connStr, table, rows);
       if (dialect === 'mongodb') return writeRowsMongo(connStr, mongoDbName!, table, rows);
+      if (dialect === 'sqlite') return writeRowsSQLite(connStr, table, rows);
       throw new Error(`Unknown dialect: ${dialect}`);
     },
   });
@@ -745,6 +861,36 @@ async function writeRowsMongo(connStr: string, dbName: string, table: string, ro
     return result.insertedCount;
   } finally {
     await client.close();
+  }
+}
+
+async function writeRowsSQLite(dbPath: string, table: string, rows: Record<string, unknown>[]): Promise<number> {
+  if (rows.length === 0) return 0;
+  const mod = await import('sql.js');
+  const initSqlJs = mod.default;
+  const SQL = await initSqlJs();
+  let buffer: Buffer;
+  try { buffer = fs.readFileSync(dbPath); } catch { buffer = Buffer.alloc(0); }
+  const db = new SQL.Database(buffer.length > 0 ? buffer : undefined);
+  try {
+    const columns = Object.keys(rows[0]);
+    const quotedCols = columns.map((c) => `"${c}"`).join(', ');
+    const placeholders = columns.map(() => '?').join(', ');
+    const insertSql = `INSERT INTO "${table}" (${quotedCols}) VALUES (${placeholders})`;
+    for (const row of rows) {
+      db.run(insertSql, columns.map((c) => {
+        const v = row[c];
+        if (v === null || v === undefined) return null;
+        if (v instanceof Date) return v.toISOString();
+        if (typeof v === 'object') return JSON.stringify(v);
+        if (typeof v === 'boolean') return v ? 1 : 0;
+        return v;
+      }));
+    }
+    fs.writeFileSync(dbPath, Buffer.from(db.export()));
+    return rows.length;
+  } finally {
+    db.close();
   }
 }
 
@@ -942,6 +1088,20 @@ export async function runMongoPipeline(connStr: string, dbName: string, fixture:
   const plan = buildGenerationPlan(schema, config, matches);
   const { batches, tableData } = await collectBatches(graph, plan, schema, seed);
   const rowsWritten = await seedMongo(connStr, dbName, batches, graph, schema);
+  const bundleFile = await exportBundleFile(config, schema, tableData, seed);
+  return { schema, graph, plan, rowsWritten, tableData, bundleFile };
+}
+
+export async function runSQLitePipeline(dbPath: string, fixture: string, seed = 42): Promise<PipelineResult> {
+  await loadFixtureSchemaSQLite(dbPath, fixture);
+  const config = getFixtureConfig(fixture, dbPath, 'sqlite');
+
+  const schema = await sqliteIntrospect({ connectionString: dbPath });
+  const matches = analyzeSchema(schema);
+  const graph = buildGraph(schema);
+  const plan = buildGenerationPlan(schema, config, matches);
+  const { batches, tableData } = await collectBatches(graph, plan, schema, seed);
+  const rowsWritten = await seedSQLite(dbPath, batches, graph, schema);
   const bundleFile = await exportBundleFile(config, schema, tableData, seed);
   return { schema, graph, plan, rowsWritten, tableData, bundleFile };
 }

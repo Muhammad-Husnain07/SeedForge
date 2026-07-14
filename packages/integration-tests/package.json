@@ -7,20 +7,24 @@
     "test": "vitest run --reporter verbose",
     "test:pg": "vitest run --reporter verbose src/postgres.e2e.test.ts",
     "test:mysql": "vitest run --reporter verbose src/mysql.e2e.test.ts",
-    "test:mongo": "vitest run --reporter verbose src/mongodb.e2e.test.ts"
+    "test:mongo": "vitest run --reporter verbose src/mongodb.e2e.test.ts",
+    "test:sqlite": "vitest run --reporter verbose src/sqlite.e2e.test.ts"
   },
   "dependencies": {
     "@seed-forge/core": "workspace:*",
     "@seed-forge/adapter-postgres": "workspace:*",
     "@seed-forge/adapter-mysql": "workspace:*",
-    "@seed-forge/adapter-mongodb": "workspace:*"
+    "@seed-forge/adapter-mongodb": "workspace:*",
+    "@seed-forge/adapter-sqlite": "workspace:*"
   },
   "devDependencies": {
     "testcontainers": "^10.9.0",
     "pg": "^8.12.0",
     "mysql2": "^3.10.0",
     "mongodb": "^6.7.0",
+    "sql.js": "^1.11.0",
     "@types/pg": "^8.11.0",
+    "@types/sql.js": "^1.4.9",
     "vitest": "^1.6.0",
     "typescript": "^5.5.0"
   }

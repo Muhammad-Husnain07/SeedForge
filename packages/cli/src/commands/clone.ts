@@ -77,6 +77,7 @@ async function importAdapter(dialect: string): Promise<{ introspect?: unknown } 
       case 'postgres': return import('@seed-forge/adapter-postgres');
       case 'mysql': return import('@seed-forge/adapter-mysql');
       case 'mongodb': return import('@seed-forge/adapter-mongodb');
+      case 'sqlite': return import('@seed-forge/adapter-sqlite');
       default: return null;
     }
   } catch {
@@ -93,6 +94,9 @@ function detectDialect(connectionString: string): string {
   }
   if (connectionString.startsWith('mongodb://') || connectionString.startsWith('mongodb+srv://')) {
     return 'mongodb';
+  }
+  if (connectionString.endsWith('.sqlite') || connectionString.endsWith('.db') || connectionString.includes('sqlite')) {
+    return 'sqlite';
   }
   return 'postgres';
 }

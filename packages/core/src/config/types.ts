@@ -52,7 +52,7 @@ export interface TableConfig {
 }
 
 export interface ConnectionConfig {
-  dialect: 'postgres' | 'mysql' | 'mongodb';
+  dialect: 'postgres' | 'mysql' | 'mongodb' | 'sqlite';
   source?: 'database' | 'prisma' | 'drizzle';
   schemaPath?: string;
   connectionString?: string;

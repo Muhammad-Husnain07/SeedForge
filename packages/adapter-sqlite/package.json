@@ -1,0 +1,40 @@
+{
+  "name": "@seed-forge/adapter-sqlite",
+  "version": "0.2.4",
+  "description": "SQLite adapter — introspection (sqlite_master + PRAGMAs) and bulk writer (batched INSERT) for SeedForge",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Muhammad-Husnain07/SeedForge.git"
+  },
+  "author": "Muhammad Husnain",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --dts --clean --format esm && node -e \"require('fs').cpSync(require.resolve('sql.js/dist/sql-wasm.wasm'), 'dist/sql-wasm.wasm')\"",
+    "postinstall": "node -e \"try{require('fs').cpSync(require.resolve('sql.js/dist/sql-wasm.wasm'), 'dist/sql-wasm.wasm')}catch(e){}\"",
+    "dev": "tsup src/index.ts --dts --watch --format esm",
+    "test": "vitest run --reporter verbose",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@seed-forge/core": "workspace:^",
+    "sql.js": "^1.11.0"
+  },
+  "devDependencies": {
+    "@types/sql.js": "^1.4.9",
+    "tsup": "^8.1.0",
+    "typescript": "^5.5.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

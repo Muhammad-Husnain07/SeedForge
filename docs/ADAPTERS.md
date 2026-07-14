@@ -190,3 +190,69 @@ For self-referential FK resolution:
 - No FK detection (MongoDB has no native referential constraints)
 - Inference accuracy scales with sample size (max 1,000 docs)
 - MongoDB has no native transactions in all configurations; rollback is best-effort
+
+---
+
+## Adapter: SQLite (`@seed-forge/adapter-sqlite`)
+
+### Introspection
+
+The SQLite adapter uses an in-process SQLite engine (`sql.js`, WebAssembly-based, no native dependencies) and queries the following system tables and PRAGMAs:
+
+| Query / PRAGMA | Purpose |
+|---|---|
+| `sqlite_master` | List user tables (excludes `sqlite_%` internal tables) |
+| `PRAGMA table_info(name)` | Columns: name, declared type, notnull, default, pk ordinal |
+| `PRAGMA foreign_key_list(name)` | Foreign keys: referenced table/columns, on delete/update rules |
+| `PRAGMA index_list(name)` | Indexes: name, unique flag, origin (pk / c / u) |
+| `PRAGMA index_info(name)` | Columns in each unique index |
+
+Check constraints are parsed from the `sqlite_master.sql` DDL text using regex, since SQLite does not expose them via PRAGMAs.
+
+### Type Mapping & Affinity
+
+SQLite uses a **type-affinity** system rather than strict column types. A column's declared type determines its storage affinity, but any value can be stored in any column regardless. The adapter maps from the **declared type** (as reported by `PRAGMA table_info`) to the `LogicalType` enum:
+
+| Declared Type Convention | LogicalType | Rationale |
+|---|---|---|
+| `INT`, `INTEGER`, `BIGINT`, `SMALLINT`, `TINYINT`, etc. | `integer` | Direct numeric mapping |
+| `REAL`, `FLOAT`, `DOUBLE`, `NUMERIC`, `DECIMAL` | `float` | Floating-point / arbitrary precision |
+| `TEXT`, `VARCHAR`, `CHAR`, `CLOB` | `string` | Text storage class |
+| `BLOB` | `binary` | Binary large object |
+| `BOOLEAN` | `boolean` | Common convention; stored as INTEGER 0/1 |
+| `DATE` | `date` | Convention; stored as TEXT (ISO 8601) or INTEGER (Julian day) |
+| `DATETIME`, `TIMESTAMP` | `timestamp` | Convention; stored as TEXT or INTEGER |
+| `UUID` | `uuid` | Convention; stored as TEXT |
+| `JSON` | `json` | Convention; stored as TEXT |
+
+Columns with **no declared type** default to `BLOB` affinity and are mapped to `string`, matching the common pattern of storing arbitrary data as text.
+
+**Judgment calls:**
+- `DATETIME` / `TIMESTAMP` → `timestamp` rather than `string` because these are almost universally used for date/time values in SQLite schemas, even though SQLite stores them as TEXT or INTEGER under the hood.
+- `BOOLEAN` → `boolean` rather than `integer` because it's the most common convention in ORMs like Prisma and Drizzle, and SeedForge's generator can produce proper boolean values.
+- `NUMERIC` / `DECIMAL` → `float` rather than `integer` because they carry a decimal point in practice.
+- `DATE` → `date` rather than `string` following the same convention as PostgreSQL's `date` type.
+
+### Writer
+
+The SQLite writer uses batched `INSERT INTO table (cols) VALUES (...)` statements within a single transaction:
+
+```
+BEGIN;
+INSERT INTO "users" ("id", "name") VALUES (?, ?), (?, ?), ...;
+INSERT INTO "posts" ("id", "author_id", "title") VALUES (?, ?, ?), ...;
+COMMIT;
+```
+
+**Key characteristics:**
+- **No COPY equivalent** — SQLite has no bulk-load mechanism like PostgreSQL's COPY or MySQL's `LOAD DATA`. The adapter groups rows into batches (default 1,000 rows, respecting a max of 999 SQL variables per query) within a transaction, which provides most of the throughput benefit.
+- **File persistence** — The adapter uses `sql.js` (WASM-based SQLite, no native compilation needed). After the transaction completes, the database buffer is exported to disk. This means the entire `.db` file is rewritten on each `write()` call, which is fine for seed-data sizes (typically < 10MB).
+- **Transaction safety** — Writes are wrapped in BEGIN/COMMIT/ROLLBACK. If any batch fails, the transaction is rolled back and the original `.db` file is preserved.
+
+### Limitations
+
+- SQLite has no native `ENUM` type — enum constraints must be expressed as `CHECK (col IN (...))`.
+- SQLite has no native `UUID` type — UUIDs are stored as `TEXT` in practice.
+- No `COPY` / bulk-load equivalent — performance for very large datasets may be lower than PostgreSQL or MySQL.
+- The `sql.js` engine is in-process and WASM-based; maximum database size is limited by available memory (typically 1–2 GB in practice).
+- Concurrent writes are not supported — the adapter opens the database exclusively for writing.

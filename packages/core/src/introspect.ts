@@ -5,6 +5,7 @@ export type ConnectConfig =
   | { dialect: 'postgres'; connectionString: string }
   | { dialect: 'mysql'; connectionString: string }
   | { dialect: 'mongodb'; connectionString: string; database: string }
+  | { dialect: 'sqlite'; connectionString: string }
   | { dialect: 'prisma'; schemaPath: string }
   | { dialect: 'drizzle'; schemaPath: string };
 
