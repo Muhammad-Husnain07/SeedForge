@@ -88,8 +88,8 @@ async function registerAdapters(dialect: string): Promise<void> {
       break;
     }
     case 'sqlite': {
-      const { introspect: sqliteIntro } = await import('@seed-forge/adapter-sqlite');
-      registerIntrospector('sqlite', { introspect: sqliteIntro });
+      const sqliteMod = await import('@seed-forge/adapter-sqlite') as { introspect: (connect: import('@seed-forge/core').ConnectConfig) => Promise<import('@seed-forge/core').DatabaseSchema> };
+      registerIntrospector('sqlite', { introspect: sqliteMod.introspect });
       break;
     }
     case 'prisma': {

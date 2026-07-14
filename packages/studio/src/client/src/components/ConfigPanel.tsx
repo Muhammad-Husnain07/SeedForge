@@ -29,7 +29,7 @@ interface ConfigPanelProps {
   onSuggestClear?: () => void;
 }
 
-export function ConfigPanel({ config, plan, onConfigChange, onSuggestDescribe, suggestLoading, suggestResult, onSuggestClear }: ConfigPanelProps) {
+export function ConfigPanel({ config: _config, plan, onConfigChange, onSuggestDescribe, suggestLoading, suggestResult, onSuggestClear }: ConfigPanelProps) {
   const [localWeights, setLocalWeights] = useState<Record<string, number>>({});
   const [description, setDescription] = useState('');
 

@@ -148,7 +148,7 @@ export function App() {
             config={config}
             plan={null}
             onConfigChange={(cfg) => { void updateConfig(cfg); }}
-            onSuggestDescribe={handleSuggestDescribe}
+            onSuggestDescribe={(desc) => { void handleSuggestDescribe(desc); }}
             suggestLoading={suggest.loading}
             suggestResult={suggest.result}
             onSuggestClear={suggest.clear}

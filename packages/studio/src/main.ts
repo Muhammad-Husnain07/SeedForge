@@ -1,4 +1,3 @@
-import type { FastifyInstance } from 'fastify';
 import { buildServer } from './server.js';
 import { initializeContext } from './context.js';
 import { isAuthEnabled } from './auth.js';
@@ -18,7 +17,7 @@ export async function startStudio(options: StudioOptions = {}): Promise<void> {
   await initializeContext(configPath);
   console.error('[studio] Context initialized (schema, graph, plan ready)');
 
-  const server = (await buildServer({ configPath })) as FastifyInstance;
+  const server = await buildServer({ configPath });
 
   // If SEEDFORGE_STUDIO_TOKEN is set, auth gate protects all routes
   // so we can safely bind beyond localhost for team deployment.
