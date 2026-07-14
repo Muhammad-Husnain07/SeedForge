@@ -7,3 +7,6 @@ coverage
  
 # npm credentials 
 .npmrc
+
+# studio logs
+studio.log
