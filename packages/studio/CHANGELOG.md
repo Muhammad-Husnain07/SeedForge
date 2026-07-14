@@ -1,5 +1,18 @@
 # @seed-forge/studio
 
+## 0.2.6
+
+### Patch Changes
+
+- Auto-generated patch release
+- Updated dependencies
+  - @seed-forge/adapter-drizzle@0.1.3
+  - @seed-forge/adapter-mongodb@0.2.6
+  - @seed-forge/adapter-mysql@0.2.6
+  - @seed-forge/adapter-postgres@0.2.6
+  - @seed-forge/adapter-prisma@0.1.3
+  - @seed-forge/core@0.2.6
+
 ## 0.2.5
 
 ### Patch Changes

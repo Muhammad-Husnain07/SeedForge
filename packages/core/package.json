@@ -1,6 +1,6 @@
 {
   "name": "@seed-forge/core",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "Schema IR, relationship graph, semantic analyzer, distributions, config DSL, generation engine, validation layer, lockfile, bundle, and plugin system — database-agnostic core",
   "license": "MIT",
   "repository": {

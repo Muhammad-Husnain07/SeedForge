@@ -1,6 +1,6 @@
 {
   "name": "@seed-forge/registry",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Seed profile registry — publish and fetch named, versioned seed profiles via HTTP",
   "license": "MIT",
   "type": "module",

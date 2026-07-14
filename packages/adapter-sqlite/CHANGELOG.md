@@ -1,5 +1,13 @@
 # @seed-forge/adapter-sqlite
 
+## 0.2.5
+
+### Patch Changes
+
+- Auto-generated patch release
+- Updated dependencies
+  - @seed-forge/core@0.2.6
+
 ## 0.2.4
 
 ### Minor Changes

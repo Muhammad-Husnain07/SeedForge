@@ -1,6 +1,6 @@
 {
   "name": "@seed-forge/adapter-sqlite",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "SQLite adapter — introspection (sqlite_master + PRAGMAs) and bulk writer (batched INSERT) for SeedForge",
   "license": "MIT",
   "repository": {

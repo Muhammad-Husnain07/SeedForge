@@ -1,6 +1,6 @@
 {
   "name": "@seed-forge/adapter-prisma",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Prisma schema adapter — parse schema.prisma via @prisma/internals getDMMF onto the DatabaseSchema shape",
   "license": "MIT",
   "repository": {
