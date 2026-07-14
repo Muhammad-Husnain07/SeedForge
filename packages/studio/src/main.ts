@@ -1,15 +1,18 @@
 import type { FastifyInstance } from 'fastify';
 import { buildServer } from './server.js';
 import { initializeContext } from './context.js';
+import { isAuthEnabled } from './auth.js';
 
 export interface StudioOptions {
   configPath?: string;
   port?: number;
+  host?: string;
 }
 
 export async function startStudio(options: StudioOptions = {}): Promise<void> {
   const port = options.port ?? 3456;
   const configPath = options.configPath;
+  const auth = isAuthEnabled();
 
   console.error(`[studio] Loading config: ${configPath ?? 'seedforge.config.ts'}`);
   await initializeContext(configPath);
@@ -17,8 +20,19 @@ export async function startStudio(options: StudioOptions = {}): Promise<void> {
 
   const server = (await buildServer({ configPath })) as FastifyInstance;
 
-  await server.listen({ port, host: '127.0.0.1' });
-  console.error(`\n  seedforge studio running at http://127.0.0.1:${port}\n`);
+  // If SEEDFORGE_STUDIO_TOKEN is set, auth gate protects all routes
+  // so we can safely bind beyond localhost for team deployment.
+  // Otherwise default to localhost-only with zero-config.
+  const bindHost = options.host ?? (auth ? '0.0.0.0' : '127.0.0.1');
+
+  await server.listen({ port, host: bindHost });
+  console.error(`\n  seedforge studio running at http://${bindHost}:${port}\n`);
+  if (auth) {
+    console.error('  Authentication: enabled (SEEDFORGE_STUDIO_TOKEN)');
+  } else {
+    console.error('  Authentication: disabled (set SEEDFORGE_STUDIO_TOKEN to enable)');
+    console.error('  ⚠  Bound to 127.0.0.1 only — use a reverse proxy for remote access');
+  }
 }
 
 // Allow running standalone

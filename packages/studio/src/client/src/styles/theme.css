@@ -52,6 +52,11 @@
   --space-lg: 16px;
   --space-xl: 24px;
 
+  /* Diff */
+  --diff-added: #22c55e;
+  --diff-removed: #ef4444;
+  --diff-changed: #eab308;
+
   /* Focus */
   --focus-ring: 0 0 0 2px #0f172a, 0 0 0 4px #06b6d4;
 }

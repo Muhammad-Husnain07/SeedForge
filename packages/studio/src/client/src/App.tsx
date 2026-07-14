@@ -11,6 +11,8 @@ import { useGraph } from './hooks/useGraph.js';
 import { useConfig } from './hooks/useConfig.js';
 import { useEventStream } from './hooks/useEventStream.js';
 import { useSeed } from './hooks/useSeed.js';
+import { useDiff } from './hooks/useDiff.js';
+import { useSuggestDescribe } from './hooks/useSuggestDescribe.js';
 
 type PanelTab = 'columns' | 'config' | 'preview' | 'seed';
 
@@ -20,13 +22,15 @@ export function App() {
   const { config, updateConfig } = useConfig();
   const { lastEvent } = useEventStream();
   const seed = useSeed();
+  const { diff, refresh: refreshDiff } = useDiff();
+  const suggest = useSuggestDescribe();
 
   const [selectedTable, setSelectedTable] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<PanelTab>('columns');
   const [previewData, setPreviewData] = useState<Record<string, Record<string, unknown>[]>>({});
   const [seedRunId, setSeedRunId] = useState<string | null>(null);
+  const [showDrift, setShowDrift] = useState(false);
 
-  // Handle incoming SSE events
   useEffect(() => {
     if (!lastEvent) return;
     if (lastEvent.type === 'preview' && lastEvent.data?.tables) {
@@ -58,6 +62,16 @@ export function App() {
     }
   }, []);
 
+  const handleToggleDrift = useCallback(() => {
+    setShowDrift((prev) => !prev);
+    if (!showDrift) refreshDiff();
+  }, [showDrift, refreshDiff]);
+
+  const handleSuggestDescribe = useCallback(async (description: string) => {
+    await suggest.generate(description);
+    setActiveTab('config');
+  }, [suggest]);
+
   if (schemaLoading || graphLoading) {
     return (
       <div className="app-layout">
@@ -88,13 +102,16 @@ export function App() {
             graph={graph}
             selectedTable={selectedTable}
             onTableClick={handleTableClick}
+            schemaTables={schema?.tables}
+            diff={diff}
+            showDrift={showDrift}
+            onToggleDrift={handleToggleDrift}
           />
         ) : (
           <div className="empty-state">No graph data</div>
         )}
       </div>
       <div className="side-panel">
-        {/* Tab bar */}
         <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', fontFamily: 'var(--font-mono)', fontSize: 'var(--font-size-xs)' }}>
           {(['columns', 'config', 'preview', 'seed'] as PanelTab[]).map((tab) => (
             <button
@@ -131,6 +148,10 @@ export function App() {
             config={config}
             plan={null}
             onConfigChange={(cfg) => { void updateConfig(cfg); }}
+            onSuggestDescribe={handleSuggestDescribe}
+            suggestLoading={suggest.loading}
+            suggestResult={suggest.result}
+            onSuggestClear={suggest.clear}
           />
         )}
         {activeTab === 'preview' && (

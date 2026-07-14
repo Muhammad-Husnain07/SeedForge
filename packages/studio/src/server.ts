@@ -1,29 +1,37 @@
+import type { FastifyInstance } from 'fastify';
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import staticFiles from '@fastify/static';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { registerAuthHook } from './auth.js';
 import { schemaRoutes } from './routes/schema.js';
 import { graphRoutes } from './routes/graph.js';
+import { diffRoutes } from './routes/diff.js';
 import { configRoutes } from './routes/config.js';
 import { planRoutes } from './routes/plan.js';
 import { eventsRoutes } from './routes/events.js';
 import { seedRoutes } from './routes/seed.js';
+import { suggestRoutes } from './routes/suggest.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export interface ServerOptions {
   configPath?: string;
+  staticRoot?: string;
 }
 
-export async function buildServer(_opts: ServerOptions = {}): ReturnType<typeof Fastify> {
+export async function buildServer(_opts: ServerOptions = {}): Promise<FastifyInstance> {
   const server = Fastify({ logger: false });
 
   await server.register(cors, { origin: true });
 
+  // Auth gate — checks Bearer token if SEEDFORGE_STUDIO_TOKEN is set
+  registerAuthHook(server);
+
   // Serve built frontend if it exists (production), or proxy to Vite dev server (dev)
-  const clientDist = path.resolve(__dirname, '../client/dist');
+  const clientDist = _opts.staticRoot ?? path.resolve(__dirname, '../client/dist');
   const clientIndex = path.resolve(clientDist, 'index.html');
   try {
     await import('fs/promises').then((fs) => fs.access(clientIndex));
@@ -45,10 +53,12 @@ export async function buildServer(_opts: ServerOptions = {}): ReturnType<typeof 
   // API routes
   await server.register(schemaRoutes, { prefix: '/api' });
   await server.register(graphRoutes, { prefix: '/api' });
+  await server.register(diffRoutes, { prefix: '/api' });
   await server.register(configRoutes, { prefix: '/api' });
   await server.register(planRoutes, { prefix: '/api' });
   await server.register(eventsRoutes, { prefix: '/api' });
   await server.register(seedRoutes, { prefix: '/api' });
+  await server.register(suggestRoutes, { prefix: '/api' });
 
   // Health check
   server.get('/api/health', () => ({ status: 'ok' }));

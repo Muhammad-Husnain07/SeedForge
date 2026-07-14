@@ -87,6 +87,11 @@ async function registerAdapters(dialect: string): Promise<void> {
       registerIntrospector('mongodb', { introspect: moIntro });
       break;
     }
+    case 'sqlite': {
+      const { introspect: sqliteIntro } = await import('@seed-forge/adapter-sqlite');
+      registerIntrospector('sqlite', { introspect: sqliteIntro });
+      break;
+    }
     case 'prisma': {
       const { introspect: prIntro } = await import('@seed-forge/adapter-prisma');
       registerIntrospector('prisma', { introspect: prIntro });
