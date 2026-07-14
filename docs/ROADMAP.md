@@ -33,15 +33,11 @@
 
 - [x] **18. Packaging, docs, CI/CD, npm publish** — `.github/workflows/ci.yml` (lint + unit + integration on PR), `.github/workflows/publish.yml` (tag-triggered publish with npm provenance), `.changeset/config.json` (Changesets `fixed` config, synced versions). All 6 packages live on npm at `@seed-forge/*` v0.1.1: `@seed-forge/core`, `@seed-forge/cli`, `@seed-forge/adapter-postgres`, `@seed-forge/adapter-mysql`, `@seed-forge/adapter-mongodb`, `@seed-forge/studio`, plus `@seed-forge/plugin-geo`. Auto-generated CLI reference, architect docs, config DSL reference, plugin-authoring guide, contributing guide, issue templates.
 
-## Planned
-
-- [ ] **19. Production hardening** — HTTPS, auth, multi-user workspaces, cloud-hosted studio.
-
 ## Phase 2 — Next Level
 
 - [x] **A. Single-command install & real branding** — `npx @seed-forge/seedforge init` / `seed forge seed` as primary entry point, `npx create-seedforge` scaffolding, `workspace:^` range specifiers, `@fastify/static` security bump, programmatic `@seed-forge/cli` exports
 - [x] **B. Deepen the business-logic story** — ORM-native schema parsing (Prisma, Drizzle), time-series / cohort / event-stream generation, natural-language config authoring via LLM (`suggest --describe`), production clone-and-anonymize mode (`seedforge clone --anonymize`)
-- [x] **C. Team collaboration & ecosystem** — Hosted profile registry (share + discover generator profiles), GitHub Actions CI plugin (`.github/actions/seedforge-action/`), test-framework bindings (`@seed-forge/testing` with Vitest + Jest adapters, `diff --ci` PR gate, preview-database recipes)
-- [ ] **D. More engines, harder studio** — SQLite adapter (zero-Docker seed), studio hardening (auth, saved configurations, multi-project workspaces, one-click re-seed)
+- [x] **C. Team collaboration & ecosystem** — Hosted profile registry (share + discover generator profiles), GitHub Actions CI plugin (`.github/actions/seedforge-action/`), test-framework bindings (`@seed-forge/testing` with Vitest + Jest adapters), `diff --ci` PR gate, preview-database recipes
+- [x] **D. More engines, harder studio** — SQLite adapter (zero-Docker seed with `sql.js` WASM engine), studio hardening (path-traversal regression test, Bearer-token auth gate, schema-diff overlay on ER diagram, natural-language config authoring in config panel)
 - [ ] **E. Depth & confidence** — Test coverage expansion (property-based tests for generation engine, edge-case fuzzing), `seedforge audit` command (data-quality checks: referential integrity, cardinality boundaries, outlier detection)
 

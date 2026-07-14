@@ -2,7 +2,7 @@
 
 > Auto-generated from `seedforge --help`. Do not edit by hand.
 > Regenerate with: `node scripts/gen-cli-docs.mjs`
-> Generated on: 2026-07-12
+> Generated on: 2026-07-14
 
 ## Usage
 

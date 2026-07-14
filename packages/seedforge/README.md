@@ -1,6 +1,6 @@
 # @seed-forge/seedforge
 
-**Deterministic, intelligent seed data generator for Postgres, MySQL, and MongoDB.**
+**Deterministic, intelligent seed data generator for Postgres, MySQL, SQLite, and MongoDB.**
 
 SeedForge introspects your database schema, infers column semantics, applies business rules, and generates realistic relational seed data — deterministically and reproducibly.
 
@@ -55,6 +55,14 @@ docker run -d --name seedforge-mongo \
   mongo:7
 
 npx @seed-forge/seedforge init
+npx @seed-forge/seedforge seed
+```
+
+### SQLite (no Docker needed)
+
+```bash
+# SQLite runs in-process via WASM — just point at a .db file
+npx @seed-forge/seedforge init   # select sqlite dialect
 npx @seed-forge/seedforge seed
 ```
 
@@ -221,10 +229,11 @@ Launch the local web studio dashboard.
 | `-p, --port <n>` | Port to bind | `3456` |
 
 The studio provides:
-- ER diagram (React Flow) of your database schema
-- Interactive config panel with inline editing
+- ER diagram (React Flow) of your database schema with schema-diff overlay
+- Interactive config panel with inline editing and natural-language config authoring
 - One-click "Seed now" with live progress
 - Real-time row counts via SSE
+- Bearer-token auth gate (`SEEDFORGE_STUDIO_TOKEN`) for safe team deployment
 
 ### `seedforge reset`
 
@@ -369,13 +378,16 @@ Example plugin: `@seed-forge/plugin-geo` provides realistic geographic data (cit
 
 ## Adapters
 
-SeedForge supports three databases through pluggable adapters:
+SeedForge supports multiple databases through pluggable adapters:
 
 | Adapter | Package | Introspection | Writer |
 |---------|---------|---------------|--------|
 | Postgres | `@seed-forge/adapter-postgres` | `INFORMATION_SCHEMA` + `pg_catalog` | Multi-row INSERT / COPY |
 | MySQL | `@seed-forge/adapter-mysql` | `INFORMATION_SCHEMA` | Multi-row INSERT |
 | MongoDB | `@seed-forge/adapter-mongodb` | Document sampling + schema inference | `insertMany` |
+| SQLite | `@seed-forge/adapter-sqlite` | `PRAGMA` + `sqlite_master` | Batched INSERT (WASM, no Docker) |
+| Prisma | `@seed-forge/adapter-prisma` | Schema file parser (`schema.prisma`) | — (introspection only) |
+| Drizzle | `@seed-forge/adapter-drizzle` | Schema file parser (`schema.drizzle.ts`) | — (introspection only) |
 
 The adapters are automatically resolved by the CLI — you only need to pick the dialect during `init`.
 
@@ -436,6 +448,9 @@ npm install @seed-forge/adapter-postgres
 | `@seed-forge/adapter-postgres` | Postgres introspection + bulk writer |
 | `@seed-forge/adapter-mysql` | MySQL introspection + bulk writer |
 | `@seed-forge/adapter-mongodb` | MongoDB schema inference + bulk writer |
+| `@seed-forge/adapter-sqlite` | SQLite introspection + bulk writer (WASM, no Docker) |
+| `@seed-forge/adapter-prisma` | Prisma schema file parser |
+| `@seed-forge/adapter-drizzle` | Drizzle schema file parser |
 | `@seed-forge/studio` | Web dashboard (Fastify + React/Vite) |
 | `@seed-forge/testing` | In-process seed helpers for Vitest and Jest (private, monorepo-only) |
 

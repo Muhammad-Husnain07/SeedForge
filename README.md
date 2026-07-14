@@ -1,6 +1,6 @@
 # SeedForge
 
-**Intelligent, deterministic database seeding for Postgres, MySQL, and MongoDB.**
+**Intelligent, deterministic database seeding for Postgres, MySQL, SQLite, and MongoDB.**
 
 SeedForge introspects your database schema, infers column semantics, applies business rules, and generates realistic relational seed data — deterministically and reproducibly.
 
@@ -38,7 +38,7 @@ seedforge seed
 ## Key Features
 
 ### Introspection & Schema Analysis
-- **Multi-database introspection** — Postgres (INFORMATION_SCHEMA + pg_catalog), MySQL (INFORMATION_SCHEMA), MongoDB (document sampling)
+- **Multi-database introspection** — Postgres (INFORMATION_SCHEMA + pg_catalog), MySQL (INFORMATION_SCHEMA), SQLite (PRAGMA + sqlite_master), MongoDB (document sampling), Prisma (schema file parser), Drizzle (schema file parser)
 - **Registry pattern dispatcher** — `registerIntrospector()` / `introspect(config)` unified API
 - **Type normalization** — Native DB types mapped to a shared `LogicalType` enum
 - **Enum detection** — Postgres `pg_enum` labels, MySQL `ENUM(...)` parsing
@@ -85,6 +85,7 @@ seedforge seed
 - **Postgres** — multi-row `INSERT` (small batches) / `COPY` (large batches), `fresh`/`truncate`/`append` modes, transaction rollback on error, progress events
 - **MySQL** — multi-row `INSERT`, same write modes and rollback behavior
 - **MongoDB** — `insertMany`, same write modes and rollback behavior
+- **SQLite** — batched `INSERT` in transaction via `sql.js` (WASM, no native deps), same write modes
 
 ### Schema Drift Detection
 - **Canonical schema hashing** — `computeSchemaHash()` produces deterministic SHA256 digests
@@ -99,6 +100,9 @@ seedforge seed
 ### Local Studio Dashboard
 - **Fastify backend** — serves static frontend SPA, provides REST + SSE APIs for schema, graph, config, plan, and seed execution
 - **React + Vite frontend** — ER diagram (React Flow), interactive config panel, one-click "Seed now", live progress via SSE
+- **Schema diff overlay** — visual drift detection on the ER graph: added/removed/changed tables and columns highlighted directly on the diagram
+- **Natural-language config authoring** — describe your data model in plain English; studio calls `suggest --describe` and renders the draft as an editable inline diff
+- **Auth gate** — `SEEDFORGE_STUDIO_TOKEN` env var enables Bearer-token authentication; binds to `0.0.0.0` when set (safe for team deployment)
 - **Inline config editing** — in-memory config overrides applied before seed; persist edits back to `seedforge.config.ts`
 - **Deterministic parity** — studio's "Seed now" produces identical results to CLI `seedforge seed` for the same config + seed
 
@@ -132,6 +136,9 @@ npx @seed-forge/cli seed
 | `@seed-forge/adapter-postgres` | Postgres introspection + bulk writer |
 | `@seed-forge/adapter-mysql` | MySQL introspection + bulk writer |
 | `@seed-forge/adapter-mongodb` | MongoDB schema inference + bulk writer |
+| `@seed-forge/adapter-sqlite` | SQLite introspection + bulk writer (WASM, no Docker) |
+| `@seed-forge/adapter-prisma` | Prisma schema file parser (ORM-native) |
+| `@seed-forge/adapter-drizzle` | Drizzle schema file parser (ORM-native) |
 | `@seed-forge/studio` | Web dashboard (Fastify + React/Vite) |
 | `@seed-forge/testing` | In-process seed helpers for Vitest and Jest (private, monorepo-only) |
 

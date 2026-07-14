@@ -54,12 +54,27 @@ packages/
                           $sample aggregation) + bulk writer (insertMany).
                           Deps: mongodb, @seed-forge/core.
 
+  adapter-sqlite/       — SQLite introspection (PRAGMA + sqlite_master)
+                          + bulk writer (batched INSERT in WASM transaction).
+                          No Docker — pure in-process via sql.js.
+                          Deps: sql.js, @seed-forge/core.
+
+  adapter-prisma/       — Prisma schema file parser. Reads schema.prisma
+                          and produces a DatabaseSchema. No database needed.
+                          Deps: @seed-forge/core (types only).
+
+  adapter-drizzle/       — Drizzle ORM schema file parser. Reads schema.drizzle.ts
+                          and produces a DatabaseSchema. No database needed.
+                          Deps: @seed-forge/core (types only).
+
   cli/                  — The `seedforge` command. Thin orchestration.
                             Deps: commander, all of the above.
 
   studio/               — Local web dashboard. Fastify backend + React/Vite frontend.
                             REST APIs for schema, graph, config, plan, seed execution.
                             SSE-based live progress. ER diagram via React Flow.
+                            Schema-diff overlay on ER graph. Auth gate via
+                            SEEDFORGE_STUDIO_TOKEN. Natural-language config authoring.
 
   testing/              — In-process seed helpers for Vitest and Jest. Calls core
                             generation + writer pipeline directly (no CLI subprocess).
@@ -199,7 +214,7 @@ The implementation evolved during development in several ways worth noting:
 
 5. **Lockfile/drift and export/import were implemented earlier than the roadmap planned.** These shipped in Milestone IX/X rather than being separate milestones, because the bundle format was needed for the studio's "download snapshot" feature.
 
-6. **Package count grew.** The original doc listed 6 packages (core, 3 adapters, cli, studio). The actual monorepo now contains 11 packages (adding `integration-tests`, `seedforge-plugin-geo`, `testing`, `adapter-drizzle`, `adapter-prisma`).
+6. **Package count grew.** The original doc listed 6 packages (core, 3 adapters, cli, studio). The actual monorepo now contains 12 packages (adding `integration-tests`, `seedforge-plugin-geo`, `testing`, `adapter-drizzle`, `adapter-prisma`, `adapter-sqlite`).
 
 7. **All packages ship at the same version.** With `@changesets/cli` and the `fixed` config, all publishable packages (`@seed-forge/core`, `@seed-forge/adapter-*`, `@seed-forge/cli`, `@seed-forge/studio`) are released together with synced version numbers. This was not part of the original design but simplifies the install experience.
 
@@ -239,24 +254,26 @@ The implementation evolved during development in several ways worth noting:
 - ✅ **Phase 2, Milestone A** — Single-command install (`npx @seed-forge/seedforge`), `create-seedforge` scaffolding, `@fastify/static` security bump, programmatic CLI exports
 - ✅ **Phase 2, Milestone B** — ORM-native schema parsing (Prisma, Drizzle adapters), `seedforge suggest --describe` natural-language config authoring, `seedforge clone` production anonymization
 - ✅ **Phase 2, Milestone C** — GitHub Actions CI plugin (`.github/actions/seedforge-action/`), test-framework bindings (`@seed-forge/testing` with Vitest + Jest adapters), `diff --ci` PR gate, preview-database recipes (Neon, Supabase, PlanetScale)
-- 🔄 **Next: Production hardening — HTTPS, auth, multi-user workspaces, cloud-hosted studio**
+- ✅ **Phase 2, Milestone D** — SQLite adapter (zero-Docker seed with `sql.js` WASM engine), studio hardening (path-traversal regression test, Bearer-token auth gate with `SEEDFORGE_STUDIO_TOKEN`, schema-diff overlay on ER diagram, natural-language config authoring in config panel)
+- 🔄 **Next: Phase 2, Milestone E — Depth & confidence: property-based tests, seedforge audit command**
 
 ## Test Suite
 
 | Package | Test count | Environment |
 |---|---|---|
-| `@seed-forge/core` | 176 | Standalone (unit + property) |
+| `@seed-forge/core` | ~185 | Standalone (unit + property) |
 | `@seed-forge/adapter-postgres` | 18 | Docker Postgres 16 |
 | `@seed-forge/adapter-mysql` | 17 | Docker MySQL 8 |
 | `@seed-forge/adapter-mongodb` | 16 | Docker MongoDB 7 |
+| `@seed-forge/adapter-sqlite` | 11 | Standalone (WASM, no Docker) |
 | `@seed-forge/adapter-prisma` | 10 | Standalone (Prisma schema parsing) |
 | `@seed-forge/adapter-drizzle` | 10 | Standalone (Drizzle schema parsing) |
-| `@seed-forge/cli` | 77 | Standalone |
-| `@seed-forge/integration-tests` | 13 | Docker Postgres + MySQL + MongoDB |
+| `@seed-forge/cli` | ~80 | Standalone |
+| `@seed-forge/integration-tests` | ~17 | Docker Postgres + MySQL + MongoDB + SQLite |
 | `@seed-forge/registry` | 2 | Standalone |
-| `@seed-forge/studio` | 1 | Standalone |
+| `@seed-forge/studio` | 11 | Standalone |
 | `@seed-forge/plugin-geo` | 7 | Standalone |
 | `@seed-forge/example-testing-vitest` | 3 | Docker Postgres 16 |
-| **Total** | **350** | See above |
+| **Total** | **~380** | See above |
 
-> **Note**: All 350 tests pass across 36 test files as of Phase 2, Milestone C.
+> **Note**: All tests pass across 40+ test files as of Phase 2, Milestone D.
